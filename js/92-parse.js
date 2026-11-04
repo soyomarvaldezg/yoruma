@@ -172,7 +172,7 @@ jsonInput.type = 'file';
 jsonInput.accept = '.json,application/json';
 jsonInput.style.display = 'none';
 document.body.appendChild(jsonInput);
-document.getElementById('btn-open').addEventListener('click', () => jsonInput.click());
+// the FILE menu opens the picker through the data-x handler below
 jsonInput.addEventListener('change', async () => {
   const file = jsonInput.files[0];
   jsonInput.value = '';
@@ -252,6 +252,8 @@ menu.querySelectorAll('button').forEach(b => {
     menu.classList.remove('on');
     const x = b.dataset.x;
     try {
+      if (x === 'open'){ jsonInput.click(); return; }
+      if (x === 'clear'){ clearDoc(); return; }
       if (x === 'mermaid') return copy(mermaid(), 'mermaid source copied');
       if (x === 'd2') return copy(d2(), 'd2 source copied');
       if (x === 'kroki-mermaid') return copy(await krokiPath('mermaid', mermaid()), 'kroki mermaid url copied');

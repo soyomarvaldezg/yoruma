@@ -40,8 +40,9 @@ just deps                   # one-time: verifier deps and Chromium
 ## Persistence
 
 The document saves itself to `localStorage` on every change and restores on reload, zoom
-included. `CLEAR` confirms, then empties it (and saves the empty state). `OPEN JSON` reads a
-version 1 yoruma JSON file, validates it, and replaces the current document; undo restores
+included. `FILE ▾ → Clear the document` confirms, then empties it (and saves the empty state).
+`FILE ▾ → Open JSON…` reads a version 1 yoruma JSON file, validates it, and replaces the
+current document; undo restores
 the previous nodes and arrows. Loading is strict: unknown node fields are dropped, images must be
 inline `data:image` URIs within the storage cap, step numbers must be positive and step members
 must point at shapes that exist in the same document. Documents over 8 MB or 5000 shapes are
@@ -54,6 +55,11 @@ loads. If another tab saves, autosave pauses and **OTHER TAB** appears; export J
 this tab's version, or reload to load the other one.
 
 ## Panels
+
+The header holds three menus and three actions: **+ INSERT ▾** (image, logo), **EXAMPLES ▾**
+(blank, three worked examples), **FILE ▾** (open, every export, clear), then **FLOW** cycling the
+arrow animation, **STEPS ▾** for the present order, and **PRESENT**. Save warnings appear beside
+them only when they matter.
 
 One **Draw** palette, no sections: select, arrow, line, rectangle, ellipse, zone (dashed),
 text, heading, database, queue, cloud, file, service/API, security, consumers, AI agent,
@@ -177,7 +183,7 @@ to colour that one object, or clicked to colour the selection.
 
 ## Motion
 
-`MOTION` cycles off → dots → dashes → dashes+dots. With an arrow selected it applies there
+`FLOW` cycles off → dots → dashes → dashes+dots. With an arrow selected it applies there
 only; with nothing selected it applies everywhere and clears per-arrow overrides.
 
 Key: `M` cycles. Dots breathe in and out as they travel. `,` and `.` change the dot size.
@@ -196,7 +202,8 @@ animated overlays and motion dots, restoring them on drop.
 
 ## Export
 
-`EXPORT ▾` — SVG, PNG (fonts inlined), JSON document, Mermaid source, D2 source, and a ready
+`FILE ▾` also holds the exports — SVG, PNG (fonts inlined), JSON document, Mermaid source, D2
+source, and a ready
 `kroki.io/…/svg/<deflate+base64>` link for Mermaid and D2. The SVG keeps motion: animated
 arrows are exported as a CSS keyframe animation inside the file, so a downloaded SVG still
 shows the flow moving. Mermaid and D2 source skip steps and zones, and strip the characters

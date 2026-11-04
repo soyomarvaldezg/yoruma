@@ -10,8 +10,19 @@ document.getElementById('btn-help').addEventListener('click', ev => {
 helpEl.addEventListener('click', ev => ev.stopPropagation());
 document.addEventListener('click', () => helpEl.classList.remove('on'));
 
-document.getElementById('btn-image').addEventListener('click', () => fileInput.click());
-document.getElementById('btn-logo').addEventListener('click', () => openLogoPicker(null));
+const insertMenu = document.getElementById('insert-menu');
+document.getElementById('btn-insert').addEventListener('click', ev => {
+  ev.stopPropagation(); insertMenu.classList.toggle('on');
+});
+insertMenu.addEventListener('click', ev => ev.stopPropagation());
+document.addEventListener('click', () => insertMenu.classList.remove('on'));
+insertMenu.querySelectorAll('button').forEach(b => {
+  b.addEventListener('click', () => {
+    insertMenu.classList.remove('on');
+    if (b.dataset.insert === 'image') fileInput.click();
+    else openLogoPicker(null);
+  });
+});
 
 const presentBtn = document.getElementById('btn-present');
 const presentBadge = document.getElementById('present-badge');
@@ -267,7 +278,7 @@ document.getElementById('btn-demo').addEventListener('click', ev => {
 demoMenu.addEventListener('click', ev => ev.stopPropagation());
 document.addEventListener('click', () => demoMenu.classList.remove('on'));
 
-document.getElementById('btn-clear').addEventListener('click', clearDoc);
+
 
 function reloadConflict(){
   if (confirm("Reload and load the version saved by the other tab? Export JSON first if you need this tab's changes."))
@@ -342,6 +353,6 @@ function syncHud(){
   const mode = S.selLinks.length
     ? ((links.find(l => l.id === S.selLinks[0]) || {}).motion || S.motion)
     : S.motion;
-  motionBtn.textContent = 'MOTION · ' + MLABEL[mode];
+  motionBtn.textContent = 'FLOW · ' + MLABEL[mode];
 }
 

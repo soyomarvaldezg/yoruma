@@ -33,8 +33,7 @@ Open work, roughly in the order it earns attention. Finished work lives in the g
 
 ## Top bar
 
-- [ ] Decide how to reduce the header: group related actions behind two or three menus, or keep
-      only PRESENT and EXPORT visible and move the rest into an overflow menu.
+- [x] Reduce the header: INSERT, EXAMPLES and FILE menus plus FLOW, STEPS, PRESENT.
 
 ## Features still open
 

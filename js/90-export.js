@@ -1,8 +1,9 @@
 /* ---------- export ---------- */
 const menu = document.getElementById('menu');
-document.getElementById('btn-export').addEventListener('click', ev => {
+document.getElementById('btn-file').addEventListener('click', ev => {
   ev.stopPropagation(); menu.classList.toggle('on');
 });
+menu.addEventListener('click', ev => ev.stopPropagation());
 document.addEventListener('click', () => menu.classList.remove('on'));
 
 function diagramId(n){
