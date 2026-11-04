@@ -154,18 +154,8 @@ function tick(now){
 <script src="js/92-parse.js"></script>
 <script src="js/94-hud.js"></script>
 <script src="js/96-keys.js"></script>
+<script src="js/98-boot.js"></script>
 <script>
-/* ---------- boot ---------- */
-const restored = restore();
-if (!restored) loadDemo();
-setTool('select', 'draw');
-render();
-showRecovery();
-requestAnimationFrame(() => {
-  if (restored) applyView(); else fit();
-});
-requestAnimationFrame(tick);
-
 if (/selftest/.test(location.search)){
   localStorage.removeItem(KEY);
   nodes = nodes.slice(0, 4);
