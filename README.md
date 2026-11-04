@@ -7,8 +7,8 @@ ships. ValdezData brand. Block names follow Omar's
 (CC BY 4.0).
 
 ```sh
-open spike/index.html        # the editor
-open spike/index.html?test   # 55 tests, report in the ? panel
+open index.html             # the editor
+open index.html?test        # 55 tests, report in the ? panel
 ```
 
 ## Persistence

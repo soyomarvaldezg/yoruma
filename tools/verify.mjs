@@ -3,7 +3,7 @@ import { pathToFileURL } from 'node:url';
 import path from 'node:path';
 
 const root = path.resolve(import.meta.dirname, '..');
-const target = path.resolve(process.argv[2] || path.join(root, 'spike', 'index.html'));
+const target = path.resolve(process.argv[2] || path.join(root, 'index.html'));
 const url = pathToFileURL(target).href + '?test';
 
 const logs = [];
