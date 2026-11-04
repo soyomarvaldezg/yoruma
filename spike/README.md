@@ -6,7 +6,7 @@ Capability names follow Omar's [enterprise data architecture reference](https://
 
 ```sh
 open spike/index.html        # the editor
-open spike/index.html?test   # 52 tests, report in the ? panel
+open spike/index.html?test   # 53 tests, report in the ? panel
 ```
 
 ## Persistence
@@ -148,7 +148,9 @@ Key: `M` cycles. Dots breathe in and out as they travel. `,` and `.` change the 
 `EXPORT ▾` — SVG, PNG (fonts inlined), JSON document, Mermaid source, D2 source, and a ready
 `kroki.io/…/svg/<deflate+base64>` link for Mermaid and D2. The SVG keeps motion: animated
 arrows are exported as a CSS keyframe animation inside the file, so a downloaded SVG still
-shows the flow moving. Kroki is free and open source and
+shows the flow moving. Mermaid and D2 source skip steps and zones, and strip the characters
+that break their parsers (`"`, brackets, pipes, angle brackets), so a note containing an arrow
+can no longer produce an unparseable diagram. Kroki is free and open source and
 renders ~25 diagram languages; Mermaid and D2 are the two that map cleanly onto this model.
 
 ## Verified
@@ -162,9 +164,9 @@ drag a swatch onto a shape, dots render, free line shape, drag a swatch tints a 
 tinted card,
 drag moves a shape, card logo, logo name match, logo slug, logo node, brand tile url, logo aspect,
 zone creation, zone click-through, zone border selection, zone resize scaling its children,
-heading colour, subtitle colour, present mode, present step order, step add, step zone members, step duplicate guard, undo,
+heading colour, subtitle colour, present mode, present step order, step add, step zone members, step duplicate guard, mermaid escape, undo,
 redo, duplicate, paste, z-order, size inspector, catalog filter, JSON export/import,
-and persistence. 52/52 green.
+and persistence. 53/53 green.
 
 ## Still open
 

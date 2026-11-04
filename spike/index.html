@@ -332,31 +332,16 @@
   <div><span><kbd>V</kbd><kbd>A</kbd><kbd>L</kbd></span><span>select · arrow · line</span></div>
   <div><span><kbd>R</kbd><kbd>O</kbd><kbd>Z</kbd></span><span>rectangle · ellipse · zone</span></div>
   <div><span><kbd>T</kbd><kbd>H</kbd></span><span>text · heading</span></div>
-  <div><span><kbd>D</kbd><kbd>Q</kbd><kbd>C</kbd><kbd>E</kbd><kbd>S</kbd></span><span>db · queue · cloud · file · service</span></div>
-  <div><span><kbd>G</kbd><kbd>P</kbd><kbd>B</kbd><kbd>K</kbd><kbd>U</kbd><kbd>I</kbd></span><span>security · consumers · agent · contract · video · image</span></div>
-  <div><span><kbd>⌘A</kbd> <kbd>⌘Z</kbd> <kbd>⇧⌘Z</kbd> <kbd>⌫</kbd></span><span>all · undo · redo · delete</span></div>
-  <div><span><kbd>⌘C</kbd> <kbd>⌘V</kbd> <kbd>⌘D</kbd></span><span>copy · paste · duplicate</span></div>
-  <div><span><kbd>⇧⌘]</kbd> <kbd>⇧⌘[</kbd></span><span>bring front · send back</span></div>
-  <div><span><kbd>⌘B</kbd> <kbd>⌘I</kbd></span><span>bold · italic</span></div>
-  <div><span><kbd>[</kbd> <kbd>]</kbd></span><span>text size</span></div>
-  <div><span><kbd>,</kbd> <kbd>.</kbd></span><span>animation dot size</span></div>
-  <div><span><kbd>M</kbd></span><span>next motion</span></div>
-  <div><span><kbd>F</kbd></span><span>fit to screen</span></div>
-  <div><span><kbd>Esc</kbd> <kbd>?</kbd></span><span>deselect · this panel</span></div>
+  <div><span><kbd>⌘Z</kbd><kbd>⇧⌘Z</kbd><kbd>⌫</kbd></span><span>undo · redo · delete</span></div>
+  <div><span><kbd>⌘C</kbd><kbd>⌘V</kbd><kbd>⌘D</kbd></span><span>copy · paste · duplicate</span></div>
+  <div><span><kbd>[</kbd><kbd>]</kbd><kbd>,</kbd><kbd>.</kbd><kbd>M</kbd></span><span>text size · dot size · motion</span></div>
+  <div><span><kbd>F</kbd><kbd>Esc</kbd><kbd>?</kbd></span><span>fit · deselect · close</span></div>
   <h3 style="margin-top:12px">Mouse</h3>
-  <div><span>drag empty canvas</span><span>marquee select / draw</span></div>
-  <div><span>drag a shape</span><span>move (snaps to guides)</span></div>
-  <div><span>drag a paddle</span><span>new arrow from that side</span></div>
-  <div><span>drag an arrow end</span><span>re-point it, snaps to nearest side</span></div>
-  <div><span>drag the teal dot</span><span>bend the arrow</span></div>
-  <div><span>double-click</span><span>rename · label an arrow</span></div>
-  <div><span>select a connected arrow</span><span>style bar: width, dashes, heads</span></div>
-  <div><span>sidebar Inspector</span><span>X/Y/W/H · align</span></div>
-  <div><span>drag a swatch</span><span>colour that shape</span></div>
-  <div><span>right-drag</span><span>pan</span></div>
-  <div><span>⌘ + wheel</span><span>zoom</span></div>
-  <div><span>paste / drop</span><span>insert an image</span></div>
-  <div class="foot">⌘ = Ctrl on Windows and Linux</div>
+  <div><span>drag a shape border</span><span>draw an arrow</span></div>
+  <div><span>double-click</span><span>rename, or note on an arrow</span></div>
+  <div><span>drag a swatch</span><span>colour that object</span></div>
+  <div><span>right-drag · ⌘ wheel</span><span>pan · zoom</span></div>
+  <div class="foot">Data shapes keep their letters: hover a palette button to see it. ⌘ = Ctrl on Windows and Linux; the whole list lives in README.md.</div>
 </div>
 <div id="logo-picker">
   <div class="logo-box">
@@ -2819,13 +2804,20 @@ document.getElementById('btn-export').addEventListener('click', ev => {
 });
 document.addEventListener('click', () => menu.classList.remove('on'));
 
+function mermaidLabel(t){
+  return String(t == null ? '' : t)
+    .replace(/["\[\]{}|<>`]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
 function mermaid(){
-  const id = n => 'n_' + n.id.replace(/[^a-zA-Z0-9]/g,'_');
-  const cap = s => String(s).replace(/"/g, "'");
+  const id = n => 'n_' + String(n.id).replace(/[^a-zA-Z0-9]/g,'_');
+  const skip = n => n.kind === 'zone' || n.kind === 'frame';
   const lines = ['flowchart LR'];
   nodes.forEach(n => {
-    if (n.kind === 'zone') return;
-    const label = cap(n.title) + (n.sub ? '<br/>' + cap(n.sub) : '');
+    if (skip(n)) return;
+    const t = mermaidLabel(n.title), s = mermaidLabel(n.sub);
+    const label = t + (s ? '<br/>' + s : '');
     const wrap = n.kind === 'store' ? `[("${label}")]`
       : n.kind === 'queue' ? `[["${label}"]]`
       : n.kind === 'cloud' ? `("${label}")`
@@ -2834,26 +2826,31 @@ function mermaid(){
   });
   links.forEach(l => {
     const a = byId(l.from), b = byId(l.to);
-    if (a && b) lines.push(`  ${id(a)} -->${l.label ? '|' + l.label + '|' : ''} ${id(b)}`);
+    if (!a || !b || skip(a) || skip(b)) return;
+    const lab = mermaidLabel(l.label);
+    lines.push('  ' + id(a) + ' -->' + (lab ? '|' + lab + '|' : '') + ' ' + id(b));
   });
   return lines.join('\n');
 }
 function d2(){
-  const id = n => 'n_' + n.id.replace(/[^a-zA-Z0-9]/g,'_');
+  const id = n => 'n_' + String(n.id).replace(/[^a-zA-Z0-9]/g,'_');
+  const skip = n => n.kind === 'zone' || n.kind === 'frame';
   const map = { store:'cylinder', queue:'queue', cloud:'cloud', file:'document',
     people:'person', ellipse:'oval', dashboard:'stored_data', cube:'package',
     shield:'diamond', api:'hexagon' };
   const out = ['direction: right', ''];
   nodes.forEach(n => {
-    if (n.kind === 'zone') return;
-    const label = String(n.title).replace(/"/g, "'");
-    const sub = n.sub ? '\\n' + String(n.sub).replace(/"/g, "'") : '';
+    if (skip(n)) return;
+    const label = mermaidLabel(n.title).replace(/"/g, "'");
+    const sub = n.sub ? '\\n' + mermaidLabel(n.sub).replace(/"/g, "'") : '';
     const t = map[n.kind];
     out.push(`${id(n)}: "${label}${sub}"${t ? ` { shape: ${t} }` : ''}`);
   });
   links.forEach(l => {
     const a = byId(l.from), b = byId(l.to);
-    if (a && b) out.push(`${id(a)} -> ${id(b)}${l.label ? ': "' + l.label + '"' : ''}`);
+    if (!a || !b || skip(a) || skip(b)) return;
+    const lab = mermaidLabel(l.label).replace(/"/g, "'");
+    out.push(`${id(a)} -> ${id(b)}${lab ? ': "' + lab + '"' : ''}`);
   });
   return out.join('\n');
 }
@@ -3929,6 +3926,15 @@ if (/[?&]test/.test(location.search)){
   const beforeSteps = presentFrames().length;
   addStep();
   addStep();
+  const nasty = { id:'mz', kind:'box', title:'A [b] "c" | d', sub:'', color:null,
+    tcolor:null, scolor:null, fs:1, x:0, y:0, w:10, h:10 };
+  const metaFr = { id:'mf', kind:'frame', title:'Step 9', members:[], step:9,
+    x:0, y:0, w:5, h:5 };
+  nodes.push(nasty, metaFr);
+  const mm = mermaid();
+  ok('mermaid escape', mm.includes('n_mz["A b c d"]') && !mm.includes('n_mf'));
+  nodes.pop(); nodes.pop();
+
   ok('step duplicate guard', presentFrames().length === beforeSteps + 1);
   presentFrames().filter(f => (f.members || []).includes(box.id))
     .forEach(f => removeStep(f.id));
