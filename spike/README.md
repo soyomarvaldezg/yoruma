@@ -6,7 +6,7 @@ Capability names follow Omar's [enterprise data architecture reference](https://
 
 ```sh
 open spike/index.html        # the editor
-open spike/index.html?test   # 38 tests, report in the ? panel
+open spike/index.html?test   # 44 tests, report in the ? panel
 ```
 
 ## Persistence
@@ -27,6 +27,10 @@ One **Draw** palette, no sections: select, arrow, line, rectangle, ellipse, zone
 text, heading, database, queue, cloud, file, service/API, security, consumers, AI agent,
 data contract, video, image data. Every shortcut is a letter.
 
+**PRESENT** hides the header, the sidebar and the status bar and fits the diagram to the
+window; `Esc` or **EXIT** brings the chrome back. Zoom and fit stay in the corner, dimmed
+until you hover them.
+
 **Arrow** draws a free arrow unless both ends land on shapes, in which case it becomes a
 connected flow. **Line** is always free.
 
@@ -36,7 +40,14 @@ available); small GIF and SVG files keep their original data.
 **Catalog**: the reference capabilities in ten groups, mirroring the architecture
 reference's planes and bands — Sources, Integration, Platform, Serving & Data Products,
 Consumption, Metadata & Knowledge, Governance & Trust, Control Plane, Platform Engineering,
-ML & AI. The filter box narrows the chips, and every entry lands as a rectangle.
+ML & AI. It lists the capabilities the reference's nine worked flows actually draw, plus the
+few those flows under-sample but a diagram still needs: network connectivity (VPN, peering,
+secure connectors), search indexes, the business glossary and data observability. The
+inventory's posture-only capabilities stay in the reference. The filter box narrows the
+chips, and every entry lands as a rectangle.
+
+Palette source: `soyomarvaldezg/enterprise-data-architecture-reference` at commit `9a01467`
+(2026-11-02). Re-check that repository's worked flows when the reference changes.
 
 ## Zones
 
@@ -48,7 +59,9 @@ with it — positions and sizes keep their proportions, so the layout inside sur
 ## Creating and naming
 
 Drag to create. On release the editor opens with title and subtitle. Double-click any shape
-to reopen it; double-click an **arrow** to give it a label. Enter moves title → subtitle,
+to reopen it; double-click an **arrow** to give it a note. The note wraps to four lines and
+sits above the path, clear of the teal bend handle, and double-clicking the note itself edits
+it. Enter moves title → subtitle,
 Enter again commits, Escape cancels. Long text wraps and ellipsizes.
 
 ## Editing
@@ -60,7 +73,8 @@ Enter again commits, Escape cancels. Long text wraps and ellipsizes.
 - **z-order**: `⇧⌘]` brings the selection forward, `⇧⌘[` sends it back; zones stay behind
   shapes
 - **inspector**: sidebar X/Y/W/H for one shape; with two or more non-zone shapes, six align
-  buttons (left/centre/right/top/middle/bottom)
+  buttons (left/centre/right/top/middle/bottom); with three or more, two distribute buttons
+  (horizontal/vertical) that even out the gaps and leave the outer two shapes where they are
 - **resize** — corner handles; shapes scale their text and icon with them. Icons are sized
   from the box (up to 170px), not from a fixed small ceiling
 - **snap** — dragging shows alignment guides against other shapes' edges and centres, and
@@ -78,7 +92,8 @@ Enter again commits, Escape cancels. Long text wraps and ellipsizes.
   button stops the flow and leaves a solid line (dots stay in dots+dashes mode); a start-only
   arrow runs its animation backwards so the flow follows the visible head
 - **shape switch** — the floating bar above a selected shape morphs it
-- **text size** — `[` and `]`, from 0.4× to 4×; the status line shows the multiplier
+- **text size** — `[` and `]`, from 0.4× to 4×, for the selected shapes and for an
+  arrow's note; the arrow note defaults to 18px
 - **text alignment** — three buttons at the end of the floating shape bar (headings included,
   left/centre/right)
 - **fit to screen** — `F`
@@ -95,9 +110,10 @@ of across it.
 ## Colour
 
 The swatch row sits at the top of the sidebar and colours whatever you last clicked —
-**border** → outline, **title** → title, **subtitle** → subtitle, **body** → fill. Underneath,
-four icons (outline, T, t, filled square) show which of those is armed and let you override it
-by hand. Arrows always take the outline colour.
+**border** → outline, **title** → title, **subtitle** → subtitle, **body** → tinted card: the
+border takes the colour and the body a 10% tint of the same hue, which is how a coloured
+reference card reads. Underneath, four icons (outline, T, t, tinted card) show which of
+those is armed and let you override it by hand. Arrows always take the outline colour.
 12 colours plus one custom swatch — picking a new custom colour
 replaces it instead of adding another. Swatches can be **dragged onto a shape or an arrow**
 to colour that one object, or clicked to colour the selection.
@@ -118,13 +134,17 @@ renders ~25 diagram languages; Mermaid and D2 are the two that map cleanly onto 
 ## Verified
 
 `?test` runs a headless-style self test against the real app: create by drag, arrow between
-shapes, select an arrow, re-point it, style it, check the animated flow and reverse flow,
+shapes, select an arrow, re-point it, style it, wrap and resize an arrow note, clear the bend
+handle, check the animated flow
+and reverse flow,
 create an edge from a paddle with its side, resize,
-drag a swatch onto a shape, dots render, free line shape, fill a shape, drag moves a shape,
+drag a swatch onto a shape, dots render, free line shape, drag a swatch tints a card,
+tinted card,
+drag moves a shape,
 zone creation, zone click-through, zone border selection, zone resize scaling its children,
-heading colour, subtitle colour, undo,
-redo, duplicate, paste, z-order, size inspector, align, catalog filter, JSON export/import,
-and persistence. 38/38 green.
+heading colour, subtitle colour, present mode, undo,
+redo, duplicate, paste, z-order, size inspector, align, distribute, catalog filter, JSON export/import,
+and persistence. 44/44 green.
 
 ## Still open
 

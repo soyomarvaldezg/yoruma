@@ -50,7 +50,7 @@
     font-family:'VD Code',monospace; font-size:10.5px; color:var(--ink);
     background:var(--card); border:1px solid var(--line); border-radius:2px}
   .inspect-grid input:disabled{opacity:.45}
-  .inspect-actions{display:grid; grid-template-columns:repeat(6,1fr); gap:3px; margin-top:6px}
+  .inspect-actions{display:grid; grid-template-columns:repeat(8,1fr); gap:3px; margin-top:6px}
   .inspect-actions button{height:26px; padding:0; border:1px solid var(--line);
     color:var(--ink); background:var(--card); display:grid; place-items:center}
   .inspect-actions button:disabled{opacity:.35; cursor:default}
@@ -73,6 +73,10 @@
   #recover-warn.on{display:inline-block}
   #tab-warn{display:none; border-color:#F6B26B; color:#F6B26B}
   #tab-warn.on{display:inline-block}
+
+  body.present header, body.present aside, body.present .status{display:none}
+  body.present .zoombar{opacity:.35}
+  body.present .zoombar:hover{opacity:1}
 
   .app{flex:1; display:flex; min-height:0}
   aside{
@@ -217,6 +221,7 @@
     <button id="btn-image">+ IMAGE</button>
     <button id="btn-open" title="Open a yoruma JSON document">OPEN JSON</button>
     <button id="btn-motion">MOTION · OFF</button>
+    <button id="btn-present" title="Hide the chrome and fit the diagram (Esc exits)">PRESENT</button>
     <button id="btn-export">EXPORT ▾</button>
     <button id="btn-help">?</button>
     <button id="btn-clear">CLEAR</button>
@@ -245,8 +250,8 @@
       <button data-target="sub" title="subtitle">
         <svg viewBox="0 0 24 24"><path d="M12 7.5v8.2c0 1.3.9 2 2.3 2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M9 10.4h5.6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
       </button>
-      <button data-target="fill" title="fill">
-        <svg viewBox="0 0 24 24"><rect x="5" y="5" width="14" height="14" rx="2" fill="currentColor"/></svg>
+      <button data-target="tint" title="tinted card (outline + 10% fill)">
+        <svg viewBox="0 0 24 24"><rect x="5" y="5" width="14" height="14" rx="2" fill="currentColor" opacity=".18"/><rect x="5" y="5" width="14" height="14" rx="2" fill="none" stroke="currentColor" stroke-width="2.4"/></svg>
       </button>
     </div>
     <details id="inspect" open>
@@ -265,6 +270,8 @@
         <button data-align="top" title="Align top" disabled><svg viewBox="0 0 24 24"><path d="M4 4h16M7 8v12M12 8v8M17 8v10"/></svg></button>
         <button data-align="middle" title="Align middle" disabled><svg viewBox="0 0 24 24"><path d="M4 12h16M7 5v14M12 8v8M17 6v12"/></svg></button>
         <button data-align="bottom" title="Align bottom" disabled><svg viewBox="0 0 24 24"><path d="M4 20h16M7 4v12M12 8v8M17 6v10"/></svg></button>
+        <button data-dist="h" title="Distribute horizontally" disabled><svg viewBox="0 0 24 24"><path d="M4 5v14M20 5v14M8 8h3v8H8zM13 8h3v8h-3z"/></svg></button>
+        <button data-dist="v" title="Distribute vertically" disabled><svg viewBox="0 0 24 24"><path d="M5 4h14M5 20h14M8 8h8v3H8zM8 13h8v3H8z"/></svg></button>
       </div>
     </details>
     <h4>Draw</h4>
@@ -400,48 +407,36 @@ const CATALOG = [
   ['Sources', ['Databases','Applications','Files & Documents','Unstructured Data',
     'Messages & Events','IoT Devices','SaaS Applications','APIs','External Databases',
     'External Files','Streaming Data','Third-Party Data']],
-  ['Integration', ['Batch','Streaming','Micro-batch','CDC','Request/Response',
-    'Event-Driven','Publish & Subscribe','Event Streaming','Log-Based Replication',
-    'Database Connectivity','File Transfer','Data Transfer Services','VPN',
-    'Private Service Connectivity','Network Peering','Dedicated Private Connectivity',
-    'Secure Connectors','Backfill & Replay']],
-  ['Platform', ['Raw','Standardized','Curated','Serving Views','Data Modeling',
-    'Master & Reference Data','Data Transformation','Batch Processing','Stream Processing',
-    'Event Processing','Data Enrichment','Schema Evolution','Data Validation',
-    'Published Datasets','Materialized Views','Logical Views','Authorized Views',
+  ['Integration', ['Batch','Streaming','Micro-batch','CDC','Publish & Subscribe',
+    'Event Streaming','Log-Based Replication','Database Connectivity','File Transfer',
+    'VPN','Private Service Connectivity','Network Peering',
+    'Dedicated Private Connectivity','Secure Connectors']],
+  ['Platform', ['Raw','Standardized','Curated','Serving Views','Data Transformation',
+    'Batch Processing','Stream Processing','Event Processing','Data Enrichment',
+    'Schema Evolution','Data Validation','Published Datasets','Materialized Views',
     'Data Marts','Search Indexes']],
   ['Serving & Data Products', ['Business Metrics & KPIs','Business Definitions',
-    'Dimensions & Hierarchies','Business Rules','Semantic Models','Business Ontology',
-    'Metric Models','Semantic Query APIs','Metric Calculation & Resolution','SQL Access',
-    'REST APIs','GraphQL APIs','Data Virtualization','Secure Data Sharing','Data Exchange',
+    'Semantic Models','Metric Models','Semantic Query APIs','SQL Access','REST APIs',
+    'GraphQL APIs','Data Virtualization','Secure Data Sharing','Data Exchange',
     'Federated Data Access','Data Products']],
   ['Consumption', ['Business Users','Analysts','Data Scientists','ML Engineers',
     'Application Teams','Operational Applications','Downstream Systems',
-    'Embedded Analytics','Partner Applications','Third-Party Applications',
-    'Partners','Public Data','External Consumers','Analytics & Reporting',
-    'Advanced Analytics & Data Science','Self-Service Analytics']],
-  ['Metadata & Knowledge', ['Enterprise Catalog','Data Lineage','Data Discovery',
-    'Business Glossary','Data Classification','Active Metadata',
-    'Knowledge Graph & Semantic Relationships','Schema & Interface Registry']],
-  ['Governance & Trust', ['Data Governance','Data Stewardship','Data Quality',
-    'Data Observability','Contract Policies','Data Product Governance','Data Privacy',
-    'Consent Management','Identity & Authentication','Encryption & Key Management',
-    'Data Masking & Tokenization','Lifecycle, Retention & Deletion','Policy as Code',
+    'Embedded Analytics','Partner Applications','Partners','External Consumers',
+    'Analytics & Reporting','Advanced Analytics & Data Science','Self-Service Analytics']],
+  ['Metadata & Knowledge', ['Enterprise Catalog','Data Lineage','Data Classification',
+    'Business Glossary']],
+  ['Governance & Trust', ['Data Quality','Data Observability','Contract Policies',
+    'Data Product Governance','Policy as Code','Lifecycle, Retention & Deletion',
     'Audit & Compliance Reporting']],
-  ['Control Plane', ['Access Management','Policy Management & Enforcement',
-    'Cost Management & FinOps Governance','Usage Metering & Quotas',
-    'Data Contracts Enforcement','Quality Policies Enforcement',
-    'Platform APIs & Interfaces','Workflow & Orchestration']],
-  ['Platform Engineering', ['Developer Experience','Infrastructure as Code & GitOps',
-    'CI/CD & DevOps','Platform APIs & Self-Service Portal','Observability & Monitoring',
-    'Reliability Engineering','Security Engineering','FinOps & Cost Optimization',
-    'Multi-cloud & Hybrid Management']],
+  ['Control Plane', ['Access Management','Data Contracts Enforcement',
+    'Workflow & Orchestration']],
+  ['Platform Engineering', ['CI/CD & DevOps','Observability & Monitoring']],
   ['ML & AI', ['Feature Store','Experiment Tracking','Model Registry','Model Serving',
-    'Vector Index','Evaluation & Drift','RAG & Context Retrieval']]
+    'Evaluation & Drift']]
 ];
 
 const S = {
-  tool:'select', motion:'off', paint:'line', armed:null, dotSize:4,
+  tool:'select', motion:'off', paint:'line', armed:null, dotSize:4, tint:false,
   color:null, tcolor:null, scolor:null, fill:null,
   selNodes:[], selLinks:[]
 };
@@ -807,10 +802,11 @@ const CLOUD_D = 'M20 45 C7 45 0 37 0 27 C0 18 7 10 16 9 C20 2 28 -2 36 -2 '
               + 'C46 -2 54 5 56 14 C64 15 70 21 70 29 C70 38 63 45 54 45 Z';
 const GLYPHS = ['people','api','dashboard','cube','shield','agent','contract','video','media'];
 
+
 function shape(n){
   const { x, y, w, h } = n;
   const stroke = accentOf(n) || LINE;
-  const fillC = fillOf(n) || CARD;
+  const fillC = fillOf(n) || (n.tint && accentOf(n) ? hexA(accentOf(n), .10) : CARD);
   const g = mk('g');
   const rect = () => g.appendChild(mk('rect', {
     x, y, width:w, height:h, rx:3, fill:fillC, stroke, 'stroke-width':1.2
@@ -1118,12 +1114,21 @@ function render(){
       const m = midPoint(pts);
       const vertical = Math.abs(pts[pts.length-1][0]-pts[0][0]) <
                        Math.abs(pts[pts.length-1][1]-pts[0][1]);
-      const t = mk('text', { x: vertical ? m.x + 9 : m.x, y: vertical ? m.y + 4 : m.y - 8,
-        'text-anchor': vertical ? 'start' : 'middle',
-        'font-family':"'VD Sans',sans-serif", 'font-size':'10.5',
+      const k = l.fs || 1;
+      const lines = wrapLines(l.label, (vertical ? 150 : 240)*k, 18*k, false, 4);
+      const x = vertical ? m.x + 12*k : m.x;
+      const lh = 22*k;
+      const y = vertical ? m.y + 6*k - (lines.length - 1)*lh/2
+                         : m.y - 8*k - (lines.length - 1)*lh;
+      const t = mk('text', { x, y, 'text-anchor': vertical ? 'start' : 'middle',
+        'font-family':"'VD Sans',sans-serif", 'font-size':String(18*k),
         fill: colorAt(l.color) || MUTED, stroke:PAPER, 'stroke-width':'3',
-        'paint-order':'stroke', 'pointer-events':'none' });
-      t.textContent = l.label;
+        'paint-order':'stroke', 'pointer-events':'all', 'data-role':'label' });
+      lines.forEach((ln, i) => {
+        const sp = mk('tspan', { x, dy: i ? lh : 0 });
+        sp.textContent = ln;
+        t.appendChild(sp);
+      });
       g.appendChild(t);
     }
     world.appendChild(g);
@@ -1373,7 +1378,7 @@ function snapDrag(items, dx, dy){
   if (by){ dy += by.d; guides.push({ h: by.at }); }
   return { dx, dy };
 }
-const PAINT_LABEL = { line:'outline', text:'title', sub:'subtitle', fill:'fill' };
+const PAINT_LABEL = { line:'outline', text:'title', sub:'subtitle', tint:'tinted card' };
 function pickTarget(ev, n, p){
   if (!n) return;
   if (n.kind === 'zone' || n.kind === 'line' || n.kind === 'arrow' || n.kind === 'image'){
@@ -1406,7 +1411,7 @@ function pickTarget(ev, n, p){
   const nearEdge = Math.min(Math.abs(p.x-n.x), Math.abs(p.x-(n.x+n.w)),
                             Math.abs(p.y-n.y), Math.abs(p.y-(n.y+n.h)));
   if (nearEdge < 10){ S.paint = 'line'; return; }
-  S.paint = 'fill';
+  S.paint = 'tint';
 }
 function selectNodes(ids, add){
   S.selLinks = [];
@@ -1478,7 +1483,7 @@ stage.addEventListener('pointerdown', ev => {
     const label = S.armed;
     snapshot();
     const n = { id:'n'+(uid++), kind:'box', title:label, sub:'', color:S.color,
-      tcolor:S.tcolor, scolor:S.scolor, fs:1,
+      tcolor:S.tcolor, scolor:S.scolor, tint:S.tint === true, fs:1,
       x:Math.round(p.x-88), y:Math.round(p.y-38), w:176, h:76 };
     nodes.push(n);
     selectNodes([n.id], false);
@@ -1555,7 +1560,7 @@ stage.addEventListener('pointerdown', ev => {
     const [w, hh] = SIZE[S.tool];
     snapshot();
     const n = { id:'n'+(uid++), kind:S.tool, title:'', sub:'', color:S.color,
-      tcolor:S.tcolor, scolor:S.scolor, fs:1,
+      tcolor:S.tcolor, scolor:S.scolor, tint:S.tint === true, fs:1,
       x:Math.round(p.x - w/2), y:Math.round(p.y - hh/2), w, h:hh };
     nodes.push(n);
     selectNodes([n.id], false);
@@ -2044,6 +2049,9 @@ function syncInspector(){
   const alignable = S.selNodes.length > 1 &&
     S.selNodes.every(id => { const m = byId(id); return m && m.kind !== 'zone'; });
   inspectEl.querySelectorAll('[data-align]').forEach(b => { b.disabled = !alignable; });
+  const distributable = S.selNodes.length > 2 &&
+    S.selNodes.every(id => { const m = byId(id); return m && m.kind !== 'zone'; });
+  inspectEl.querySelectorAll('[data-dist]').forEach(b => { b.disabled = !distributable; });
 }
 
 function commitBox(){
@@ -2095,6 +2103,22 @@ function alignSelection(mode){
   render();
 }
 
+function distributeSelection(axis){
+  const selected = S.selNodes.map(id => byId(id)).filter(n => n && n.kind !== 'zone');
+  if (selected.length < 3) return;
+  snapshot();
+  const key = axis === 'v' ? 'y' : 'x';
+  const dim = axis === 'v' ? 'h' : 'w';
+  const list = selected.slice().sort((a,b) => a[key] - b[key]);
+  const first = list[0], last = list[list.length-1];
+  const span = (last[key] + last[dim]) - first[key];
+  const used = list.reduce((acc, n) => acc + n[dim], 0);
+  const gap = (span - used) / (list.length - 1);
+  let at = first[key];
+  list.forEach(n => { n[key] = Math.round(at); at += n[dim] + gap; });
+  render();
+}
+
 [iX,iY,iW,iH].forEach(el => {
   el.addEventListener('focus', () => {
     boxEdit = S.selNodes.length === 1 ? S.selNodes[0] : null;
@@ -2108,6 +2132,9 @@ function alignSelection(mode){
 });
 inspectEl.querySelectorAll('[data-align]').forEach(b => {
   b.addEventListener('click', () => alignSelection(b.dataset.align));
+});
+inspectEl.querySelectorAll('[data-dist]').forEach(b => {
+  b.addEventListener('click', () => distributeSelection(b.dataset.dist));
 });
 
 /* ---------- sidebar ---------- */
@@ -2393,7 +2420,11 @@ function buildSwatches(){
         const n = nodeAt(p, 0);
         if (n){
           snapshot();
-          n[{ line:'color', text:'tcolor', sub:'scolor', fill:'fill' }[S.paint]] = hex;
+          if (S.paint === 'tint' && n.kind !== 'zone'){
+            n.color = hex; n.tint = !!hex; n.fill = null;
+          } else {
+            n[{ line:'color', text:'tcolor', sub:'scolor' }[S.paint]] = hex;
+          }
           render();
           return;
         }
@@ -2435,7 +2466,18 @@ buildSwatches();
 
 
 function applyColor(hex){
-  const prop = { line:'color', text:'tcolor', sub:'scolor', fill:'fill' }[S.paint];
+  if (S.paint === 'tint'){
+    if (S.selNodes.length){
+      snapshot();
+      nodes.filter(n => S.selNodes.includes(n.id) && n.kind !== 'zone')
+        .forEach(n => { n.color = hex; n.tint = !!hex; n.fill = null; });
+      render();
+    } else {
+      S.color = hex; S.tint = !!hex;
+    }
+    return;
+  }
+  const prop = { line:'color', text:'tcolor', sub:'scolor' }[S.paint];
   if (S.paint === 'line' && S.selLinks.length && !S.selNodes.length){
     snapshot();
     links.filter(l => S.selLinks.includes(l.id)).forEach(l => l.color = hex);
@@ -2473,11 +2515,16 @@ function setDotSize(delta){
   render();
 }
 function bumpFont(delta){
-  if (!S.selNodes.length) return;
+  if (!S.selNodes.length && !S.selLinks.length) return;
   snapshot();
   nodes.filter(n => S.selNodes.includes(n.id)).forEach(n => {
     n.fs = Math.min(4, Math.max(0.4, Math.round(((n.fs || 1) + delta) * 10) / 10));
   });
+  links.filter(l => S.selLinks.includes(l.id)).forEach(l => {
+    l.fs = Math.min(4, Math.max(0.4, Math.round(((l.fs || 1) + delta) * 10) / 10));
+  });
+  const l = links.find(x => S.selLinks.includes(x.id));
+  if (l) toast('arrow note ' + (l.fs || 1).toFixed(1) + '×');
   render();
 }
 
@@ -2571,6 +2618,7 @@ function parseNode(raw){
   if (typeof n.src !== 'string' || !n.src.startsWith('data:image/')) delete n.src;
   n.bold = n.bold === true;
   n.italic = n.italic === true;
+  n.tint = n.tint === true;
   n.flip = n.flip === true;
   return n;
 }
@@ -2594,6 +2642,7 @@ function parseLink(raw, ids){
     head: raw.head !== false,
     headStart: raw.headStart === true,
     lw: isNum(raw.lw) && raw.lw > 0 && raw.lw <= 8 ? raw.lw : undefined,
+    fs: isNum(raw.fs) && raw.fs > 0 ? Math.min(4, Math.max(0.4, raw.fs)) : 1,
     dash: raw.dash === true,
     way,
     fromSide: DOC_SIDES.has(raw.fromSide) ? raw.fromSide : null,
@@ -2808,6 +2857,17 @@ document.addEventListener('click', () => helpEl.classList.remove('on'));
 
 document.getElementById('btn-image').addEventListener('click', () => fileInput.click());
 
+const presentBtn = document.getElementById('btn-present');
+function setPresent(on){
+  document.body.classList.toggle('present', on);
+  presentBtn.textContent = on ? 'EXIT' : 'PRESENT';
+  if (on) clearSel();
+  render();
+  fit();
+}
+presentBtn.addEventListener('click', () =>
+  setPresent(!document.body.classList.contains('present')));
+
 document.getElementById('btn-clear').addEventListener('click', () => {
   if ((nodes.length || links.length) &&
       !confirm('Clear the whole document? Undo restores it until reload.')) return;
@@ -2875,7 +2935,7 @@ function syncHud(){
       : [{ bold:'arrow' }]);
   } else setStatus([{ bold:total }, ' selected']);
 
-  const prop = { line:'color', text:'tcolor', sub:'scolor', fill:'fill' }[S.paint];
+  const prop = { line:'color', text:'tcolor', sub:'scolor', tint:'color' }[S.paint];
   let cur = S[prop];
   if (S.selNodes.length) cur = (byId(S.selNodes[0]) || {})[prop];
   if (S.selLinks.length && !S.selNodes.length) cur = (links.find(l => l.id === S.selLinks[0]) || {}).color;
@@ -2894,6 +2954,7 @@ function syncHud(){
 window.addEventListener('keydown', e => {
   if (editableTarget(e.target)) return;
   if (e.key === 'Escape'){
+    if (document.body.classList.contains('present')){ setPresent(false); return; }
     clearSel(); setTool('select', 'draw'); render();
     return;
   }
@@ -3050,6 +3111,22 @@ if (/[?&]test/.test(location.search)){
   send('pointerdown', mid, el); send('pointerup', mid, el);
   ok('select arrow by click', S.selLinks.length === 1 && S.selLinks[0] === lnk.id);
 
+  lnk.label = 'load and model the curated tables into the serving layer';
+  render();
+  const lb = stage.querySelector('[data-role="label"]');
+  ok('arrow label wraps', !!lb && lb.querySelectorAll('tspan').length > 1);
+  ok('arrow note clears the bend handle', !!lb &&
+     Number(lb.getAttribute('y')) < mid.y &&
+     lb.getAttribute('pointer-events') === 'all');
+
+  lnk.fs = 2;
+  render();
+  const lb2 = stage.querySelector('[data-role="label"]');
+  ok('arrow label size', !!lb2 && lb2.getAttribute('font-size') === '36');
+  lnk.fs = 1;
+  lnk.label = '';
+  render();
+
   const C = byId('analysts');
   const hTo = handles.find(x => x.kind === 'linkend' && x.end === 'to');
   if (!hTo) ok('re-point arrow to another shape', false);
@@ -3185,14 +3262,27 @@ if (/[?&]test/.test(location.search)){
 
   setTool('select', 'draw');
   const prevPaint = S.paint;
-  S.paint = 'fill';
+  S.paint = 'tint';
   const sw2 = swEl.children[4];
   const rb = sw2.getBoundingClientRect();
   sw2.dispatchEvent(new PointerEvent('pointerdown', { bubbles:true, clientX:rb.left+7, clientY:rb.top+7, pointerId:1 }));
   const fb = toScreen({ x:box.x+box.w/2, y:box.y+box.h/2 });
   window.dispatchEvent(new PointerEvent('pointerup', { bubbles:true, clientX:fb.x, clientY:fb.y }));
-  ok('fill a shape', box.fill === sw2.dataset.hex);
+  ok('drag a swatch tints a card', box.color === sw2.dataset.hex && box.tint === true);
   S.paint = prevPaint;
+
+  const keptFill = box.fill;
+  box.fill = null;
+  S.selNodes = [box.id]; S.selLinks = [];
+  S.paint = 'tint';
+  applyColor('#08829C');
+  S.selNodes = [];
+  render();
+  const trect = stage.querySelector(`g.node[data-id="${box.id}"] rect`);
+  ok('tinted card', !!trect && trect.getAttribute('fill') === hexA('#08829C', .1));
+  box.tint = false; box.color = null; box.fill = keptFill;
+  S.paint = 'line';
+  render();
 
   const moved = byId('repl');
   const zx = moved.x, zy = moved.y;
@@ -3279,6 +3369,20 @@ if (/[?&]test/.test(location.search)){
   leftBtn.click();
   ok('align left', ib.x === a2.x);
   undo(); undo();
+
+  const a3 = byId('spark');
+  S.selNodes = [ib.id, a2.id, a3.id]; S.selLinks = []; render();
+  distributeSelection('h');
+  const row = [ib, a2, a3].sort((a,b) => a.x - b.x);
+  const g1 = row[1].x - (row[0].x + row[0].w);
+  const g2 = row[2].x - (row[1].x + row[1].w);
+  ok('distribute horizontally', Math.abs(g1 - g2) <= 1);
+  undo();
+
+  setPresent(true);
+  const asideHidden = getComputedStyle(document.querySelector('aside')).display === 'none';
+  ok('present mode', document.body.classList.contains('present') && asideHidden);
+  setPresent(false);
 
   const doc = JSON.parse(docJSON());
   ok('json export document', doc.format === 'yoruma' && doc.version === 1 &&
