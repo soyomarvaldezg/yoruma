@@ -2311,8 +2311,10 @@ function addImage(dataUrl, natW, natH, at){
   render();
   if (dataUrl.length > IMG_MAX_CHARS) toast('image is large; storage may fill', 5000);
 }
+const FILE_MAX_BYTES = 20e6;
 function insertFile(file, at){
   if (!file || !file.type || !file.type.startsWith('image/')) return;
+  if (file.size > FILE_MAX_BYTES){ toast('that image is too large', 4200); return; }
   const fr = new FileReader();
   fr.onload = () => {
     if (!fr.result){ toast('image could not be read'); return; }
@@ -2436,6 +2438,7 @@ async function fetchLogoByName(name, n){
 }
 function attachLogo(file, n){
   if (!file || !file.type || !file.type.startsWith('image/')) return;
+  if (file.size > FILE_MAX_BYTES){ toast('that image is too large', 4200); return; }
   const fr = new FileReader();
   fr.onload = () => {
     if (!fr.result){ toast('logo could not be read'); return; }
@@ -2937,15 +2940,21 @@ function parseLink(raw, ids){
   };
 }
 
+const DOC_MAX_CHARS = 8e6;
+const DOC_MAX_ITEMS = 5000;
 function parseDoc(text){
+  const body = String(text).replace(/^\uFEFF/, '');
+  if (body.length > DOC_MAX_CHARS) throw new Error('document is too large');
   let raw;
-  try { raw = JSON.parse(String(text).replace(/^\uFEFF/, '')); }
+  try { raw = JSON.parse(body); }
   catch (e){ throw new Error('not valid JSON'); }
   if (!raw || typeof raw !== 'object') throw new Error('not a yoruma document');
   if (raw.format !== 'yoruma' || raw.version !== 1)
     throw new Error('not a version 1 yoruma document');
   if (!Array.isArray(raw.nodes) || !Array.isArray(raw.links))
     throw new Error('document has no nodes or links');
+  if (raw.nodes.length > DOC_MAX_ITEMS || raw.links.length > DOC_MAX_ITEMS)
+    throw new Error('document has too many shapes');
   const ids = new Set();
   const nextNodes = raw.nodes.map(rawN => {
     const n = parseNode(rawN);
@@ -3027,6 +3036,7 @@ jsonInput.addEventListener('change', async () => {
   const file = jsonInput.files[0];
   jsonInput.value = '';
   if (!file) return;
+  if (file.size > DOC_MAX_CHARS){ toast('that file is too large to open', 4200); return; }
   try { importText(await file.text(), file.name); }
   catch (e){ toast('open failed: could not read file'); }
 });
@@ -3952,6 +3962,15 @@ if (/[?&]test/.test(location.search)){
   ok('document fields', pdA.tint === true && !('junk' in pdA) &&
      pdA.logo === 'data:image/png;base64,AAA' &&
      pdF.step === 2 && pdF.members.length === 1 && pdF.members[0] === 'a1');
+
+  let bigDoc = false, hugeDoc = false;
+  try { parseDoc('x'.repeat(DOC_MAX_CHARS + 1)); } catch (e){ bigDoc = /too large/.test(e.message); }
+  try {
+    const many = Array.from({ length: DOC_MAX_ITEMS + 1 }, (_, i) =>
+      ({ id:'b' + i, kind:'box', x:0, y:0, w:1, h:1 }));
+    parseDoc(JSON.stringify({ format:'yoruma', version:1, nodes:many, links:[] }));
+  } catch (e){ hugeDoc = /too many/.test(e.message); }
+  ok('document limits', bigDoc && hugeDoc);
 
   ok('step duplicate guard', presentFrames().length === beforeSteps + 1);
   presentFrames().filter(f => (f.members || []).includes(box.id))
