@@ -10,7 +10,6 @@ check:
 # Regenerate the README screenshots into docs/.
 shots:
     node tools/shots.mjs
-    node tools/shots-examples.mjs
 
 # Measure full-render cost at 50, 100, 200 and 400 shapes.
 measure:
