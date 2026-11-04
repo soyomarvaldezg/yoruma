@@ -50,6 +50,10 @@
     background:transparent; color:var(--on-dark);
   }
   button:hover{background:rgba(207,221,230,.13)}
+  #gh-link{display:grid; place-items:center; width:28px; height:26px;
+    border:1px solid var(--edge); border-radius:3px; color:var(--on-dark)}
+  #gh-link:hover{background:rgba(207,221,230,.13)}
+  #gh-link svg{width:15px; height:15px; fill:currentColor}
   .right{display:flex; gap:6px; align-items:center; position:relative;
     flex-wrap:wrap; justify-content:flex-end}
   #save-warn{display:none; font-family:'VD Code',monospace; font-size:9.5px;
