@@ -312,6 +312,15 @@ if (/[?&]test/.test(location.search)){
   ok('nested zone moves', zo1.x === ox+40 && zi1.x === 470 && zs1.x === 490);
   nodes.pop(); nodes.pop(); nodes.pop(); render();
 
+  const zb = { id:'zb1', kind:'zone', title:'VPC', color:null, tcolor:null, scolor:null,
+    fs:1, x:200, y:1500, w:260, h:180, band:true, solid:true };
+  nodes.push(zb); render();
+  const zbG = stage.querySelector('g.node[data-id="zb1"]');
+  const zbRect = zbG && zbG.querySelector('rect');
+  ok('zone band', !!zbG && !!zbG.querySelector('[data-role="zone-band"]') &&
+     !!zbRect && !zbRect.getAttribute('stroke-dasharray'));
+  nodes.pop(); render();
+
   const before = nodes.length;
   snapshot(); nodes.pop(); render(); undo();
   ok('undo restores', nodes.length === before);

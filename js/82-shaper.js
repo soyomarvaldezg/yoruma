@@ -166,6 +166,29 @@ pickerEl.addEventListener('keydown', ev => {
   shaper.appendChild(b);
 });
 
+const ZONE_STYLE = [
+  { flag:'band', title:'Header band',
+    svg:'<rect x="3.5" y="5" width="17" height="14" rx="2"/><path d="M3.5 10h17"/>' },
+  { flag:'solid', title:'Solid border',
+    svg:'<rect x="3.5" y="5" width="17" height="14" rx="2"/>' }
+];
+ZONE_STYLE.forEach(opt => {
+  const b = document.createElement('button');
+  b.innerHTML = `<svg viewBox="0 0 24 24">${opt.svg}</svg>`;
+  b.title = opt.title;
+  b.dataset.zone = opt.flag;
+  b.style.marginLeft = opt.flag === 'band' ? '6px' : '0';
+  b.addEventListener('mousedown', ev => ev.preventDefault());
+  b.addEventListener('click', () => {
+    const n = byId(S.selNodes[0]);
+    if (!n || n.kind !== 'zone') return;
+    snapshot();
+    n[opt.flag] = !n[opt.flag];
+    render();
+  });
+  shaper.appendChild(b);
+});
+
 const linkbar = document.getElementById('linkbar');
 const LINK_STYLE = [
   { lw:1.2, title:'Thin', svg:'<path d="M3 12h18" stroke-width="1.2"/>' },
@@ -219,7 +242,10 @@ function placeShaper(){
   const above = s.y - 78;
   shaper.style.top = (above < 8 ? s.y + n.h*view.k + 46 : above) + 'px';
   shaper.querySelectorAll('button').forEach(b => {
-    if (b.dataset.align) b.classList.toggle('on', (n.align || 'center') === b.dataset.align);
+    if (b.dataset.zone){
+      b.style.display = n.kind === 'zone' ? '' : 'none';
+      b.classList.toggle('on', n.kind === 'zone' && n[b.dataset.zone] === true);
+    } else if (b.dataset.align) b.classList.toggle('on', (n.align || 'center') === b.dataset.align);
     else b.classList.toggle('on', b.dataset.kind === n.kind);
   });
 }

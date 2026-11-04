@@ -36,7 +36,9 @@ function parseNode(raw){
     bold: raw.bold === true,
     italic: raw.italic === true,
     tint: raw.tint === true,
-    flip: raw.flip === true
+    flip: raw.flip === true,
+    band: raw.band === true,
+    solid: raw.solid === true
   };
   if (['left','center','right'].includes(raw.align)) n.align = raw.align;
   const src = image(raw.src), logo = image(raw.logo);

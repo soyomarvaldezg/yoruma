@@ -35,14 +35,27 @@ function shape(n){
         'stroke-width':16, 'pointer-events':'stroke' }));
       break;
     }
-    case 'zone':
+    case 'zone': {
       g.appendChild(mk('rect', {
         x, y, width:w, height:h, rx:8,
         fill: fillOf(n) ? hexA(fillOf(n), .10) : 'rgba(255,255,255,.30)',
         stroke: accentOf(n) || LINE,
-        'stroke-width':1.4, 'stroke-dasharray':'7 6', 'pointer-events':'none'
+        'stroke-width':1.4,
+        ...(n.solid ? {} : { 'stroke-dasharray':'7 6' }),
+        'pointer-events':'none'
       }));
+      if (n.band && n.title){
+        const accent = accentOf(n) || LINE;
+        g.appendChild(mk('path', {
+          d:`M${x} ${y+34} V${y+8} a8 8 0 0 1 8 -8 H${x+w-8} a8 8 0 0 1 8 8 V${y+34} Z`,
+          fill: hexA(accent, .16), stroke:'none', 'pointer-events':'none',
+          'data-role':'zone-band'
+        }));
+        addLines(g, x + 12, y + 23, 'start', accent, "'VD Code',monospace",
+          13*fscale(n), 600, '.08em', [String(n.title)], 0, '', 'zone-band-label');
+      }
       break;
+    }
     case 'text':
     case 'heading':
       g.appendChild(mk('rect', { x, y, width:w, height:h, fill:'transparent',
@@ -204,6 +217,7 @@ function drawText(g, n){
     return;
   }
   if (n.kind === 'zone'){
+    if (n.band) return;
     addLines(g, n.x + 12, n.y + 28, 'start', ink, CODE, 20*fscale(n), W1, '.12em',
       [title.toUpperCase()], 0, ST, 'title');
     return;

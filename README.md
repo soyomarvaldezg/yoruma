@@ -8,7 +8,7 @@ ships. ValdezData brand. Block names follow Omar's
 
 ```sh
 open index.html             # the editor
-open index.html?test        # 58 tests, report in the ? panel
+open index.html?test        # 59 tests, report in the ? panel
 just check                  # same suite, headless, fails the shell on red
 just deps                   # one-time: verifier deps and Chromium
 ```
@@ -77,7 +77,9 @@ select it by its border or label, resize it with the corner handles, and its chi
 with it — positions and sizes keep their proportions, so the layout inside survives.
 Zones nest: an outer zone's members are everything inside it at any depth, including other
 zones, so moving or resizing a VPC carries the region, the group and the shapes with it, and
-copying or stepping a zone brings the whole subtree.
+copying or stepping a zone brings the whole subtree. Two buttons in the floating bar style a
+zone: **header band** draws a tinted strip with the title in it, the way cloud frames label a
+VPC or an account, and **solid border** swaps the dashes for a clean outline.
 
 ## Creating and naming
 
@@ -185,7 +187,7 @@ selection, re-pointing, styling, notes, bend handle, animation), zones (creation
 border selection, resizing that scales children), colour and tinting, card logos and the brand
 picker, steps and present mode, undo, duplication, paste, z-order, the size inspector, the
 Blocks filter, JSON export and import against the schema rules, document limits, persistence,
-the render budget at both sizes, and nested-zone membership. 58 assertions, all green.
+the render budget at both sizes, nested-zone membership and zone styling. 59 assertions, all green.
 
 ## Still open
 
