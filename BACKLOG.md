@@ -7,10 +7,9 @@ Open work, roughly in the order it earns attention. Finished work lives in the g
 - [x] Create the GitHub repository and add it as `origin`.
 - [ ] Delete `soyomarvaldezg/yoruma-old`, the repository left behind when the stuck Pages
       deployment forced a rename and a fresh start (needs the `delete_repo` scope).
-- [ ] Decide the code licence and add `LICENSE`. The reference architecture the block list follows is
-      CC BY 4.0; the fonts in `fonts/` are already SIL OFL 1.1. MIT for the code is the simplest fit.
-- [ ] Publish on GitHub Pages: serve the repository root, add a `.nojekyll` file so `js/` and `css/`
-      are not filtered, and confirm `index.html?test` runs from the published URL.
+- [x] MIT licence in `LICENSE`; the fonts stay SIL OFL 1.1.
+- [x] Publish on GitHub Pages from `main` at the repository root, with `.nojekyll` so `js/` is
+      served as files.
 - [x] Add a short "Use it" section to the README: the published URL, or clone and open `index.html`.
 - [x] Screenshots for the README: the editor, a zoned diagram with a header band, present mode.
 - [ ] Custom domain later: `CNAME` plus DNS at the registrar, then enable HTTPS in the Pages settings.
@@ -21,9 +20,10 @@ Open work, roughly in the order it earns attention. Finished work lives in the g
 
 - [ ] `ARCHITECTURE.md`: load order, one line per file in `js/`, the invariants (one global scope, no
       modules, no build, `just check` as the gate), and where a new feature belongs.
-- [ ] CI on push: `just deps && just check`, pinned to a Chromium download. Blocked until the remote exists.
+- [x] CI on push: the `Checks` workflow runs the headless suite with its own Chromium.
 - [ ] `cog.toml` plus an annotated `v0.0.0` baseline tag, so `cog check` and versioning start clean.
-- [ ] `just measure` recipe for the render scaling probe.
+- [ ] `just` recipes for the helpers already in `tools/`: the render scaling probe and the two
+      screenshot scripts.
 
 ## Site and identity
 
