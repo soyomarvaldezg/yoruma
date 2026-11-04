@@ -1,0 +1,90 @@
+# Architecture
+
+How the app is put together, and where a new piece belongs.
+
+## Invariants
+
+These are deliberate and should not change without a decision recorded in the backlog.
+
+- **No build, no bundler, no modules.** `index.html` is served as-is. Classic `<script src>`
+  tags load the app; ES modules are blocked over `file://`, which is how this app is usually
+  opened.
+- **One shared global scope.** The scripts form one namespace, exactly as before the split.
+  Top-level `const` and `let` are visible across files, so load order is the dependency graph.
+- **No runtime dependency.** Everything the app needs lives in this repository. The only
+  network call is the opt-in brand-logo fetch, and its result is inlined into the document.
+- **One document format, version 1.** `parseDoc` is the trust boundary: unknown fields are
+  dropped, values are bounded, and step members must reference ids that exist.
+- **The gate is `just check`.** It runs the in-page suite in headless Chromium and exits
+  non-zero on any red line.
+
+## Load order
+
+Numbered because classic scripts execute in tag order. Gaps of ten leave room to insert a file
+without renaming its neighbours.
+
+| File | Owns |
+|---|---|
+| `js/00-core.js` | constants, palette tables (`ICON`, `DRAW`, `DATA`, `MORPHS`, `SIZE`), the `S` state object, colour helpers, `byId`, `zoneMembers` |
+| `js/05-examples.js` | the three worked example documents, as plain data |
+| `js/10-doc.js` | demo seed, `snapshot`/`undo`/`redo`, autosave and restore |
+| `js/20-view.js` | pan, zoom, fit, `applyView` |
+| `js/30-routing.js` | anchors, the 26px stubs, bend handling, `midPoint` |
+| `js/40-shapes.js` | every shape kind, glyph icons, zone bands, `drawText` |
+| `js/50-render.js` | `render()`, present dimming, handles, motion dots, the lite drag path |
+| `js/60-hit.js` | `nodeAt`, `handleAt`, `zoneHit`, the paint-target picker |
+| `js/70-pointer.js` | pointer listeners: drag, resize, bend, marquee, pan, arrow pen |
+| `js/80-editor.js` | the inline title, subtitle and note editor |
+| `js/82-shaper.js` | floating shape bar, arrow style bar, brand picker and logo fetch |
+| `js/84-inspector.js` | sidebar X/Y/W/H and `commitBox` |
+| `js/86-sidebar.js` | Draw palette, Blocks catalog and filter, clipboard paste |
+| `js/88-colour-motion.js` | paint targets, swatches, `applyColor`, motion, dot and font size |
+| `js/90-export.js` | `diagramId`, `diagramSkip`, Mermaid and D2 builders |
+| `js/92-parse.js` | schema validation, import flow, downloads and Kroki links |
+| `js/94-hud.js` | zoom bar, status line, toasts, the steps model, present walkthrough, menus |
+| `js/96-keys.js` | the global key handler and present navigation |
+| `js/98-boot.js` | restore-or-blank, initial fit, animation tick |
+| `js/99-tests.js` | the `?test` suite |
+
+`css/app.css` holds every style. `index.html` is markup, one `<link>` and these tags.
+
+## Where a feature goes
+
+- **A new shape kind**: add it to `SIZE` and `ICON` in `00-core`, a case in `40-shapes.js`, and
+  to `DRAW` or `DATA` if the palette should offer it. `parseNode` accepts it automatically
+  because `DOC_KINDS` is derived from `SIZE`.
+- **A new gesture**: `70-pointer.js` for the interaction, `60-hit.js` for new hit areas,
+  `50-render.js` for new handles.
+- **A new panel or menu**: build it in `86-sidebar.js` or `94-hud.js`, style it in `app.css`.
+- **A new node field**: validate it in `parseNode` (`92-parse.js`) or it will be dropped on
+  load; document it here and in the README.
+- **Something visual about zones or cards**: `40-shapes.js` draws it; state lives in `00-core`
+  and the floating bar controls it in `82-shaper.js`.
+
+## Data model
+
+`nodes` and `links` are plain arrays in memory, serialised as a version 1 document. A node
+carries geometry, kind, text, colours, `fs` (text scale) and optionally `logo`, `tint`, `band`,
+`solid`, `align`, `bold`, `italic`, `flip`. A link carries `from`/`to`, optional anchors
+(`fromSide`, `fromT`, `toSide`, `toT`), `way` for a single bend, styling (`lw`, `dash`, `head`,
+`headStart`), `motion`, a `label`, `fs` for the note scale and a `color`.
+
+Steps are nodes of `kind: "frame"` with a `members` array and a `step` order. They are never
+drawn unless selected, so steps can overlap spatially. Membership of a zone expands to
+everything inside it at any depth (`zoneMembers`).
+
+## Performance
+
+`render()` rebuilds the SVG. The budget is one 16 ms frame per render, measured by `?test` at
+the demo size and at 200 shapes. Two rules protect it: the dotted grid is created once and only
+transformed on pan and zoom, and dragging renders in a lite mode that skips the motion
+overlays. The scaling curve lives in the README and can be reproduced with `just measure`.
+
+## Verifying work
+
+```
+just check     # 60 assertions in headless Chromium; non-zero exit on red
+```
+
+The suite drives the real page, including synthetic pointer events, so a green run means the
+browser agrees, not just the parser.
