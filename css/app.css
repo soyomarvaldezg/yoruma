@@ -191,12 +191,12 @@
     padding:4px; min-width:230px}
   #menu button{display:block; width:100%; text-align:left; border:0; padding:7px 9px}
   #menu.on{display:block}
-  #steps-menu{position:absolute; right:0; top:38px; display:none; z-index:10;
+  #steps-menu, #demo-menu{position:absolute; right:0; top:38px; display:none; z-index:10;
     background:var(--ink); border:1px solid var(--edge); border-radius:4px;
     padding:4px; min-width:250px}
-  #steps-menu.on{display:block}
-  #steps-menu button{display:block; width:100%; text-align:left; border:0; padding:7px 9px}
-  #steps-menu button:disabled{opacity:.4; cursor:default}
+  #steps-menu.on, #demo-menu.on{display:block}
+  #steps-menu button, #demo-menu button{display:block; width:100%; text-align:left; border:0; padding:7px 9px}
+  #steps-menu button:disabled, #demo-menu button:disabled{opacity:.4; cursor:default}
   .step-row{display:flex; align-items:center; gap:3px; padding:2px 0}
   .step-row .num{font-family:'VD Code',monospace; font-size:10px;
     color:var(--muted-on-dark); min-width:18px; padding-left:4px}

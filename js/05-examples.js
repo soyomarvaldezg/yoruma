@@ -1,0 +1,86 @@
+/* ---------- examples ---------- */
+const EXAMPLES = [
+  {
+    id: "bi",
+    name: "Modern BI",
+    nodes: [
+    {"id":"b_zs","kind":"zone","title":"Sources","sub":"","color":"#4263EB","tcolor":null,"scolor":null,"fs":1,"x":0,"y":0,"w":480,"h":620,"band":true},
+    {"id":"b_zw","kind":"zone","title":"Warehouse","sub":"","color":"#F76707","tcolor":null,"scolor":null,"fs":1,"x":760,"y":0,"w":520,"h":620,"band":true},
+    {"id":"b_zv","kind":"zone","title":"Serving","sub":"","color":"#099268","tcolor":null,"scolor":null,"fs":1,"x":1320,"y":0,"w":480,"h":620,"band":true},
+    {"id":"b_oltp","kind":"store","title":"OLTP Databases","sub":"Postgres \u00b7 Salesforce","color":"#4263EB","tcolor":null,"scolor":null,"fs":1,"x":60,"y":90,"w":220,"h":120},
+    {"id":"b_saas","kind":"api","title":"SaaS APIs","sub":"Stripe \u00b7 HubSpot","color":"#F76707","tcolor":null,"scolor":null,"fs":1,"x":60,"y":290,"w":220,"h":120},
+    {"id":"b_files","kind":"file","title":"Files","sub":"S3 exports \u00b7 CSV","color":"#657486","tcolor":null,"scolor":null,"fs":1,"x":60,"y":480,"w":220,"h":100},
+    {"id":"b_ing","kind":"box","title":"Ingestion","sub":"Fivetran \u00b7 Airbyte","color":"#099268","tcolor":null,"scolor":null,"fs":1,"x":540,"y":270,"w":180,"h":100},
+    {"id":"b_raw","kind":"store","title":"Raw","sub":"Iceberg on S3","color":"#F76707","tcolor":null,"scolor":null,"fs":1,"x":820,"y":120,"w":220,"h":120},
+    {"id":"b_cur","kind":"table","title":"Curated","sub":"dbt models","color":"#F76707","tcolor":null,"scolor":null,"fs":1,"x":820,"y":340,"w":220,"h":120},
+    {"id":"b_sem","kind":"api","title":"Semantic Layer","sub":"Cube \u00b7 dbt metrics","color":"#099268","tcolor":null,"scolor":null,"fs":1,"x":1360,"y":180,"w":200,"h":110},
+    {"id":"b_dash","kind":"box","title":"Dashboards","sub":"Looker \u00b7 Superset","color":"#099268","tcolor":null,"scolor":null,"fs":1,"x":1360,"y":380,"w":200,"h":100},
+    {"id":"b_people","kind":"people","title":"Analysts","sub":"Business users","color":"#099268","tcolor":null,"scolor":null,"fs":1,"x":1640,"y":200,"w":150,"h":110},
+    ],
+    links: [
+    {"id":"bl1","from":"b_oltp","to":"b_ing","label":"extract","color":"#4263EB","motion":null,"way":null},
+    {"id":"bl2","from":"b_saas","to":"b_ing","label":"extract","color":"#F76707","motion":null,"way":null},
+    {"id":"bl3","from":"b_files","to":"b_ing","label":"extract","color":"#657486","motion":null,"way":null},
+    {"id":"bl4","from":"b_ing","to":"b_raw","label":"load","color":"#099268","motion":null,"way":null},
+    {"id":"bl5","from":"b_raw","to":"b_cur","label":"model","color":"#F76707","motion":null,"way":null},
+    {"id":"bl6","from":"b_cur","to":"b_sem","label":"metrics","color":"#099268","motion":null,"way":null},
+    {"id":"bl7","from":"b_sem","to":"b_dash","label":"query","color":"#099268","motion":null,"way":null},
+    {"id":"bl8","from":"b_dash","to":"b_people","label":"read","color":"#099268","motion":null,"way":null},
+    ]
+  },
+  {
+    id: "streaming",
+    name: "Real-time streaming",
+    nodes: [
+    {"id":"s_zi","kind":"zone","title":"Ingestion","sub":"","color":"#F76707","tcolor":null,"scolor":null,"fs":1,"x":0,"y":0,"w":460,"h":520,"band":true},
+    {"id":"s_zp","kind":"zone","title":"Processing","sub":"","color":"#AE3EC9","tcolor":null,"scolor":null,"fs":1,"x":560,"y":0,"w":620,"h":520,"band":true},
+    {"id":"s_zs","kind":"zone","title":"Serving","sub":"","color":"#099268","tcolor":null,"scolor":null,"fs":1,"x":1240,"y":0,"w":440,"h":520,"band":true},
+    {"id":"s_ev","kind":"queue","title":"Event Streams","sub":"Kafka \u00b7 Kinesis","color":"#F76707","tcolor":null,"scolor":null,"fs":1,"x":60,"y":140,"w":220,"h":100},
+    {"id":"s_api","kind":"api","title":"Partner APIs","sub":"Webhooks \u00b7 REST","color":"#F76707","tcolor":null,"scolor":null,"fs":1,"x":60,"y":340,"w":220,"h":100},
+    {"id":"s_proc","kind":"box","title":"Stream Processing","sub":"Flink \u00b7 Spark Structured","color":"#AE3EC9","tcolor":null,"scolor":null,"fs":1,"x":620,"y":200,"w":220,"h":110},
+    {"id":"s_lake","kind":"store","title":"Lakehouse","sub":"Delta \u00b7 Iceberg","color":"#AE3EC9","tcolor":null,"scolor":null,"fs":1,"x":900,"y":90,"w":220,"h":120},
+    {"id":"s_feat","kind":"box","title":"Feature Store","sub":"Feast \u00b7 Tecton","color":"#AE3EC9","tcolor":null,"scolor":null,"fs":1,"x":900,"y":320,"w":220,"h":110},
+    {"id":"s_watch","kind":"shield","title":"Monitoring","sub":"Freshness \u00b7 drift","color":"#657486","tcolor":null,"scolor":null,"fs":1,"x":620,"y":390,"w":220,"h":100},
+    {"id":"s_srv","kind":"api","title":"Serving API","sub":"REST \u00b7 GraphQL","color":"#099268","tcolor":null,"scolor":null,"fs":1,"x":1280,"y":190,"w":200,"h":110},
+    {"id":"s_live","kind":"box","title":"Live Dashboards","sub":"Superset \u00b7 Grafana","color":"#099268","tcolor":null,"scolor":null,"fs":1,"x":1280,"y":370,"w":200,"h":100},
+    ],
+    links: [
+    {"id":"sl1","from":"s_ev","to":"s_proc","label":"events","color":"#F76707","motion":null,"way":null},
+    {"id":"sl2","from":"s_api","to":"s_proc","label":"calls","color":"#F76707","motion":null,"way":null},
+    {"id":"sl3","from":"s_proc","to":"s_lake","label":"merge","color":"#AE3EC9","motion":null,"way":null},
+    {"id":"sl4","from":"s_proc","to":"s_feat","label":"compute","color":"#AE3EC9","motion":null,"way":null},
+    {"id":"sl5","from":"s_feat","to":"s_srv","label":"serve","color":"#099268","motion":null,"way":null},
+    {"id":"sl6","from":"s_lake","to":"s_srv","label":"query","color":"#099268","motion":null,"way":null},
+    {"id":"sl7","from":"s_srv","to":"s_live","label":"read","color":"#099268","motion":null,"way":null},
+    {"id":"sl8","from":"s_proc","to":"s_watch","label":"observe","color":"#657486","motion":null,"way":null},
+    ]
+  },
+  {
+    id: "ml",
+    name: "ML platform",
+    nodes: [
+    {"id":"m_zg","kind":"zone","title":"Governed data","sub":"","color":"#4263EB","tcolor":null,"scolor":null,"fs":1,"x":0,"y":0,"w":460,"h":560,"band":true},
+    {"id":"m_zt","kind":"zone","title":"Features and training","sub":"","color":"#AE3EC9","tcolor":null,"scolor":null,"fs":1,"x":560,"y":0,"w":560,"h":560,"band":true},
+    {"id":"m_zs","kind":"zone","title":"Serving","sub":"","color":"#099268","tcolor":null,"scolor":null,"fs":1,"x":1200,"y":0,"w":600,"h":560,"band":true},
+    {"id":"m_data","kind":"store","title":"Curated Datasets","sub":"Raw \u00b7 Standardized \u00b7 Curated","color":"#4263EB","tcolor":null,"scolor":null,"fs":1,"x":60,"y":120,"w":240,"h":130},
+    {"id":"m_unstr","kind":"file","title":"Unstructured","sub":"Docs \u00b7 images \u00b7 logs","color":"#657486","tcolor":null,"scolor":null,"fs":1,"x":60,"y":360,"w":240,"h":110},
+    {"id":"m_feat","kind":"box","title":"Feature Store","sub":"Feast \u00b7 Tecton","color":"#AE3EC9","tcolor":null,"scolor":null,"fs":1,"x":620,"y":120,"w":220,"h":110},
+    {"id":"m_train","kind":"box","title":"Training","sub":"PyTorch \u00b7 Ray","color":"#AE3EC9","tcolor":null,"scolor":null,"fs":1,"x":620,"y":320,"w":220,"h":110},
+    {"id":"m_exp","kind":"table","title":"Experiments","sub":"MLflow tracking","color":"#AE3EC9","tcolor":null,"scolor":null,"fs":1,"x":900,"y":120,"w":200,"h":110},
+    {"id":"m_reg","kind":"table","title":"Model Registry","sub":"MLflow \u00b7 SageMaker","color":"#AE3EC9","tcolor":null,"scolor":null,"fs":1,"x":900,"y":320,"w":200,"h":110},
+    {"id":"m_srv","kind":"api","title":"Model Serving","sub":"KServe \u00b7 BentoML","color":"#099268","tcolor":null,"scolor":null,"fs":1,"x":1240,"y":180,"w":200,"h":110},
+    {"id":"m_eval","kind":"shield","title":"Evaluation & Drift","sub":"Quality gates","color":"#657486","tcolor":null,"scolor":null,"fs":1,"x":1240,"y":400,"w":200,"h":110},
+    {"id":"m_app","kind":"box","title":"Applications","sub":"Products \u00b7 agents","color":"#099268","tcolor":null,"scolor":null,"fs":1,"x":1520,"y":180,"w":180,"h":110},
+    ],
+    links: [
+    {"id":"ml1","from":"m_data","to":"m_feat","label":"features","color":"#4263EB","motion":null,"way":null},
+    {"id":"ml2","from":"m_unstr","to":"m_feat","label":"embed","color":"#657486","motion":null,"way":null},
+    {"id":"ml3","from":"m_feat","to":"m_train","label":"train","color":"#AE3EC9","motion":null,"way":null},
+    {"id":"ml4","from":"m_train","to":"m_exp","label":"track","color":"#AE3EC9","motion":null,"way":null},
+    {"id":"ml5","from":"m_exp","to":"m_reg","label":"promote","color":"#AE3EC9","motion":null,"way":null},
+    {"id":"ml6","from":"m_reg","to":"m_srv","label":"deploy","color":"#099268","motion":null,"way":null},
+    {"id":"ml7","from":"m_srv","to":"m_app","label":"infer","color":"#099268","motion":null,"way":null},
+    {"id":"ml8","from":"m_srv","to":"m_eval","label":"observe","color":"#657486","motion":null,"way":null},
+    ]
+  }
+];

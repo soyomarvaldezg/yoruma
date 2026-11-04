@@ -6,7 +6,11 @@ step at a time.
 
 **Use it:** <https://soyomarvaldezg.github.io/yoruma/> — or clone the repository and open
 `index.html` locally. Nothing to install, no build step. A first visit starts on a blank
-canvas; **DEMO** in the header loads the example document (or open `index.html?demo`).
+canvas; **DEMO ▾** in the header offers three worked examples built only from the Blocks —
+a modern BI stack, a real-time streaming pipeline and an ML platform — plus the original demo
+document (or open `index.html?demo` for that one).
+
+![A modern BI stack built from the Blocks](docs/example-bi.png)
 
 ![The editor with the demo document open](docs/editor.png)
 

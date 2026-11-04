@@ -25,6 +25,13 @@ Open work, roughly in the order it earns attention. Finished work lives in the g
 - [ ] `cog.toml` plus an annotated `v0.0.0` baseline tag, so `cog check` and versioning start clean.
 - [ ] `just measure` recipe for the render scaling probe.
 
+## Site and identity
+
+- [ ] GitHub mark in the header linking to the repository.
+- [ ] Omar's logo in the header, in place of, or beside, the `yoruma` wordmark.
+- [ ] First-visit tour: an optional walkthrough over the real UI (draw a shape, colour a card,
+      add a step, present) with the option to skip and never see it again.
+
 ## Features still open
 
 - [ ] No snapping and no grid: shapes land exactly where the pointer is. A grid or snapping needs an

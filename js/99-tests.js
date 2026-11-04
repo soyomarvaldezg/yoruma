@@ -310,6 +310,13 @@ if (/[?&]test/.test(location.search)){
   send('pointermove', { x:zo1.x+42, y:zo1.y+zo1.h/2+30 });
   send('pointerup', { x:zo1.x+42, y:zo1.y+zo1.h/2+30 });
   ok('nested zone moves', zo1.x === ox+40 && zi1.x === 470 && zs1.x === 490);
+
+  const keepN = nodes, keepL = links;
+  nodes = []; links = [];
+  loadExample('bi');
+  ok('example loads', nodes.length >= 10 && links.length >= 6 &&
+     !!stage.querySelector('g.node[data-id="b_oltp"]'));
+  nodes = keepN; links = keepL; render();
   nodes.pop(); nodes.pop(); nodes.pop(); render();
 
   const zb = { id:'zb1', kind:'zone', title:'VPC', color:null, tcolor:null, scolor:null,

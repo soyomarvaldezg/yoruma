@@ -230,17 +230,50 @@ document.getElementById('btn-steps').addEventListener('click', ev => {
 stepsMenu.addEventListener('click', ev => ev.stopPropagation());
 document.addEventListener('click', () => stepsMenu.classList.remove('on'));
 
-document.getElementById('btn-demo').addEventListener('click', () => {
-  if ((nodes.length || links.length) &&
-      !confirm('Load the demo? This replaces the current document. Undo restores it.')) return;
-  snapshot(); loadDemo(); S.selNodes = []; S.selLinks = []; render(); fit();
-});
-
-document.getElementById('btn-clear').addEventListener('click', () => {
+function clearDoc(){
   if ((nodes.length || links.length) &&
       !confirm('Clear the whole document? Undo restores it until reload.')) return;
   snapshot(); nodes = []; links = []; clearSel(); render(); fit();
+}
+function loadDemoDoc(){
+  if ((nodes.length || links.length) &&
+      !confirm('Load the demo? This replaces the current document. Undo restores it.')) return;
+  snapshot(); loadDemo(); S.selNodes = []; S.selLinks = []; render(); fit();
+}
+function loadExample(id){
+  const ex = EXAMPLES.find(e => e.id === id);
+  if (!ex) return;
+  if ((nodes.length || links.length) &&
+      !confirm('Load “' + ex.name + '”? This replaces the current document. Undo restores it.')) return;
+  snapshot();
+  nodes = JSON.parse(JSON.stringify(ex.nodes));
+  links = JSON.parse(JSON.stringify(ex.links));
+  S.selNodes = []; S.selLinks = [];
+  render(); fit();
+}
+function renderDemoMenu(){
+  const el = document.getElementById('demo-menu');
+  el.innerHTML = '';
+  const add = (label, fn) => {
+    const b = document.createElement('button');
+    b.textContent = label;
+    b.addEventListener('click', () => { el.classList.remove('on'); fn(); });
+    el.appendChild(b);
+  };
+  add('Blank canvas', clearDoc);
+  EXAMPLES.forEach(ex => add(ex.name, () => loadExample(ex.id)));
+  add('Demo document', loadDemoDoc);
+}
+const demoMenu = document.getElementById('demo-menu');
+document.getElementById('btn-demo').addEventListener('click', ev => {
+  ev.stopPropagation();
+  renderDemoMenu();
+  demoMenu.classList.toggle('on');
 });
+demoMenu.addEventListener('click', ev => ev.stopPropagation());
+document.addEventListener('click', () => demoMenu.classList.remove('on'));
+
+document.getElementById('btn-clear').addEventListener('click', clearDoc);
 
 function reloadConflict(){
   if (confirm("Reload and load the version saved by the other tab? Export JSON first if you need this tab's changes."))
