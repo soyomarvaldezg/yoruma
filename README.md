@@ -9,6 +9,8 @@ ships. ValdezData brand. Block names follow Omar's
 ```sh
 open index.html             # the editor
 open index.html?test        # 57 tests, report in the ? panel
+just check                  # same suite, headless, fails the shell on red
+just deps                   # one-time: verifier deps and Chromium
 ```
 
 ## Persistence
