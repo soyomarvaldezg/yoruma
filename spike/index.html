@@ -2797,6 +2797,12 @@ document.getElementById('btn-export').addEventListener('click', ev => {
 });
 document.addEventListener('click', () => menu.classList.remove('on'));
 
+function diagramId(n){
+  return 'n_' + String(n.id).replace(/[^a-zA-Z0-9]/g, '_');
+}
+function diagramSkip(n){
+  return n.kind === 'zone' || n.kind === 'frame';
+}
 function mermaidLabel(t){
   return String(t == null ? '' : t)
     .replace(/["\[\]{}|<>`]/g, ' ')
@@ -2804,46 +2810,42 @@ function mermaidLabel(t){
     .trim();
 }
 function mermaid(){
-  const id = n => 'n_' + String(n.id).replace(/[^a-zA-Z0-9]/g,'_');
-  const skip = n => n.kind === 'zone' || n.kind === 'frame';
   const lines = ['flowchart LR'];
   nodes.forEach(n => {
-    if (skip(n)) return;
+    if (diagramSkip(n)) return;
     const t = mermaidLabel(n.title), s = mermaidLabel(n.sub);
     const label = t + (s ? '<br/>' + s : '');
     const wrap = n.kind === 'store' ? `[("${label}")]`
       : n.kind === 'queue' ? `[["${label}"]]`
       : n.kind === 'cloud' ? `("${label}")`
       : n.kind === 'people' ? `(["${label}"])` : `["${label}"]`;
-    lines.push('  ' + id(n) + wrap);
+    lines.push('  ' + diagramId(n) + wrap);
   });
   links.forEach(l => {
     const a = byId(l.from), b = byId(l.to);
-    if (!a || !b || skip(a) || skip(b)) return;
+    if (!a || !b || diagramSkip(a) || diagramSkip(b)) return;
     const lab = mermaidLabel(l.label);
-    lines.push('  ' + id(a) + ' -->' + (lab ? '|' + lab + '|' : '') + ' ' + id(b));
+    lines.push('  ' + diagramId(a) + ' -->' + (lab ? '|' + lab + '|' : '') + ' ' + diagramId(b));
   });
   return lines.join('\n');
 }
 function d2(){
-  const id = n => 'n_' + String(n.id).replace(/[^a-zA-Z0-9]/g,'_');
-  const skip = n => n.kind === 'zone' || n.kind === 'frame';
   const map = { store:'cylinder', queue:'queue', cloud:'cloud', file:'document',
     people:'person', ellipse:'oval', dashboard:'stored_data', cube:'package',
     shield:'diamond', api:'hexagon' };
   const out = ['direction: right', ''];
   nodes.forEach(n => {
-    if (skip(n)) return;
+    if (diagramSkip(n)) return;
     const label = mermaidLabel(n.title).replace(/"/g, "'");
     const sub = n.sub ? '\\n' + mermaidLabel(n.sub).replace(/"/g, "'") : '';
     const t = map[n.kind];
-    out.push(`${id(n)}: "${label}${sub}"${t ? ` { shape: ${t} }` : ''}`);
+    out.push(`${diagramId(n)}: "${label}${sub}"${t ? ` { shape: ${t} }` : ''}`);
   });
   links.forEach(l => {
     const a = byId(l.from), b = byId(l.to);
-    if (!a || !b || skip(a) || skip(b)) return;
+    if (!a || !b || diagramSkip(a) || diagramSkip(b)) return;
     const lab = mermaidLabel(l.label).replace(/"/g, "'");
-    out.push(`${id(a)} -> ${id(b)}${lab ? ': "' + lab + '"' : ''}`);
+    out.push(`${diagramId(a)} -> ${diagramId(b)}${lab ? ': "' + lab + '"' : ''}`);
   });
   return out.join('\n');
 }
