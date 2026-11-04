@@ -1,5 +1,25 @@
 # yoruma — Data Architecture
 
+A data-architecture diagram editor that runs as one static page: zones that nest, cards
+that carry real brand logos, notes on arrows, and a present mode that walks the diagram one
+step at a time.
+
+**Use it:** <https://soyomarvaldezg.github.io/yoruma/> — or clone the repository and open
+`index.html` locally. Nothing to install, no build step.
+
+![The editor with the demo document open](docs/editor.png)
+
+Zones nest and take a header band, so a VPC, a region and a group read the way cloud diagrams
+do, and moving the outer one carries everything inside it.
+
+![Two zones with header bands](docs/zones.png)
+
+Present walks the steps you define, gliding the camera and dimming everything else.
+
+![Present mode on the overview slide](docs/present.png)
+
+## The app
+
 Single static HTML file. The app has no build, no framework and no runtime dependency;
 the only npm in the repository is the dev-only headless test runner in `tools/`, which never
 ships. ValdezData brand. Block names follow Omar's
@@ -192,4 +212,10 @@ the render budget at both sizes, nested-zone membership and zone styling. 59 ass
 
 ## Still open
 
-No snapping or grid, no lasso, no groups, no multiplayer.
+No snapping or grid, no lasso, no groups, no multiplayer. The full list, including publishing
+and tooling follow-ups, lives in [BACKLOG.md](BACKLOG.md).
+
+## Licence
+
+MIT for the code — see [LICENSE](LICENSE). The two bundled fonts are SIL OFL 1.1; their licence
+files sit beside them in `fonts/`.
