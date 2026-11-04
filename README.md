@@ -8,7 +8,7 @@ ships. ValdezData brand. Block names follow Omar's
 
 ```sh
 open index.html             # the editor
-open index.html?test        # 56 tests, report in the ? panel
+open index.html?test        # 57 tests, report in the ? panel
 ```
 
 ## Persistence
@@ -152,11 +152,15 @@ Key: `M` cycles. Dots breathe in and out as they travel. `,` and `.` change the 
 
 ## Performance
 
-`render()` rebuilds the whole SVG, so the budget is one frame: a full render of the demo
-document must stay under **16 ms** (60 fps). `?test` measures 24 renders and fails if the median
-crosses it — currently about 1 ms. Two rules protect the budget: the dotted background and its
-pattern are created once and only transformed on pan and zoom, and dragging or resizing renders
-in a lite mode that skips the animated overlays and motion dots, restoring them on drop.
+`render()` rebuilds the whole SVG, so the budget is one frame: a full render must stay under
+**16 ms** (60 fps). `?test` measures the demo document and a synthetic 200-shape document, and
+fails if either median crosses the budget. Measured headless (`node tools/measure.mjs`):
+50 shapes 0.7 ms, 100 shapes 1.3 ms, 200 shapes 3 ms, 400 shapes 9.3 ms — a realistic diagram
+is far inside one frame, so an incremental renderer is not worth its complexity yet.
+
+Two rules protect the budget: the dotted background and its pattern are created once and only
+transformed on pan and zoom, and dragging or resizing renders in a lite mode that skips the
+animated overlays and motion dots, restoring them on drop.
 
 ## Export
 
@@ -176,7 +180,7 @@ selection, re-pointing, styling, notes, bend handle, animation), zones (creation
 border selection, resizing that scales children), colour and tinting, card logos and the brand
 picker, steps and present mode, undo, duplication, paste, z-order, the size inspector, the
 Blocks filter, JSON export and import against the schema rules, document limits, persistence,
-and the render budget. 56 assertions, all green.
+and the render budget at both sizes. 57 assertions, all green.
 
 ## Still open
 

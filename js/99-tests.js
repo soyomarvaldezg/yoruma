@@ -445,6 +445,29 @@ if (/[?&]test/.test(location.search)){
       times.sort((a, b) => a - b);
       const median = times[Math.floor(times.length/2)];
       ok('render budget ' + median.toFixed(1) + 'ms', median < 16);
+
+      const keepNodes = nodes, keepLinks = links;
+      nodes = [];
+      links = [];
+      for (let i = 0; i < 200; i++){
+        nodes.push({ id:'s'+i, kind:'box', title:'Node ' + i, sub:'sub', color:null,
+          tcolor:null, scolor:null, fs:1, x:(i%20)*220, y:Math.floor(i/20)*140,
+          w:180, h:90 });
+        if (i) links.push({ id:'l'+i, from:'s'+(i-1), to:'s'+i, color:null,
+          motion:'off', label:'', way:null });
+      }
+      const heavy = [];
+      for (let i = 0; i < 10; i++){
+        const t = performance.now();
+        render();
+        heavy.push(performance.now() - t);
+      }
+      heavy.sort((a, b) => a - b);
+      const heavyMedian = heavy[Math.floor(heavy.length/2)];
+      nodes = keepNodes;
+      links = keepLinks;
+      render();
+      ok('heavy render ' + heavyMedian.toFixed(1) + 'ms', heavyMedian < 16);
       const fails = R.filter(r => r.startsWith('FAIL')).length;
       const el2 = document.getElementById('help');
       el2.innerHTML = '<h3>Self test</h3>' + R.map(r =>
