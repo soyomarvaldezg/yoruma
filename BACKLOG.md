@@ -4,14 +4,18 @@ Open work, roughly in the order it earns attention. Finished work lives in the g
 
 ## Publishing
 
-- [ ] Create the GitHub repository and add it as `origin`.
+- [x] Create the GitHub repository and add it as `origin`.
+- [ ] Delete `soyomarvaldezg/yoruma-old`, the repository left behind when the stuck Pages
+      deployment forced a rename and a fresh start (needs the `delete_repo` scope).
 - [ ] Decide the code licence and add `LICENSE`. The reference architecture the block list follows is
       CC BY 4.0; the fonts in `fonts/` are already SIL OFL 1.1. MIT for the code is the simplest fit.
 - [ ] Publish on GitHub Pages: serve the repository root, add a `.nojekyll` file so `js/` and `css/`
       are not filtered, and confirm `index.html?test` runs from the published URL.
-- [ ] Add a short "Use it" section to the README: open the URL, or clone and open `index.html`.
-- [ ] Screenshots for the README: the editor, a zoned diagram with a header band, present mode.
+- [x] Add a short "Use it" section to the README: the published URL, or clone and open `index.html`.
+- [x] Screenshots for the README: the editor, a zoned diagram with a header band, present mode.
 - [ ] Custom domain later: `CNAME` plus DNS at the registrar, then enable HTTPS in the Pages settings.
+- [ ] Watch for test flakiness on a cold browser: one run of the published `?test` reported two
+      failures that did not reproduce; the timing assertions are the likely suspects.
 
 ## Architecture and tooling
 
