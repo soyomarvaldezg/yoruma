@@ -1,0 +1,19 @@
+from_latest_tag = true
+ignore_merge_commits = true
+branch_whitelist = ["main"]
+tag_prefix = "v"
+
+[changelog]
+path = "CHANGELOG.md"
+template = "remote"
+remote = "github.com"
+owner = "soyomarvaldezg"
+repository = "yoruma"
+
+[commit_types]
+docs = { changelog_title = "Documentation" }
+feat = { changelog_title = "Features" }
+fix = { changelog_title = "Bug fixes" }
+perf = { changelog_title = "Performance" }
+refactor = { changelog_title = "Refactoring" }
+chore = { changelog_title = "Housekeeping" }
