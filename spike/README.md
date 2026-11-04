@@ -6,7 +6,7 @@ Capability names follow Omar's [enterprise data architecture reference](https://
 
 ```sh
 open spike/index.html        # the editor
-open spike/index.html?test   # 53 tests, report in the ? panel
+open spike/index.html?test   # 54 tests, report in the ? panel
 ```
 
 ## Persistence
@@ -14,7 +14,9 @@ open spike/index.html?test   # 53 tests, report in the ? panel
 The document saves itself to `localStorage` on every change and restores on reload, zoom
 included. `CLEAR` confirms, then empties it (and saves the empty state). `OPEN JSON` reads a
 version 1 yoruma JSON file, validates it, and replaces the current document; undo restores
-the previous nodes and arrows.
+the previous nodes and arrows. Loading is strict: unknown node fields are dropped, images must be
+inline `data:image` URIs within the storage cap, step numbers must be positive and step members
+must point at shapes that exist in the same document.
 
 If `localStorage` is full or blocked, autosave warns and shows **NOT SAVED**; export JSON to
 keep a copy. If the saved document cannot be read, **RECOVER** downloads a copy and the demo
@@ -164,9 +166,9 @@ drag a swatch onto a shape, dots render, free line shape, drag a swatch tints a 
 tinted card,
 drag moves a shape, card logo, logo name match, logo slug, logo node, brand tile url, logo aspect,
 zone creation, zone click-through, zone border selection, zone resize scaling its children,
-heading colour, subtitle colour, present mode, present step order, step add, step zone members, step duplicate guard, mermaid escape, undo,
+heading colour, subtitle colour, present mode, present step order, step add, step zone members, step duplicate guard, mermaid escape, document fields, undo,
 redo, duplicate, paste, z-order, size inspector, catalog filter, JSON export/import,
-and persistence. 53/53 green.
+and persistence. 54/54 green.
 
 ## Still open
 

@@ -2877,27 +2877,34 @@ function parseNode(raw){
       Math.abs(raw.x) > 1e7 || Math.abs(raw.y) > 1e7 ||
       raw.w <= 0 || raw.h <= 0 || raw.w > 1e7 || raw.h > 1e7)
     throw new Error('shape ' + id + ' has invalid geometry');
+  const text = v => v == null ? '' : String(v).slice(0, 2000);
+  const image = v => typeof v === 'string' && v.startsWith('data:image/') &&
+    v.length <= IMG_MAX_CHARS ? v : undefined;
   const n = {
-    ...raw,
     id,
     kind: raw.kind,
-    title: raw.title == null ? '' : String(raw.title),
-    sub: raw.sub == null ? '' : String(raw.sub),
+    title: text(raw.title),
+    sub: text(raw.sub),
     color: docColor(raw.color),
     tcolor: docColor(raw.tcolor),
     scolor: docColor(raw.scolor),
     fill: docColor(raw.fill),
     fs: isNum(raw.fs) && raw.fs > 0 ? Math.min(4, Math.max(0.4, raw.fs)) : 1,
-    x: raw.x, y: raw.y, w: raw.w, h: raw.h
+    x: raw.x, y: raw.y, w: raw.w, h: raw.h,
+    bold: raw.bold === true,
+    italic: raw.italic === true,
+    tint: raw.tint === true,
+    flip: raw.flip === true
   };
-  if (!['left','center','right'].includes(n.align)) delete n.align;
-  if (typeof n.src !== 'string' || !n.src.startsWith('data:image/')) delete n.src;
-  if (typeof n.logo !== 'string' || !n.logo.startsWith('data:image/')) delete n.logo;
-  if (isNum(raw.step) && raw.step > 0) n.step = Math.round(raw.step); else delete n.step;
-  n.bold = n.bold === true;
-  n.italic = n.italic === true;
-  n.tint = n.tint === true;
-  n.flip = n.flip === true;
+  if (['left','center','right'].includes(raw.align)) n.align = raw.align;
+  const src = image(raw.src), logo = image(raw.logo);
+  if (src) n.src = src;
+  if (logo) n.logo = logo;
+  if (isNum(raw.step) && raw.step > 0 && raw.step < 1e6) n.step = Math.round(raw.step);
+  if (raw.kind === 'frame' && Array.isArray(raw.members)){
+    const members = Array.from(new Set(raw.members.filter(m => idOf(m)).map(idOf))).slice(0, 500);
+    if (members.length) n.members = members;
+  }
   return n;
 }
 
@@ -2945,6 +2952,11 @@ function parseDoc(text){
     if (ids.has(n.id)) throw new Error('duplicate shape id ' + n.id);
     ids.add(n.id);
     return n;
+  });
+  nextNodes.forEach(n => {
+    if (!n.members) return;
+    n.members = n.members.filter(id => ids.has(id));
+    if (!n.members.length) delete n.members;
   });
   const linkIds = new Set();
   const nextLinks = raw.links.map(rawL => {
@@ -3928,6 +3940,18 @@ if (/[?&]test/.test(location.search)){
   const mm = mermaid();
   ok('mermaid escape', mm.includes('n_mz["A b c d"]') && !mm.includes('n_mf'));
   nodes.pop(); nodes.pop();
+
+  const rawDoc = JSON.stringify({ format:'yoruma', version:1, links:[], nodes:[
+    { id:'a1', kind:'box', title:'A', x:0, y:0, w:10, h:10, tint:true, junk:'x',
+      logo:'data:image/png;base64,AAA' },
+    { id:'f1', kind:'frame', title:'S', x:0, y:0, w:1, h:1, step:2,
+      members:['a1', 'gone', 'a1'] }
+  ] });
+  const pd = parseDoc(rawDoc);
+  const pdA = pd.nodes[0], pdF = pd.nodes[1];
+  ok('document fields', pdA.tint === true && !('junk' in pdA) &&
+     pdA.logo === 'data:image/png;base64,AAA' &&
+     pdF.step === 2 && pdF.members.length === 1 && pdF.members[0] === 'a1');
 
   ok('step duplicate guard', presentFrames().length === beforeSteps + 1);
   presentFrames().filter(f => (f.members || []).includes(box.id))
