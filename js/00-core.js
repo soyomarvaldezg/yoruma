@@ -56,7 +56,7 @@ const DATA = [
   { id:'video',     key:'u', icon:'video',     label:'Video' },
   { id:'media',     key:'i', icon:'media',     label:'Image data' }
 ];
-const MORPHS = ['api','shield','people','agent','contract','media'];
+const MORPHS = ['box','ellipse','zone','store','queue','cloud','file'];
 
 const SIZE = {
   box:[208,100], ellipse:[190,116], zone:[420,300], table:[236,120], store:[186,112],
