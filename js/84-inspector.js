@@ -37,15 +37,12 @@ function commitBox(){
   if (n.kind === 'zone'){
     const ow = n.w || 1, oh = n.h || 1;
     const nw = Math.max(1, Math.round(w)), nh = Math.max(1, Math.round(h));
-    nodes.forEach(m => {
-      if (m.kind !== 'zone' && m.x >= n.x && m.y >= n.y &&
-          m.x + m.w <= n.x + n.w && m.y + m.h <= n.y + n.h){
-        const rx = (m.x - n.x)/ow, ry = (m.y - n.y)/oh;
-        if (nw !== ow) m.w = Math.max(12, Math.round(m.w/ow*nw));
-        if (nh !== oh) m.h = Math.max(12, Math.round(m.h/oh*nh));
-        m.x = Math.round(nx + rx*nw);
-        m.y = Math.round(ny + ry*nh);
-      }
+    zoneMembers(n).forEach(m => {
+      const rx = (m.x - n.x)/ow, ry = (m.y - n.y)/oh;
+      if (nw !== ow) m.w = Math.max(12, Math.round(m.w/ow*nw));
+      if (nh !== oh) m.h = Math.max(12, Math.round(m.h/oh*nh));
+      m.x = Math.round(nx + rx*nw);
+      m.y = Math.round(ny + ry*nh);
     });
   }
   n.x = nx; n.y = ny;

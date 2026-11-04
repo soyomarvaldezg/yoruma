@@ -8,7 +8,7 @@ ships. ValdezData brand. Block names follow Omar's
 
 ```sh
 open index.html             # the editor
-open index.html?test        # 57 tests, report in the ? panel
+open index.html?test        # 58 tests, report in the ? panel
 just check                  # same suite, headless, fails the shell on red
 just deps                   # one-time: verifier deps and Chromium
 ```
@@ -75,6 +75,9 @@ Palette source: `soyomarvaldezg/enterprise-data-architecture-reference` at commi
 behind everything, its label stays on top, and it sits in the layer stack like any shape:
 select it by its border or label, resize it with the corner handles, and its children scale
 with it — positions and sizes keep their proportions, so the layout inside survives.
+Zones nest: an outer zone's members are everything inside it at any depth, including other
+zones, so moving or resizing a VPC carries the region, the group and the shapes with it, and
+copying or stepping a zone brings the whole subtree.
 
 ## Creating and naming
 
@@ -182,7 +185,7 @@ selection, re-pointing, styling, notes, bend handle, animation), zones (creation
 border selection, resizing that scales children), colour and tinting, card logos and the brand
 picker, steps and present mode, undo, duplication, paste, z-order, the size inspector, the
 Blocks filter, JSON export and import against the schema rules, document limits, persistence,
-and the render budget at both sizes. 57 assertions, all green.
+the render budget at both sizes, and nested-zone membership. 58 assertions, all green.
 
 ## Still open
 

@@ -38,14 +38,7 @@ function stepMembers(f){
     const n = byId(id);
     if (!n) return;
     out.add(n.id);
-    if (n.kind === 'zone'){
-      nodes.forEach(m => {
-        if (m.kind !== 'zone' && m.id !== n.id &&
-            m.x >= n.x && m.y >= n.y &&
-            m.x + m.w <= n.x + n.w && m.y + m.h <= n.y + n.h)
-          out.add(m.id);
-      });
-    }
+    if (n.kind === 'zone') zoneMembers(n).forEach(m => out.add(m.id));
   });
   return out;
 }

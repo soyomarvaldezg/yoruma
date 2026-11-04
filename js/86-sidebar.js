@@ -204,12 +204,8 @@ function buildClipboard(){
   const ids = new Set(S.selNodes);
   if (!ids.size) return null;
   nodes.forEach(n => {
-    if (n.kind === 'zone' && ids.has(n.id)){
-      nodes.forEach(m => {
-        if (m.kind !== 'zone' && m.x >= n.x && m.y >= n.y &&
-            m.x + m.w <= n.x + n.w && m.y + m.h <= n.y + n.h) ids.add(m.id);
-      });
-    }
+    if (n.kind === 'zone' && ids.has(n.id))
+      zoneMembers(n).forEach(m => ids.add(m.id));
   });
   const ns = nodes.filter(n => ids.has(n.id)).map(n => JSON.parse(JSON.stringify(n)));
   const ls = links.filter(l => ids.has(l.from) && ids.has(l.to))

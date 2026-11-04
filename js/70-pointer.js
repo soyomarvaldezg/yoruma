@@ -29,9 +29,7 @@ stage.addEventListener('pointerdown', ev => {
     } else if (h.kind === 'resize'){
       const n = byId(h.id);
       const kids = n.kind === 'zone'
-        ? nodes.filter(m => m.kind !== 'zone' && m.x >= n.x && m.y >= n.y &&
-            m.x + m.w <= n.x + n.w && m.y + m.h <= n.y + n.h)
-            .map(m => ({ m, rx:(m.x - n.x)/n.w, ry:(m.y - n.y)/n.h,
+        ? zoneMembers(n).map(m => ({ m, rx:(m.x - n.x)/n.w, ry:(m.y - n.y)/n.h,
               rw:m.w/n.w, rh:m.h/n.h }))
         : [];
       resize = { n, corner:h.corner, ox:n.x, oy:n.y, ow:n.w, oh:n.h, kids, moved:false };
@@ -98,11 +96,7 @@ stage.addEventListener('pointerdown', ev => {
       }
       const items = S.selNodes.map(id => byId(id)).filter(Boolean);
       if (hit.kind === 'zone'){
-        nodes.forEach(n => {
-          if (n.kind !== 'zone' && !items.includes(n) &&
-              n.x >= hit.x && n.y >= hit.y &&
-              n.x+n.w <= hit.x+hit.w && n.y+n.h <= hit.y+hit.h) items.push(n);
-        });
+        zoneMembers(hit).forEach(n => { if (!items.includes(n)) items.push(n); });
       }
       drag = { items: items.map(n => ({ n, x:n.x, y:n.y })), start:p, moved:false };
       cap(ev);

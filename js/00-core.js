@@ -106,6 +106,12 @@ const S = {
   selNodes:[], selLinks:[]
 };
 let nodes = [], links = [], uid = 1;
+
+function zoneMembers(zone){
+  return nodes.filter(n => n !== zone &&
+    n.x >= zone.x && n.y >= zone.y &&
+    n.x + n.w <= zone.x + zone.w && n.y + n.h <= zone.y + zone.h);
+}
 const undoStack = [];
 const redoStack = [];
 const view = { x:0, y:0, k:1 };

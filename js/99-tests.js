@@ -297,6 +297,21 @@ if (/[?&]test/.test(location.search)){
     kid.x >= zone.x && kid.y >= zone.y &&
     kid.x + kid.w <= zone.x + zone.w && kid.y + kid.h <= zone.y + zone.h);
 
+  const zo1 = { id:'zo1', kind:'zone', title:'Outer', color:null, tcolor:null, scolor:null,
+    fs:1, x:400, y:1250, w:300, h:220 };
+  const zi1 = { id:'zi1', kind:'zone', title:'Inner', color:null, tcolor:null, scolor:null,
+    fs:1, x:430, y:1290, w:160, h:120 };
+  const zs1 = { id:'zs1', kind:'box', title:'Leaf', color:null, tcolor:null, scolor:null,
+    fs:1, x:450, y:1310, w:100, h:60 };
+  nodes.push(zo1, zi1, zs1);
+  setTool('select', 'draw');
+  const ox = zo1.x;
+  send('pointerdown', { x:zo1.x+2, y:zo1.y+zo1.h/2 });
+  send('pointermove', { x:zo1.x+42, y:zo1.y+zo1.h/2+30 });
+  send('pointerup', { x:zo1.x+42, y:zo1.y+zo1.h/2+30 });
+  ok('nested zone moves', zo1.x === ox+40 && zi1.x === 470 && zs1.x === 490);
+  nodes.pop(); nodes.pop(); nodes.pop(); render();
+
   const before = nodes.length;
   snapshot(); nodes.pop(); render(); undo();
   ok('undo restores', nodes.length === before);
