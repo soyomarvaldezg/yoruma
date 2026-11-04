@@ -3896,7 +3896,7 @@ if (/[?&]test/.test(location.search)){
   cf.value = 'lineage';
   cf.dispatchEvent(new Event('input', { bubbles:true }));
   const vis = Array.from(document.querySelectorAll('#catalog .chip')).filter(c => !c.hidden);
-  ok('catalog filter', vis.length > 0 && vis.every(c => /lineage/i.test(c.dataset.label)));
+  ok('blocks filter', vis.length > 0 && vis.every(c => /lineage/i.test(c.dataset.label)));
   cf.value = '';
   cf.dispatchEvent(new Event('input', { bubbles:true }));
 

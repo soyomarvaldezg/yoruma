@@ -1,7 +1,9 @@
 # yoruma — Data Architecture
 
-Single static HTML file. No build, no npm, no framework. ValdezData brand.
-Capability names follow Omar's [enterprise data architecture reference](https://github.com/soyomarvaldezg/enterprise-data-architecture-reference)
+Single static HTML file. The app has no build, no framework and no runtime dependency;
+the only npm in the repository is the dev-only headless test runner in `tools/`, which never
+ships. ValdezData brand. Block names follow Omar's
+[enterprise data architecture reference](https://github.com/soyomarvaldezg/enterprise-data-architecture-reference)
 (CC BY 4.0).
 
 ```sh
@@ -51,14 +53,15 @@ connected flow. **Line** is always free.
 
 Images: `+ IMAGE` in the header, or paste from the clipboard, or drop a file on the canvas.
 They are downscaled to at most 960 px on the long edge and stored inline (WebP where
-available); small GIF and SVG files keep their original data.
+available); small GIF and SVG files keep their original data. Dropping an image onto a
+rectangle or ellipse attaches it as that card's logo instead.
 **Blocks**: the reference building blocks in ten groups, mirroring the architecture
 reference's planes and bands — Sources, Integration, Platform, Serving & Data Products,
 Consumption, Metadata & Knowledge, Governance & Trust, Control Plane, Platform Engineering,
-ML & AI. It lists the capabilities the reference's nine worked flows actually draw, plus the
-few those flows under-sample but a diagram still needs: network connectivity (VPN, peering,
+ML & AI. It lists the blocks the reference's nine worked flows actually draw, plus the few
+those flows under-sample but a diagram still needs: network connectivity (VPN, peering,
 secure connectors), search indexes, the business glossary and data observability. The
-inventory's posture-only capabilities stay in the reference. The filter box narrows the
+inventory's posture-only items stay in the reference. The filter box narrows the
 chips, and every entry lands as a rectangle.
 
 Palette source: `soyomarvaldezg/enterprise-data-architecture-reference` at commit `9a01467`
@@ -82,7 +85,7 @@ Enter again commits, Escape cancels. Long text wraps and ellipsizes.
 ## Editing
 
 - click / marquee / Shift or **⌘ click** to add to the selection / ⌘A for all · ⌫ deletes
-- **undo / redo**: `⌘Z` and `⇧⌘Z` (`⌘Y` on Windows and Linux)
+- **undo / redo**: `⌘Z` and `⇧⌘Z` (`Ctrl+Y` also redoes)
 - **copy / paste / duplicate**: `⌘C`, `⌘V`, `⌘D`; copies selected shapes and the arrows
   between them, a selected zone brings its children, and pastes cascade by 24px
 - **z-order**: `⇧⌘]` brings the selection forward, `⇧⌘[` sends it back; zones stay behind
@@ -120,7 +123,7 @@ Enter again commits, Escape cancels. Long text wraps and ellipsizes.
   left/centre/right)
 - **fit to screen** — `F`
 - **bold / italic** — `⌘B` and `⌘I` (Ctrl on Windows and Linux)
-- **?** opens the full command list
+- **?** opens the quick reference; the exhaustive list is this file
 
 Arrows attach **anywhere along the border**: the anchor is the point closest to where you
 drop, so two arrows can leave the same shape a few pixels apart. Several arrows from the same
@@ -159,20 +162,14 @@ renders ~25 diagram languages; Mermaid and D2 are the two that map cleanly onto 
 
 ## Verified
 
-`?test` runs a headless-style self test against the real app: create by drag, arrow between
-shapes, select an arrow, re-point it, style it, wrap and resize an arrow note, clear the bend
-handle, check the animated flow
-and reverse flow,
-create an edge from a paddle with its side, resize,
-drag a swatch onto a shape, dots render, free line shape, drag a swatch tints a card,
-tinted card,
-drag moves a shape, card logo, logo name match, logo slug, logo node, brand tile url, logo aspect,
-zone creation, zone click-through, zone border selection, zone resize scaling its children,
-heading colour, subtitle colour, present mode, present step order, step add, step zone members, step duplicate guard, mermaid escape, document fields, document limits, undo,
-redo, duplicate, paste, z-order, size inspector, catalog filter, JSON export/import,
-and persistence. 55/55 green.
+`?test` runs a self test inside the real app, and `node tools/verify.mjs` runs it headless and
+fails the shell on any red line. The suite covers drawing and naming, arrows (creation,
+selection, re-pointing, styling, notes, bend handle, animation), zones (creation, click-through,
+border selection, resizing that scales children), colour and tinting, card logos and the brand
+picker, steps and present mode, undo, duplication, paste, z-order, the size inspector, the
+Blocks filter, JSON export and import against the schema rules, document limits, and
+persistence. 55 assertions, all green.
 
 ## Still open
 
-Resizing a zone scales its children. Still open: no snapping or grid, no
-lasso, no groups/frames, no multiplayer.
+No snapping or grid, no lasso, no groups, no multiplayer.
