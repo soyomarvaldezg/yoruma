@@ -7,12 +7,11 @@ step at a time.
 **Use it:** <https://soyomarvaldezg.github.io/yoruma/> — or clone the repository and open
 `index.html` locally. Nothing to install, no build step. A first visit starts on a blank
 canvas; **DEMO ▾** in the header offers three worked examples built only from the Blocks —
-a modern BI stack, a real-time streaming pipeline and an ML platform — plus the original demo
-document (or open `index.html?demo` for that one).
+a modern BI stack, a real-time streaming pipeline and an ML platform.
 
 ![A modern BI stack built from the Blocks](docs/example-bi.png)
 
-![The editor with the demo document open](docs/editor.png)
+![The editor with the modern BI example open](docs/editor.png)
 
 Zones nest and take a header band, so a VPC, a region and a group read the way cloud diagrams
 do, and moving the outer one carries everything inside it.
@@ -73,7 +72,7 @@ the camera to the bounds of its shapes and dims everything else; a badge shows
 restores the chrome. With no steps defined, present falls back to walking the zones, ordered by
 a number in their title (`01 / Sources`) or by position.
 
-Zone titles render at 20px — they read as section headers, not captions.
+Zone titles render at 15px, or 13px inside a header band.
 
 **Arrow** draws a free arrow unless both ends land on shapes, in which case it becomes a
 connected flow. **Line** is always free.
@@ -151,7 +150,7 @@ Enter again commits, Escape cancels. Long text wraps and ellipsizes.
   Enter runs the fallback chain; the twenty data-platform brands are always offered as tiles at
   the top of the picker
 - **text size** — `[` and `]`, from 0.4× to 4×, for the selected shapes and for an
-  arrow's note; the arrow note defaults to 18px
+  arrow's note; the arrow note defaults to 14px
 - **text alignment** — three buttons at the end of the floating shape bar (headings included,
   left/centre/right)
 - **fit to screen** — `F`

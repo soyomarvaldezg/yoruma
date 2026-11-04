@@ -218,7 +218,7 @@ function drawText(g, n){
   }
   if (n.kind === 'zone'){
     if (n.band) return;
-    addLines(g, n.x + 12, n.y + 28, 'start', ink, CODE, 20*fscale(n), W1, '.12em',
+    addLines(g, n.x + 12, n.y + 24, 'start', ink, CODE, 15*fscale(n), W1, '.12em',
       [title.toUpperCase()], 0, ST, 'title');
     return;
   }

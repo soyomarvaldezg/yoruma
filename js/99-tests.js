@@ -100,7 +100,7 @@ if (/[?&]test/.test(location.search)){
   lnk.fs = 2;
   render();
   const lb2 = stage.querySelector('[data-role="label"]');
-  ok('arrow label size', !!lb2 && lb2.getAttribute('font-size') === '36');
+  ok('arrow label size', !!lb2 && lb2.getAttribute('font-size') === '28');
   lnk.fs = 1;
   lnk.label = '';
   render();

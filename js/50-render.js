@@ -103,14 +103,14 @@ function render(){
       const vertical = Math.abs(pts[pts.length-1][0]-pts[0][0]) <
                        Math.abs(pts[pts.length-1][1]-pts[0][1]);
       const k = l.fs || 1;
-      const lines = wrapLines(l.label, (vertical ? 150 : 240)*k, 18*k, false, 4);
+      const lines = wrapLines(l.label, (vertical ? 120 : 190)*k, 14*k, false, 4);
       const x = vertical ? m.x + 12*k : m.x;
-      const lh = 22*k;
-      const y = vertical ? m.y + 6*k - (lines.length - 1)*lh/2
-                         : m.y - 8*k - (lines.length - 1)*lh;
+      const lh = 17*k;
+      const y = vertical ? m.y + 5*k - (lines.length - 1)*lh/2
+                         : m.y - 7*k - (lines.length - 1)*lh;
       const t = mk('text', { x, y, 'text-anchor': vertical ? 'start' : 'middle',
-        'font-family':"'VD Sans',sans-serif", 'font-size':String(18*k),
-        fill: colorAt(l.color) || MUTED, stroke:PAPER, 'stroke-width':'3',
+        'font-family':"'VD Sans',sans-serif", 'font-size':String(14*k),
+        fill: colorAt(l.color) || MUTED, stroke:PAPER, 'stroke-width':'2.6',
         'paint-order':'stroke', 'pointer-events':'all', 'data-role':'label' });
       lines.forEach((ln, i) => {
         const sp = mk('tspan', { x, dy: i ? lh : 0 });

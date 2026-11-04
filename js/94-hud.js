@@ -235,11 +235,6 @@ function clearDoc(){
       !confirm('Clear the whole document? Undo restores it until reload.')) return;
   snapshot(); nodes = []; links = []; clearSel(); render(); fit();
 }
-function loadDemoDoc(){
-  if ((nodes.length || links.length) &&
-      !confirm('Load the demo? This replaces the current document. Undo restores it.')) return;
-  snapshot(); loadDemo(); S.selNodes = []; S.selLinks = []; render(); fit();
-}
 function loadExample(id){
   const ex = EXAMPLES.find(e => e.id === id);
   if (!ex) return;
@@ -262,7 +257,6 @@ function renderDemoMenu(){
   };
   add('Blank canvas', clearDoc);
   EXAMPLES.forEach(ex => add(ex.name, () => loadExample(ex.id)));
-  add('Demo document', loadDemoDoc);
 }
 const demoMenu = document.getElementById('demo-menu');
 document.getElementById('btn-demo').addEventListener('click', ev => {
