@@ -18,16 +18,15 @@ Open work, roughly in the order it earns attention. Finished work lives in the g
 
 ## Architecture and tooling
 
-- [ ] `ARCHITECTURE.md`: load order, one line per file in `js/`, the invariants (one global scope, no
-      modules, no build, `just check` as the gate), and where a new feature belongs.
+- [x] `ARCHITECTURE.md`: load order, one file per responsibility, the invariants and where a new
+      feature belongs.
 - [x] CI on push: the `Checks` workflow runs the headless suite with its own Chromium.
-- [ ] `cog.toml` plus an annotated `v0.0.0` baseline tag, so `cog check` and versioning start clean.
-- [ ] `just` recipes for the helpers already in `tools/`: the render scaling probe and the two
-      screenshot scripts.
+- [x] `cog.toml` plus an annotated `v0.0.0` baseline tag; `cog check --from-latest-tag` passes.
+- [x] `just` recipes for the helpers already in `tools/`: `shots` and `measure`.
 
 ## Site and identity
 
-- [ ] GitHub mark in the header linking to the repository.
+- [x] GitHub mark in the header linking to the repository.
 - [ ] Omar's logo in the header, in place of, or beside, the `yoruma` wordmark.
 - [x] First-visit tour — dropped by Omar: no walkthrough.
 
