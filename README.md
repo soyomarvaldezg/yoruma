@@ -8,7 +8,7 @@ ships. ValdezData brand. Block names follow Omar's
 
 ```sh
 open index.html             # the editor
-open index.html?test        # 55 tests, report in the ? panel
+open index.html?test        # 56 tests, report in the ? panel
 ```
 
 ## Persistence
@@ -150,6 +150,14 @@ only; with nothing selected it applies everywhere and clears per-arrow overrides
 
 Key: `M` cycles. Dots breathe in and out as they travel. `,` and `.` change the dot size.
 
+## Performance
+
+`render()` rebuilds the whole SVG, so the budget is one frame: a full render of the demo
+document must stay under **16 ms** (60 fps). `?test` measures 24 renders and fails if the median
+crosses it — currently about 1 ms. Two rules protect the budget: the dotted background and its
+pattern are created once and only transformed on pan and zoom, and dragging or resizing renders
+in a lite mode that skips the animated overlays and motion dots, restoring them on drop.
+
 ## Export
 
 `EXPORT ▾` — SVG, PNG (fonts inlined), JSON document, Mermaid source, D2 source, and a ready
@@ -167,8 +175,8 @@ fails the shell on any red line. The suite covers drawing and naming, arrows (cr
 selection, re-pointing, styling, notes, bend handle, animation), zones (creation, click-through,
 border selection, resizing that scales children), colour and tinting, card logos and the brand
 picker, steps and present mode, undo, duplication, paste, z-order, the size inspector, the
-Blocks filter, JSON export and import against the schema rules, document limits, and
-persistence. 55 assertions, all green.
+Blocks filter, JSON export and import against the schema rules, document limits, persistence,
+and the render budget. 56 assertions, all green.
 
 ## Still open
 

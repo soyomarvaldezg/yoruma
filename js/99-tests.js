@@ -435,6 +435,16 @@ if (/[?&]test/.test(location.search)){
         saved = !!raw && JSON.parse(raw).nodes.length === nodes.length;
       } catch (e){}
       ok('document saved', saved);
+
+      const times = [];
+      for (let i = 0; i < 24; i++){
+        const t = performance.now();
+        render();
+        times.push(performance.now() - t);
+      }
+      times.sort((a, b) => a - b);
+      const median = times[Math.floor(times.length/2)];
+      ok('render budget ' + median.toFixed(1) + 'ms', median < 16);
       const fails = R.filter(r => r.startsWith('FAIL')).length;
       const el2 = document.getElementById('help');
       el2.innerHTML = '<h3>Self test</h3>' + R.map(r =>
