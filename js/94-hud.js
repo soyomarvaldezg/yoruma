@@ -230,6 +230,12 @@ document.getElementById('btn-steps').addEventListener('click', ev => {
 stepsMenu.addEventListener('click', ev => ev.stopPropagation());
 document.addEventListener('click', () => stepsMenu.classList.remove('on'));
 
+document.getElementById('btn-demo').addEventListener('click', () => {
+  if ((nodes.length || links.length) &&
+      !confirm('Load the demo? This replaces the current document. Undo restores it.')) return;
+  snapshot(); loadDemo(); S.selNodes = []; S.selLinks = []; render(); fit();
+});
+
 document.getElementById('btn-clear').addEventListener('click', () => {
   if ((nodes.length || links.length) &&
       !confirm('Clear the whole document? Undo restores it until reload.')) return;
