@@ -14,32 +14,40 @@
     <button id="recover-warn" title="Download a copy of the unreadable saved document">RECOVER</button>
     <button id="tab-warn" title="Another tab saved. Autosave is paused; export JSON or reload.">OTHER TAB</button>
     <span id="save-warn" role="status" aria-live="polite" title="Autosave failed: storage full or blocked">NOT SAVED</span>
-    <button id="btn-insert" title="Add an image or a logo">+ INSERT ▾</button>
+    <div class="menu-wrap">
+      <button id="btn-insert" title="Add an image or a logo">+ INSERT ▾</button>
+      <div id="insert-menu">
+        <button data-insert="image">Image…</button>
+        <button data-insert="logo">Logo…</button>
+      </div>
+    </div>
     <button id="btn-motion" title="Animated flow: off, dots, dashes, both">FLOW · OFF</button>
-    <button id="btn-steps" title="Present steps (frames)">STEPS ▾</button>
+    <div class="menu-wrap">
+      <button id="btn-steps" title="Present steps (frames)">STEPS ▾</button>
+      <div id="steps-menu"></div>
+    </div>
     <button id="btn-present" title="Hide the chrome and fit the diagram (Esc exits)">PRESENT</button>
-    <button id="btn-demo" title="Load an example">EXAMPLES ▾</button>
-    <button id="btn-file" title="Open, export or clear the document">FILE ▾</button>
+    <div class="menu-wrap">
+      <button id="btn-demo" title="Load an example">EXAMPLES ▾</button>
+      <div id="demo-menu"></div>
+    </div>
+    <div class="menu-wrap">
+      <button id="btn-file" title="Open, export or clear the document">FILE ▾</button>
+      <div id="menu">
+        <button data-x="open">Open JSON…</button>
+        <div class="menu-sep"></div>
+        <button data-x="svg">Download SVG</button>
+        <button data-x="png">Download PNG</button>
+        <button data-x="json">Download JSON</button>
+        <button data-x="mermaid">Copy Mermaid source</button>
+        <button data-x="d2">Copy D2 source</button>
+        <button data-x="kroki-mermaid">Copy Kroki link · Mermaid</button>
+        <button data-x="kroki-d2">Copy Kroki link · D2</button>
+        <div class="menu-sep"></div>
+        <button data-x="clear">Clear the document…</button>
+      </div>
+    </div>
     <button id="btn-help">?</button>
-    <div id="demo-menu"></div>
-    <div id="steps-menu"></div>
-    <div id="insert-menu">
-      <button data-insert="image">Image…</button>
-      <button data-insert="logo">Logo…</button>
-    </div>
-    <div id="menu">
-      <button data-x="open">Open JSON…</button>
-      <div class="menu-sep"></div>
-      <button data-x="svg">Download SVG</button>
-      <button data-x="png">Download PNG</button>
-      <button data-x="json">Download JSON</button>
-      <button data-x="mermaid">Copy Mermaid source</button>
-      <button data-x="d2">Copy D2 source</button>
-      <button data-x="kroki-mermaid">Copy Kroki link · Mermaid</button>
-      <button data-x="kroki-d2">Copy Kroki link · D2</button>
-      <div class="menu-sep"></div>
-      <button data-x="clear">Clear the document…</button>
-    </div>
   </div>
 </header>
 
