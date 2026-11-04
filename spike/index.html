@@ -471,7 +471,6 @@ const CUSTOM = { hex:null };
 
 let drag = null, resize = null, lend = null, marquee = null, pen = null, pan = null, bend = null;
 let hoverId = null, rafPending = false;
-let guides = [];
 let editing = null, lastHit = { id:null, t:0 };
 
 const byId = id => nodes.find(n => n.id === id);
@@ -712,12 +711,6 @@ const zoomCenter = f => {
 };
 
 /* ---------- routing ---------- */
-function nearestSide(n, p){
-  const d = [['w', Math.abs(p.x-n.x)], ['e', Math.abs(p.x-(n.x+n.w))],
-             ['n', Math.abs(p.y-n.y)], ['s', Math.abs(p.y-(n.y+n.h))]];
-  d.sort((a,b) => a[1]-b[1]);
-  return d[0][0];
-}
 function anchors(a, b, l){
   const acx = a.x + a.w/2, acy = a.y + a.h/2;
   const bcx = b.x + b.w/2, bcy = b.y + b.h/2;
@@ -1727,7 +1720,7 @@ stage.addEventListener('pointerup', ev => {
     lend = null; clearPreview(); render();
     return;
   }
-  if (drag){ drag = null; guides = []; render(); return; }
+  if (drag){ drag = null; render(); return; }
   if (marquee){
     const x1 = Math.min(marquee.x0, marquee.x1), x2 = Math.max(marquee.x0, marquee.x1);
     const y1 = Math.min(marquee.y0, marquee.y1), y2 = Math.max(marquee.y0, marquee.y1);
@@ -2973,7 +2966,6 @@ function loadDoc(doc){
   S.motion = doc.motion;
   S.selNodes = []; S.selLinks = [];
   hoverId = null;
-  guides = [];
   lastHit = { id:null, t:0 };
   setTool('select', 'draw');
   [...nodes, ...links].forEach(o => {
