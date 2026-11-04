@@ -1,23 +1,5 @@
 /* ---------- shaper ---------- */
 const shaper = document.getElementById('shaper');
-MORPHS.forEach(kind => {
-  const b = document.createElement('button');
-  b.innerHTML = `<svg viewBox="0 0 24 24">${ICON[kind] || ICON.box}</svg>`;
-  b.title = kind;
-  b.dataset.kind = kind;
-  b.addEventListener('mousedown', ev => ev.preventDefault());
-  b.addEventListener('click', () => {
-    const n = byId(S.selNodes[0]);
-    if (!n) return;
-    snapshot();
-    n.kind = kind;
-    const [w, h] = SIZE[kind];
-    n.w = Math.max(n.w, Math.min(w, 260));
-    n.h = Math.max(n.h, Math.min(h, 140));
-    render();
-  });
-  shaper.appendChild(b);
-});
 const ALIGN_ICON = {
   left:'<path d="M4 6h16M4 12h9M4 18h13"/>',
   center:'<path d="M4 6h16M7.5 12h9M5.5 18h13"/>',
@@ -245,8 +227,8 @@ function placeShaper(){
     if (b.dataset.zone){
       b.style.display = n.kind === 'zone' ? '' : 'none';
       b.classList.toggle('on', n.kind === 'zone' && n[b.dataset.zone] === true);
-    } else if (b.dataset.align) b.classList.toggle('on', (n.align || 'center') === b.dataset.align);
-    else b.classList.toggle('on', b.dataset.kind === n.kind);
+    } else if (b.dataset.align)
+      b.classList.toggle('on', (n.align || 'center') === b.dataset.align);
   });
 }
 

@@ -114,7 +114,6 @@ Enter again commits, Escape cancels. Long text wraps and ellipsizes.
   also style the animated flow and dots scale with width. In an animated mode, the dash
   button stops the flow and leaves a solid line (dots stay in dots+dashes mode); a start-only
   arrow runs its animation backwards so the flow follows the visible head
-- **shape switch** — the floating bar above a selected shape morphs it
 - **card logo** — drop an image on a rectangle or ellipse, or use **+ LOGO** in the header to
   open the brand picker: it lists svgl's whole catalogue with thumbnails and a filter box, and
   when a name is not in that catalogue it offers to fetch it from gilbarbara/logos, then
