@@ -1,0 +1,237 @@
+  @font-face{font-family:'VD Code';src:url('../fonts/SourceCodePro.ttf') format('truetype');font-weight:100 900;font-display:swap}
+  @font-face{font-family:'VD Sans';src:url('../fonts/DMSans.ttf') format('truetype');font-weight:100 900;font-display:swap}
+
+  :root{
+    --ink:#2D3141; --paper:#CFDDE6; --card:#E6EDF2; --input:#DCE7EF;
+    --muted:#4A5670; --line:#657486; --accent:#08829C; --link:#05657A;
+    --on-dark:#CFDDE6; --muted-on-dark:#A9B8C6; --edge:#46506a;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%}
+  body{
+    background:var(--paper); color:var(--ink);
+    font-family:'VD Sans',system-ui,sans-serif;
+    display:flex; flex-direction:column; overflow:hidden;
+  }
+  header{
+    display:flex; align-items:center; gap:10px; flex-wrap:wrap; flex:none;
+    padding:8px 16px; background:var(--ink); color:var(--on-dark);
+  }
+  .brand{font-family:'VD Code',monospace; font-weight:600; font-size:13px;
+    letter-spacing:.16em; text-transform:uppercase}
+  .brand span{color:var(--muted-on-dark); font-weight:400; letter-spacing:.02em;
+    text-transform:none; margin-left:9px; font-size:11px; font-family:'VD Sans',sans-serif}
+  .paint{display:flex; gap:2px; padding:2px; border:1px solid var(--line); border-radius:3px}
+  .paint button{
+    flex:1; border:0; background:transparent; color:var(--muted); padding:4px 0;
+    border-radius:2px; display:grid; place-items:center; cursor:pointer;
+  }
+  .paint button svg{width:14px; height:14px}
+  .paint button.on{background:var(--ink); color:var(--paper)}
+  .swatches{display:grid; grid-template-columns:repeat(7,1fr); gap:4px; margin-top:8px}
+  .sw{width:100%; aspect-ratio:1; border-radius:2px; cursor:pointer;
+      border:1px solid rgba(0,0,0,.28)}
+  .sw.on{outline:2px solid var(--ink); outline-offset:1.5px}
+  .sw.none{background:transparent; border-style:dashed; border-color:var(--line)}
+  #inspect{margin:10px 0 2px}
+  #i-status{font-family:'VD Code',monospace; font-size:9.5px; color:var(--muted);
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin:0 0 5px}
+  .inspect-grid{display:grid; grid-template-columns:1fr 1fr; gap:4px 6px}
+  .inspect-grid label{display:flex; align-items:center; gap:4px;
+    font-family:'VD Code',monospace; font-size:9.5px; color:var(--muted)}
+  .inspect-grid input{width:100%; min-width:0; padding:4px 5px;
+    font-family:'VD Code',monospace; font-size:10.5px; color:var(--ink);
+    background:var(--card); border:1px solid var(--line); border-radius:2px}
+  .inspect-grid input:disabled{opacity:.45}
+  .spacer{flex:1}
+  button{
+    font-family:'VD Code',monospace; font-size:10.5px; letter-spacing:.06em;
+    padding:6px 10px; border-radius:3px; cursor:pointer; border:1px solid var(--edge);
+    background:transparent; color:var(--on-dark);
+  }
+  button:hover{background:rgba(207,221,230,.13)}
+  .right{display:flex; gap:6px; align-items:center; position:relative;
+    flex-wrap:wrap; justify-content:flex-end}
+  #save-warn{display:none; font-family:'VD Code',monospace; font-size:9.5px;
+    letter-spacing:.06em; padding:4px 6px; border:1px solid #E03131; border-radius:3px;
+    color:#FF8787; white-space:nowrap}
+  #save-warn.on{display:inline-block}
+  #recover-warn{display:none; border-color:#E599F7; color:#E599F7}
+  #recover-warn.on{display:inline-block}
+  #tab-warn{display:none; border-color:#F6B26B; color:#F6B26B}
+  #tab-warn.on{display:inline-block}
+
+  #logo-picker{position:fixed; inset:0; z-index:30; display:none; align-items:center;
+    justify-content:center; background:rgba(45,49,65,.38)}
+  #logo-picker.on{display:flex}
+  .logo-box{width:min(640px,92vw); max-height:82vh; background:#fff; border-radius:4px;
+    display:flex; flex-direction:column; overflow:hidden}
+  .logo-head{display:flex; gap:6px; padding:8px; border-bottom:1px solid var(--line)}
+  .logo-head input{flex:1; min-width:0; font-family:'VD Code',monospace; font-size:11px;
+    padding:6px 8px; border:1px solid var(--line); border-radius:2px}
+  .logo-grid{overflow:auto; padding:8px; display:grid;
+    grid-template-columns:repeat(auto-fill,minmax(88px,1fr)); gap:6px}
+  .logo-item{border:1px solid var(--line); background:var(--card); border-radius:3px;
+    padding:8px 4px; display:grid; place-items:center; gap:5px;
+    font-family:'VD Sans',sans-serif; font-size:10px; color:var(--ink); text-align:center}
+  .logo-item:hover{border-color:var(--accent)}
+  .logo-item img{width:34px; height:34px; object-fit:contain}
+  .logo-empty{grid-column:1/-1; padding:16px 4px; font-family:'VD Code',monospace;
+    font-size:11px; color:var(--muted)}
+
+  body.present header, body.present aside, body.present .status{display:none}
+  body.present #shaper, body.present #linkbar, body.present #help{display:none !important}
+  #present-badge{position:fixed; left:50%; bottom:56px; transform:translateX(-50%);
+    display:none; z-index:12; background:var(--ink); color:var(--on-dark);
+    font-family:'VD Code',monospace; font-size:11px; letter-spacing:.08em;
+    padding:7px 14px; border-radius:4px}
+  body.present #present-badge{display:block}
+  body.present .zoombar{opacity:.35}
+  body.present .zoombar:hover{opacity:1}
+
+  .app{flex:1; display:flex; min-height:0}
+  aside{
+    width:232px; flex:none; overflow-y:auto; padding:12px 12px 40px;
+    background:var(--input); border-right:1px solid var(--line);
+  }
+  aside h4{
+    margin:16px 0 7px; font-family:'VD Code',monospace; font-size:10px;
+    letter-spacing:.18em; text-transform:uppercase; color:var(--muted); font-weight:600;
+  }
+  aside h4:first-child{margin-top:0}
+  .grid{display:grid; grid-template-columns:repeat(4,1fr); gap:4px}
+  .grid button{
+    height:36px; display:grid; place-items:center; padding:0; border:1px solid transparent;
+    color:var(--ink); border-radius:3px;
+  }
+  .grid button:hover{background:rgba(45,49,65,.08)}
+  .grid button.on{background:var(--ink); color:var(--paper)}
+  .grid svg{width:18px; height:18px; fill:none; stroke:currentColor;
+    stroke-width:1.6; stroke-linecap:round; stroke-linejoin:round}
+  details{margin:2px 0}
+  summary{
+    cursor:pointer; list-style:none; padding:5px 0; font-family:'VD Code',monospace;
+    font-size:10px; letter-spacing:.14em; text-transform:uppercase; color:var(--muted);
+    display:flex; align-items:center; gap:6px; font-weight:600;
+  }
+  summary::-webkit-details-marker{display:none}
+  summary::before{content:'+'; font-size:12px; line-height:1; color:var(--line)}
+  details[open] summary::before{content:'–'}
+  .chips{display:flex; flex-wrap:wrap; gap:4px; padding:2px 0 8px}
+  .chip{
+    font-family:'VD Code',monospace; font-size:9.5px; letter-spacing:.02em;
+    padding:4px 6px; border-radius:2px; border:1px solid var(--line);
+    background:var(--card); color:var(--ink); cursor:pointer; line-height:1.15;
+  }
+  .chip:hover{background:#fff}
+  .chip.on{background:var(--ink); color:var(--paper); border-color:var(--ink)}
+  #catalog-filter{width:100%; margin:0 0 6px; padding:6px 7px;
+    font-family:'VD Code',monospace; font-size:10.5px; color:var(--ink);
+    background:var(--card); border:1px solid var(--line); border-radius:3px}
+  #catalog-filter:focus{border-color:var(--accent); outline:1px solid var(--accent); outline-offset:1px}
+  #catalog-filter::placeholder{color:var(--muted)}
+  .catalog-empty{font-family:'VD Code',monospace; font-size:10px; color:var(--muted);
+    padding:8px 2px}
+
+  main{flex:1; position:relative; min-width:0}
+  #stage{position:absolute; inset:0; width:100%; height:100%; touch-action:none;
+    background:var(--paper); display:block;
+    -webkit-user-select:none; user-select:none}
+  #stage.panning{cursor:grabbing}
+  body[data-tool="select"] g.node{cursor:grab}
+  body:not([data-tool="select"]) #stage{cursor:crosshair}
+  @keyframes march{to{stroke-dashoffset:-56}}
+  .march{stroke-dasharray:8 6; animation:march 1.4s linear infinite}
+  .march.rev{animation-direction:reverse}
+
+  .zoombar{
+    position:absolute; left:12px; bottom:12px; display:flex; gap:2px;
+    background:var(--ink); padding:4px; border-radius:4px;
+  }
+  .zoombar button{border:0; width:30px; height:26px; font-size:13px; padding:0}
+  .zoombar .pct{color:var(--muted-on-dark); font-family:'VD Code',monospace;
+    font-size:10.5px; display:grid; place-items:center; min-width:48px}
+
+  .status{
+    position:absolute; right:12px; bottom:12px; background:var(--ink);
+    color:var(--muted-on-dark); font-family:'VD Code',monospace; font-size:10.5px;
+    letter-spacing:.05em; padding:7px 12px; border-radius:4px; max-width:62%;
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  }
+  .status b{color:var(--on-dark); font-weight:600}
+
+  #shaper{position:fixed; display:none; z-index:8; background:var(--ink);
+    padding:3px; border-radius:4px; gap:2px}
+  #shaper button{width:30px; height:28px; padding:0; border:0; display:grid;
+    place-items:center; color:var(--on-dark)}
+  #shaper button.on{background:var(--on-dark); color:var(--ink)}
+  #shaper button:disabled{opacity:.32; cursor:default}
+  #shaper svg{width:17px; height:17px; fill:none; stroke:currentColor;
+    stroke-width:1.6; stroke-linecap:round; stroke-linejoin:round}
+  #linkbar{position:fixed; display:none; z-index:8; background:var(--ink);
+    padding:3px; border-radius:4px; gap:2px}
+  #linkbar button{width:30px; height:28px; padding:0; border:0; display:grid;
+    place-items:center; color:var(--on-dark)}
+  #linkbar button.on{background:var(--on-dark); color:var(--ink)}
+  #linkbar button:disabled{opacity:.45; cursor:default}
+  #linkbar svg{width:17px; height:17px; fill:none; stroke:currentColor;
+    stroke-width:1.6; stroke-linecap:round; stroke-linejoin:round}
+
+  #editor{position:fixed; display:none; z-index:9; background:#fff;
+    border:1px solid var(--accent); border-radius:3px; padding:5px; width:236px}
+  #editor input{
+    width:100%; border:0; outline:none; font-family:'VD Code',monospace;
+    font-size:12px; color:var(--ink); padding:3px 4px; background:transparent;
+  }
+  #editor input+input{border-top:1px solid #e3e8ec; font-family:'VD Sans',sans-serif;
+    font-size:11.5px; color:var(--muted)}
+
+  #menu{position:absolute; right:0; top:38px; display:none; z-index:10;
+    background:var(--ink); border:1px solid var(--edge); border-radius:4px;
+    padding:4px; min-width:230px}
+  #menu button{display:block; width:100%; text-align:left; border:0; padding:7px 9px}
+  #menu.on{display:block}
+  #steps-menu{position:absolute; right:0; top:38px; display:none; z-index:10;
+    background:var(--ink); border:1px solid var(--edge); border-radius:4px;
+    padding:4px; min-width:250px}
+  #steps-menu.on{display:block}
+  #steps-menu button{display:block; width:100%; text-align:left; border:0; padding:7px 9px}
+  #steps-menu button:disabled{opacity:.4; cursor:default}
+  .step-row{display:flex; align-items:center; gap:3px; padding:2px 0}
+  .step-row .num{font-family:'VD Code',monospace; font-size:10px;
+    color:var(--muted-on-dark); min-width:18px; padding-left:4px}
+  .step-row .name{flex:1; min-width:0; font-size:11px; overflow:hidden;
+    text-overflow:ellipsis; white-space:nowrap; color:var(--on-dark); cursor:pointer}
+  .step-row .name:hover{text-decoration:underline}
+  .step-row button{width:22px; height:22px; padding:0; text-align:center; border:1px solid var(--edge)}
+  .step-empty{padding:6px 8px; font-family:'VD Code',monospace; font-size:10px;
+    color:var(--muted-on-dark)}
+
+  .help{
+    position:fixed; right:16px; top:56px; z-index:11; display:none;
+    background:var(--ink); color:var(--on-dark); border:1px solid var(--edge);
+    border-radius:4px; padding:14px 18px; width:360px;
+    max-height:calc(100vh - 80px); overflow:auto;
+    font-family:'VD Code',monospace; font-size:11px; line-height:1.9;
+    box-shadow:0 10px 30px rgba(0,0,0,.3);
+  }
+  .help.on{display:block}
+  .help h3{margin:0 0 8px; font-size:10px; letter-spacing:.18em; text-transform:uppercase;
+    color:var(--muted-on-dark)}
+  .help kbd{
+    display:inline-block; min-width:20px; text-align:center; padding:0 5px;
+    border:1px solid var(--edge); border-radius:3px; color:var(--on-dark);
+    font-family:inherit; font-size:10px; margin-right:7px;
+  }
+  .help div{display:flex; justify-content:space-between; gap:14px; white-space:nowrap;
+    align-items:baseline}
+  .help div span:first-child{flex:none}
+  .help div span:last-child{color:var(--muted-on-dark); text-align:right;
+    overflow:hidden; text-overflow:ellipsis}
+  .help .foot{margin-top:10px; color:var(--muted-on-dark); font-size:10px;
+    white-space:normal; display:block}
+  #toast{position:fixed; left:50%; bottom:20px; transform:translateX(-50%);
+    background:var(--ink); color:var(--on-dark); padding:8px 14px; border-radius:3px;
+    font-family:'VD Code',monospace; font-size:11px; letter-spacing:.04em;
+    opacity:0; pointer-events:none; transition:opacity .22s ease}
+  #toast.on{opacity:1}
