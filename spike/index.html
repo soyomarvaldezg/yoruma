@@ -50,12 +50,6 @@
     font-family:'VD Code',monospace; font-size:10.5px; color:var(--ink);
     background:var(--card); border:1px solid var(--line); border-radius:2px}
   .inspect-grid input:disabled{opacity:.45}
-  .inspect-actions{display:grid; grid-template-columns:repeat(8,1fr); gap:3px; margin-top:6px}
-  .inspect-actions button{height:26px; padding:0; border:1px solid var(--line);
-    color:var(--ink); background:var(--card); display:grid; place-items:center}
-  .inspect-actions button:disabled{opacity:.35; cursor:default}
-  .inspect-actions svg{width:15px; height:15px; fill:none; stroke:currentColor;
-    stroke-width:1.5; stroke-linecap:round; stroke-linejoin:round}
   .spacer{flex:1}
   button{
     font-family:'VD Code',monospace; font-size:10.5px; letter-spacing:.06em;
@@ -74,7 +68,31 @@
   #tab-warn{display:none; border-color:#F6B26B; color:#F6B26B}
   #tab-warn.on{display:inline-block}
 
+  #logo-picker{position:fixed; inset:0; z-index:30; display:none; align-items:center;
+    justify-content:center; background:rgba(45,49,65,.38)}
+  #logo-picker.on{display:flex}
+  .logo-box{width:min(640px,92vw); max-height:82vh; background:#fff; border-radius:4px;
+    display:flex; flex-direction:column; overflow:hidden}
+  .logo-head{display:flex; gap:6px; padding:8px; border-bottom:1px solid var(--line)}
+  .logo-head input{flex:1; min-width:0; font-family:'VD Code',monospace; font-size:11px;
+    padding:6px 8px; border:1px solid var(--line); border-radius:2px}
+  .logo-grid{overflow:auto; padding:8px; display:grid;
+    grid-template-columns:repeat(auto-fill,minmax(88px,1fr)); gap:6px}
+  .logo-item{border:1px solid var(--line); background:var(--card); border-radius:3px;
+    padding:8px 4px; display:grid; place-items:center; gap:5px;
+    font-family:'VD Sans',sans-serif; font-size:10px; color:var(--ink); text-align:center}
+  .logo-item:hover{border-color:var(--accent)}
+  .logo-item img{width:34px; height:34px; object-fit:contain}
+  .logo-empty{grid-column:1/-1; padding:16px 4px; font-family:'VD Code',monospace;
+    font-size:11px; color:var(--muted)}
+
   body.present header, body.present aside, body.present .status{display:none}
+  body.present #shaper, body.present #linkbar, body.present #help{display:none !important}
+  #present-badge{position:fixed; left:50%; bottom:56px; transform:translateX(-50%);
+    display:none; z-index:12; background:var(--ink); color:var(--on-dark);
+    font-family:'VD Code',monospace; font-size:11px; letter-spacing:.08em;
+    padding:7px 14px; border-radius:4px}
+  body.present #present-badge{display:block}
   body.present .zoombar{opacity:.35}
   body.present .zoombar:hover{opacity:1}
 
@@ -154,6 +172,7 @@
   #shaper button{width:30px; height:28px; padding:0; border:0; display:grid;
     place-items:center; color:var(--on-dark)}
   #shaper button.on{background:var(--on-dark); color:var(--ink)}
+  #shaper button:disabled{opacity:.32; cursor:default}
   #shaper svg{width:17px; height:17px; fill:none; stroke:currentColor;
     stroke-width:1.6; stroke-linecap:round; stroke-linejoin:round}
   #linkbar{position:fixed; display:none; z-index:8; background:var(--ink);
@@ -179,6 +198,21 @@
     padding:4px; min-width:230px}
   #menu button{display:block; width:100%; text-align:left; border:0; padding:7px 9px}
   #menu.on{display:block}
+  #steps-menu{position:absolute; right:0; top:38px; display:none; z-index:10;
+    background:var(--ink); border:1px solid var(--edge); border-radius:4px;
+    padding:4px; min-width:250px}
+  #steps-menu.on{display:block}
+  #steps-menu button{display:block; width:100%; text-align:left; border:0; padding:7px 9px}
+  #steps-menu button:disabled{opacity:.4; cursor:default}
+  .step-row{display:flex; align-items:center; gap:3px; padding:2px 0}
+  .step-row .num{font-family:'VD Code',monospace; font-size:10px;
+    color:var(--muted-on-dark); min-width:18px; padding-left:4px}
+  .step-row .name{flex:1; min-width:0; font-size:11px; overflow:hidden;
+    text-overflow:ellipsis; white-space:nowrap; color:var(--on-dark); cursor:pointer}
+  .step-row .name:hover{text-decoration:underline}
+  .step-row button{width:22px; height:22px; padding:0; text-align:center; border:1px solid var(--edge)}
+  .step-empty{padding:6px 8px; font-family:'VD Code',monospace; font-size:10px;
+    color:var(--muted-on-dark)}
 
   .help{
     position:fixed; right:16px; top:56px; z-index:11; display:none;
@@ -219,12 +253,15 @@
     <button id="tab-warn" title="Another tab saved. Autosave is paused; export JSON or reload.">OTHER TAB</button>
     <span id="save-warn" role="status" aria-live="polite" title="Autosave failed: storage full or blocked">NOT SAVED</span>
     <button id="btn-image">+ IMAGE</button>
+    <button id="btn-logo" title="Insert a logo from the brand picker">+ LOGO</button>
     <button id="btn-open" title="Open a yoruma JSON document">OPEN JSON</button>
     <button id="btn-motion">MOTION · OFF</button>
+    <button id="btn-steps" title="Present steps (frames)">STEPS ▾</button>
     <button id="btn-present" title="Hide the chrome and fit the diagram (Esc exits)">PRESENT</button>
     <button id="btn-export">EXPORT ▾</button>
     <button id="btn-help">?</button>
     <button id="btn-clear">CLEAR</button>
+    <div id="steps-menu"></div>
     <div id="menu">
       <button data-x="svg">Download SVG</button>
       <button data-x="png">Download PNG</button>
@@ -263,21 +300,11 @@
         <label>W <input id="i-w" type="number" step="1" min="1" disabled></label>
         <label>H <input id="i-h" type="number" step="1" min="1" disabled></label>
       </div>
-      <div class="inspect-actions">
-        <button data-align="left" title="Align left" disabled><svg viewBox="0 0 24 24"><path d="M4 4v16M8 7h12M8 12h8M8 17h10"/></svg></button>
-        <button data-align="center" title="Align centre" disabled><svg viewBox="0 0 24 24"><path d="M12 4v16M5 7h14M8 12h8M6 17h12"/></svg></button>
-        <button data-align="right" title="Align right" disabled><svg viewBox="0 0 24 24"><path d="M20 4v16M4 7h12M8 12h8M6 17h10"/></svg></button>
-        <button data-align="top" title="Align top" disabled><svg viewBox="0 0 24 24"><path d="M4 4h16M7 8v12M12 8v8M17 8v10"/></svg></button>
-        <button data-align="middle" title="Align middle" disabled><svg viewBox="0 0 24 24"><path d="M4 12h16M7 5v14M12 8v8M17 6v12"/></svg></button>
-        <button data-align="bottom" title="Align bottom" disabled><svg viewBox="0 0 24 24"><path d="M4 20h16M7 4v12M12 8v8M17 6v10"/></svg></button>
-        <button data-dist="h" title="Distribute horizontally" disabled><svg viewBox="0 0 24 24"><path d="M4 5v14M20 5v14M8 8h3v8H8zM13 8h3v8h-3z"/></svg></button>
-        <button data-dist="v" title="Distribute vertically" disabled><svg viewBox="0 0 24 24"><path d="M5 4h14M5 20h14M8 8h8v3H8zM8 13h8v3H8z"/></svg></button>
-      </div>
     </details>
     <h4>Draw</h4>
     <div class="grid" id="tools"></div>
-    <h4>Catalog</h4>
-    <input id="catalog-filter" type="search" placeholder="Filter capabilities" autocomplete="off" spellcheck="false">
+    <h4>Blocks</h4>
+    <input id="catalog-filter" type="search" placeholder="Filter blocks" autocomplete="off" spellcheck="false">
     <div id="catalog"></div>
     <div id="catalog-empty" class="catalog-empty" hidden>No matches</div>
   </aside>
@@ -289,6 +316,7 @@
       <button id="z-in">+</button>
       <button id="z-fit">FIT</button>
     </div>
+    <div id="present-badge"></div>
     <div class="status" id="status">nothing selected</div>
   </main>
 </div>
@@ -329,6 +357,15 @@
   <div><span>⌘ + wheel</span><span>zoom</span></div>
   <div><span>paste / drop</span><span>insert an image</span></div>
   <div class="foot">⌘ = Ctrl on Windows and Linux</div>
+</div>
+<div id="logo-picker">
+  <div class="logo-box">
+    <div class="logo-head">
+      <input id="logo-filter" type="search" placeholder="Filter brands — snowflake, dbt, kafka…" autocomplete="off" spellcheck="false">
+      <button id="logo-close" title="Close">×</button>
+    </div>
+    <div class="logo-grid" id="logo-grid"></div>
+  </div>
 </div>
 <div id="toast"></div>
 
@@ -400,7 +437,8 @@ const SIZE = {
   queue:[212,72], cloud:[206,112], file:[162,108], people:[188,124],
   api:[188,124], dashboard:[168,96], cube:[156,96], shield:[188,124],
   line:[140,80], arrow:[150,80], image:[220,150], text:[200,28], heading:[270,28],
-  agent:[188,124], contract:[188,124], video:[206,134], media:[206,134]
+  agent:[188,124], contract:[188,124], video:[206,134], media:[206,134], logo:[120,120],
+  frame:[200,120]
 };
 
 const CATALOG = [
@@ -608,6 +646,33 @@ function downloadRecovery(){
 /* ---------- view ---------- */
 const stage = document.getElementById('stage');
 const viewport = document.getElementById('viewport');
+(function initGrid(){
+  const ns = 'http://www.w3.org/2000/svg';
+  const defs = document.createElementNS(ns, 'defs');
+  const pat = document.createElementNS(ns, 'pattern');
+  pat.setAttribute('id', 'grid');
+  pat.setAttribute('width', '26');
+  pat.setAttribute('height', '26');
+  pat.setAttribute('patternUnits', 'userSpaceOnUse');
+  const dot = document.createElementNS(ns, 'circle');
+  dot.setAttribute('cx', '1.4');
+  dot.setAttribute('cy', '1.4');
+  dot.setAttribute('r', '1.4');
+  dot.setAttribute('fill', INK);
+  dot.setAttribute('opacity', '.11');
+  pat.appendChild(dot);
+  defs.appendChild(pat);
+  const bg = document.createElementNS(ns, 'rect');
+  bg.setAttribute('id', 'grid-bg');
+  bg.setAttribute('x', '-6000');
+  bg.setAttribute('y', '-6000');
+  bg.setAttribute('width', '16000');
+  bg.setAttribute('height', '16000');
+  bg.setAttribute('fill', 'url(#grid)');
+  bg.setAttribute('pointer-events', 'none');
+  stage.insertBefore(bg, viewport);
+  stage.insertBefore(defs, bg);
+})();
 function cap(ev){ try { stage.setPointerCapture(ev.pointerId); } catch (e){} }
 const mk = (tag, attrs = {}) => {
   const e = document.createElementNS(NS, tag);
@@ -615,8 +680,10 @@ const mk = (tag, attrs = {}) => {
   return e;
 };
 function applyView(){
-  viewport.setAttribute('transform',
-    `translate(${view.x.toFixed(2)},${view.y.toFixed(2)}) scale(${view.k.toFixed(3)})`);
+  const tf = `translate(${view.x.toFixed(2)},${view.y.toFixed(2)}) scale(${view.k.toFixed(3)})`;
+  viewport.setAttribute('transform', tf);
+  const bgEl = document.getElementById('grid-bg');
+  if (bgEl) bgEl.setAttribute('transform', tf);
   document.getElementById('z-pct').textContent = Math.round(view.k*100) + '%';
   if (typeof placeShaper === 'function') placeShaper();
   if (typeof placeLinkbar === 'function') placeLinkbar();
@@ -801,6 +868,7 @@ function midPoint(pts){
 const CLOUD_D = 'M20 45 C7 45 0 37 0 27 C0 18 7 10 16 9 C20 2 28 -2 36 -2 '
               + 'C46 -2 54 5 56 14 C64 15 70 21 70 29 C70 38 63 45 54 45 Z';
 const GLYPHS = ['people','api','dashboard','cube','shield','agent','contract','video','media'];
+const LOGO_KINDS = new Set(['box','ellipse']);
 
 
 function shape(n){
@@ -917,6 +985,22 @@ function shape(n){
         fill:fillC, stroke, 'stroke-width':1.2 }));
       break;
     }
+    case 'frame':
+      if (isSelNode(n.id) || hoverId === n.id){
+        g.appendChild(mk('rect', { x, y, width:w, height:h, rx:6, fill:'none',
+          stroke:FIBER, 'stroke-width':1.2, 'stroke-dasharray':'6 5',
+          'pointer-events':'none', class:'ui' }));
+      }
+      break;
+    case 'logo':
+      if (n.logo){
+        g.appendChild(mk('image', { x, y, width:w, height:h, href:n.logo,
+          preserveAspectRatio:'xMidYMid meet', 'data-role':'logo' }));
+      } else {
+        g.appendChild(mk('rect', { x, y, width:w, height:h, rx:3, fill:'none',
+          stroke, 'stroke-width':1.2, 'stroke-dasharray':'4 3' }));
+      }
+      break;
     default: rect();
   }
   return g;
@@ -977,7 +1061,7 @@ function drawText(g, n){
   const CODE = "'VD Code',monospace", SANS = "'VD Sans',sans-serif";
   const cx = n.x + n.w/2, cy = n.y + n.h/2;
 
-  if (n.kind === 'line' || n.kind === 'arrow' || n.kind === 'image') return;
+  if (n.kind === 'line' || n.kind === 'arrow' || n.kind === 'image' || n.kind === 'logo' || n.kind === 'frame') return;
   if (n.kind === 'heading'){
     const al = n.align || 'left';
     const hx = al === 'right' ? n.x + n.w - 6 : al === 'center' ? n.x + n.w/2 : n.x + 6;
@@ -986,7 +1070,7 @@ function drawText(g, n){
     return;
   }
   if (n.kind === 'zone'){
-    addLines(g, n.x + 12, n.y + 20, 'start', ink, CODE, 11.5*fscale(n), W1, '.12em',
+    addLines(g, n.x + 12, n.y + 28, 'start', ink, CODE, 20*fscale(n), W1, '.12em',
       [title.toUpperCase()], 0, ST, 'title');
     return;
   }
@@ -1012,14 +1096,22 @@ function drawText(g, n){
   }
 
   const fam = sub ? SANS : CODE;
-  const align = n.align || 'center';
-  const ax = align === 'left' ? n.x + 12 : align === 'right' ? n.x + n.w - 12 : cx;
+  const logo = n.logo || null;
+  const indent = logo ? 54*k : 0;
+  const align = logo ? 'left' : (n.align || 'center');
+  const ax = align === 'left' ? n.x + 12 + indent : align === 'right' ? n.x + n.w - 12 : cx;
   const anchor = align === 'left' ? 'start' : align === 'right' ? 'end' : 'middle';
-  const tl = wrapLines(title, n.w - 26, 16*k, !sub, 2);
-  const sl = sub ? wrapLines(sub, n.w - 26, 14*k, false, 2) : [];
+  const tl = wrapLines(title, n.w - 26 - indent, 16*k, !sub, 2);
+  const sl = sub ? wrapLines(sub, n.w - 26 - indent, 14*k, false, 2) : [];
   const lh = 19*k, lh2 = 17.5*k, gap = sub ? 3 : 0;
   const total = tl.length*lh + (sl.length ? sl.length*lh2 + gap : 0);
   const y = cy - total/2 + 9;
+  if (logo){
+    const box = 40*k;
+    g.appendChild(mk('image', { x:(n.x + 12).toFixed(1), y:(y - 28*k).toFixed(1),
+      width:String(box), height:String(box), href:logo,
+      preserveAspectRatio:'xMidYMid meet', 'data-role':'logo' }));
+  }
   addLines(g, ax, y, anchor, ink, fam, 16*k, W1, sub ? '0' : '.03em', tl, lh, ST, 'title');
   if (sl.length)
     addLines(g, ax, y + tl.length*lh + gap + 5, anchor, subInk, SANS, 14*k, W2, '0', sl, lh2, ST, 'sub');
@@ -1035,11 +1127,9 @@ function renderSoon(){
   requestAnimationFrame(() => { rafPending = false; render(); });
 }
 function render(){
+  const lite = !!(drag || resize);
   viewport.innerHTML = '';
   const defs = mk('defs');
-  const pat = mk('pattern', { id:'grid', width:'26', height:'26', patternUnits:'userSpaceOnUse' });
-  pat.appendChild(mk('circle', { cx:'1.4', cy:'1.4', r:'1.4', fill:INK, opacity:'.11' }));
-  defs.appendChild(pat);
   const mkArrow = (id, fill) => {
     const m = mk('marker', { id, viewBox:'0 0 10 10', refX:'9', refY:'5',
       markerWidth:'7', markerHeight:'7', orient:'auto-start-reverse' });
@@ -1060,9 +1150,23 @@ function render(){
   });
   colors.forEach(c => defs.appendChild(mkArrow(markerId(c), c)));
   viewport.appendChild(defs);
-  viewport.appendChild(mk('rect', { x:-6000, y:-6000, width:16000, height:16000, fill:'url(#grid)' }));
+
+  nodes.filter(n => n.kind === 'frame').forEach(f => {
+    const box = membersBox(f);
+    if (box){ f.x = box.x; f.y = box.y; f.w = box.w; f.h = box.h; }
+  });
 
   const world = mk('g');
+  const focusZone = presentZoneId ? nodes.find(n => n.id === presentZoneId) : null;
+  const focusMembers = focusZone && focusZone.kind === 'frame'
+    ? stepMembers(focusZone) : null;
+  const dimmed = n => {
+    if (!focusZone || n === focusZone || n.kind === 'frame') return false;
+    if (focusMembers) return !focusMembers.has(n.id);
+    return !(n.x >= focusZone.x && n.y >= focusZone.y &&
+      n.x + n.w <= focusZone.x + focusZone.w &&
+      n.y + n.h <= focusZone.y + focusZone.h);
+  };
 
   nodes.filter(n => n.kind === 'zone').forEach(n => {
     const g = mk('g', { class:'node', 'data-id':n.id });
@@ -1071,6 +1175,7 @@ function render(){
         fill:'none', stroke:FIBER, 'stroke-width':1.4, 'stroke-dasharray':'3 3',
         'pointer-events':'none', class:'ui' }));
     g.appendChild(shape(n));
+    if (dimmed(n)) g.setAttribute('opacity', '.16');
     world.appendChild(g);
   });
 
@@ -1096,11 +1201,11 @@ function render(){
       'stroke-width': selected ? Math.max(2.6, lw + 1.1) : lw, 'stroke-linecap':'round',
       'marker-end': l.head === false ? 'none' : `url(#${markerId(col || LINE)})`,
       'marker-start': l.headStart ? `url(#${markerId(col || LINE)})` : 'none',
-      opacity: flow ? 0.22 : 1,
+      opacity: flow && !lite ? 0.22 : 1,
       ...(staticDash ? { 'stroke-dasharray':'7 5' } : {}),
       ...(flow ? { 'data-flow':'1' } : {}),
       ...(selected ? { 'data-sel':'1', 'data-lw':lw } : {}) }));
-    if (flow)
+    if (flow && !lite)
       g.appendChild(mk('path', { d, fill:'none', stroke: col || LINE,
         'stroke-width': Math.max(1.6, lw + 0.7),
         'stroke-linecap':'butt', class:'march ui' + (dir < 0 ? ' rev' : ''),
@@ -1110,6 +1215,8 @@ function render(){
     if (selected)
       g.appendChild(mk('path', { d, fill:'none', stroke:FIBER, 'stroke-width':1,
         'stroke-dasharray':'2 4', opacity:'.9', 'pointer-events':'none', class:'ui' }));
+    if (focusZone && (focusMembers ? (dimmed(a) || dimmed(b)) : (dimmed(a) && dimmed(b))))
+      g.setAttribute('opacity', '.16');
     if (l.label){
       const m = midPoint(pts);
       const vertical = Math.abs(pts[pts.length-1][0]-pts[0][0]) <
@@ -1144,6 +1251,7 @@ function render(){
         'pointer-events':'none', class:'ui' }));
     g.appendChild(shape(n));
     drawText(g, n);
+    if (dimmed(n)) g.setAttribute('opacity', '.22');
     nodesG.appendChild(g);
   });
   world.appendChild(nodesG);
@@ -1152,6 +1260,7 @@ function render(){
   nodes.filter(n => n.kind === 'zone').forEach(n => {
     const g = mk('g');
     drawText(g, n);
+    if (dimmed(n)) g.setAttribute('opacity', '.22');
     zoneLabels.appendChild(g);
   });
   world.appendChild(zoneLabels);
@@ -1159,7 +1268,7 @@ function render(){
   viewport.appendChild(world);
 
   motionEls = [];
-  drawn.forEach(({ link, d, mode, col }) => {
+  if (!lite) drawn.forEach(({ link, d, mode, col }) => {
     if (mode !== 'dots' && mode !== 'both') return;
     const c = mk('circle', { r:'2.8', opacity:'0',
       fill: col || (accentOf(byId(link.from)) || FIBER), class:'ui' });
@@ -1180,7 +1289,7 @@ function render(){
   const hs = 9/view.k;
   if (S.selNodes.length === 1){
     const n = byId(S.selNodes[0]);
-    if (n){
+    if (n && n.kind !== 'frame'){
       [['nw',n.x,n.y],['ne',n.x+n.w,n.y],['sw',n.x,n.y+n.h],['se',n.x+n.w,n.y+n.h]]
         .forEach(([k,hx,hy]) => {
           viewport.appendChild(mk('rect', { x:hx-hs/2, y:hy-hs/2, width:hs, height:hs,
@@ -1235,18 +1344,6 @@ function render(){
     }
   }
 
-  guides.forEach(g => {
-    if (g.v != null)
-      viewport.appendChild(mk('line', { x1:g.v, y1:-4000, x2:g.v, y2:9000,
-        stroke:FIBER, 'stroke-width':1/view.k,
-        'stroke-dasharray':`${4/view.k} ${4/view.k}`, opacity:'.55',
-        'pointer-events':'none', class:'ui' }));
-    if (g.h != null)
-      viewport.appendChild(mk('line', { x1:-4000, y1:g.h, x2:9000, y2:g.h,
-        stroke:FIBER, 'stroke-width':1/view.k,
-        'stroke-dasharray':`${4/view.k} ${4/view.k}`, opacity:'.55',
-        'pointer-events':'none', class:'ui' }));
-  });
 
   if (marquee){
     viewport.appendChild(mk('rect', {
@@ -1303,7 +1400,7 @@ function nodeAt(p, pad){
   pad = pad || 0;
   for (let i=nodes.length-1;i>=0;i--){
     const n = nodes[i];
-    if (n.kind === 'zone') continue;
+    if (n.kind === 'zone' || n.kind === 'frame') continue;
     if (n.kind === 'line' || n.kind === 'arrow'){ if (lineDist(n, p) <= 9 + pad) return n; continue; }
     if (p.x >= n.x-pad && p.x <= n.x+n.w+pad && p.y >= n.y-pad && p.y <= n.y+n.h+pad) return n;
   }
@@ -1349,34 +1446,6 @@ function nearestAnchor(n, p){
 function handleAt(p){
   for (const h of handles) if (Math.hypot(p.x-h.x, p.y-h.y) <= h.r) return h;
   return null;
-}
-function snapDrag(items, dx, dy){
-  guides = [];
-  const pri = items.length ? items[0].n : null;
-  if (!pri) return { dx, dy };
-  const th = 6 / view.k;
-  const px = [pri.x+dx, pri.x+dx+pri.w/2, pri.x+dx+pri.w];
-  const py = [pri.y+dy, pri.y+dy+pri.h/2, pri.y+dy+pri.h];
-  let bx = null, by = null;
-  const taken = new Set(items.map(it => it.n));
-  nodes.forEach(o => {
-    if (taken.has(o) || o.kind === 'line') return;
-    [o.x, o.x+o.w/2, o.x+o.w].forEach(w => {
-      px.forEach(v => {
-        const d = w - v;
-        if (Math.abs(d) < th && (!bx || Math.abs(d) < Math.abs(bx.d))) bx = { d, at:w };
-      });
-    });
-    [o.y, o.y+o.h/2, o.y+o.h].forEach(w => {
-      py.forEach(v => {
-        const d = w - v;
-        if (Math.abs(d) < th && (!by || Math.abs(d) < Math.abs(by.d))) by = { d, at:w };
-      });
-    });
-  });
-  if (bx){ dx += bx.d; guides.push({ v: bx.at }); }
-  if (by){ dy += by.d; guides.push({ h: by.at }); }
-  return { dx, dy };
 }
 const PAINT_LABEL = { line:'outline', text:'title', sub:'subtitle', tint:'tinted card' };
 function pickTarget(ev, n, p){
@@ -1446,6 +1515,7 @@ stage.addEventListener('pointerdown', ev => {
     return;
   }
   if (ev.button !== 0) return;
+  if (document.body.classList.contains('present')){ stepPresent(1); return; }
 
   const p = toWorld(ev);
   if (editing) commitEdit();
@@ -1625,9 +1695,7 @@ stage.addEventListener('pointermove', ev => {
       snapshot(); drag.moved = true;
     }
     if (drag.moved){
-      let dx = p.x - drag.start.x, dy = p.y - drag.start.y;
-      const adj = snapDrag(drag.items, dx, dy);
-      dx = adj.dx; dy = adj.dy;
+      const dx = p.x - drag.start.x, dy = p.y - drag.start.y;
       drag.items.forEach(it => {
         it.n.x = Math.round(it.x + dx);
         it.n.y = Math.round(it.y + dy);
@@ -1681,7 +1749,9 @@ stage.addEventListener('pointerup', ev => {
     const tiny = (x2-x1) < 4 && (y2-y1) < 4;
     const hit = tiny ? [] : nodes.filter(n => n.kind === 'zone'
       ? (n.x >= x1 && n.y >= y1 && n.x+n.w <= x2 && n.y+n.h <= y2)
-      : (n.x < x2 && n.x+n.w > x1 && n.y < y2 && n.y+n.h > y1)).map(n => n.id);
+      : n.kind !== 'frame'
+        ? (n.x < x2 && n.x+n.w > x1 && n.y < y2 && n.y+n.h > y1)
+        : false).map(n => n.id);
     const add = marquee.add;
     marquee = null;
     if (hit.length || !add) selectNodes(hit, add);
@@ -1910,6 +1980,132 @@ const ALIGN_ICON = {
   center:'<path d="M4 6h16M7.5 12h9M5.5 18h13"/>',
   right:'<path d="M4 6h16M11 12h9M7 18h13"/>'
 };
+const pickerEl = document.getElementById('logo-picker');
+const pickerGrid = document.getElementById('logo-grid');
+const pickerFilter = document.getElementById('logo-filter');
+let pickerNode = null;
+function closeLogoPicker(){
+  pickerEl.classList.remove('on');
+  pickerNode = null;
+}
+const DATA_BRANDS = ['snowflake','dbt','databricks','airflow','apache-spark','kafka','tableau',
+  'looker','power-bi','bigquery','postgresql','mysql','mongodb','elasticsearch','redis',
+  'segment','airbyte','docker','kubernetes','terraform'];
+const BRAND_THUMB = {
+  'power-bi': 'https://cdn.jsdelivr.net/gh/gilbarbara/logos/logos/microsoft-power-bi.svg',
+  'bigquery': 'https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/googlebigquery.svg'
+};
+const brandThumb = name => BRAND_THUMB[name] ||
+  'https://cdn.jsdelivr.net/gh/gilbarbara/logos/logos/' + logoSlug(name) + '.svg';
+function brandTile(name){
+  const b = document.createElement('button');
+  b.className = 'logo-item';
+  const img = document.createElement('img');
+  img.loading = 'lazy';
+  img.alt = '';
+  if (BRAND_THUMB[name]) img.src = BRAND_THUMB[name];
+  else {
+    img.src = 'https://cdn.jsdelivr.net/gh/gilbarbara/logos/logos/' + logoSlug(name) + '-icon.svg';
+    img.onerror = () => {
+      img.onerror = null;
+      img.src = 'https://cdn.jsdelivr.net/gh/gilbarbara/logos/logos/' + logoSlug(name) + '.svg';
+    };
+  }
+  const sp = document.createElement('span');
+  sp.textContent = name;
+  b.appendChild(img);
+  b.appendChild(sp);
+  b.addEventListener('mousedown', ev => ev.preventDefault());
+  b.addEventListener('click', () => fetchLogoByName(name, pickerNode));
+  return b;
+}
+function pickerItem(it){
+  const b = document.createElement('button');
+  b.className = 'logo-item';
+  const img = document.createElement('img');
+  img.loading = 'lazy';
+  img.alt = '';
+  img.src = svglRoute(it);
+  const sp = document.createElement('span');
+  sp.textContent = it.title;
+  b.appendChild(img);
+  b.appendChild(sp);
+  b.addEventListener('mousedown', ev => ev.preventDefault());
+  b.addEventListener('click', () => useLogoSvg(it));
+  return b;
+}
+function paintPicker(q){
+  const query = normName(q);
+  pickerGrid.innerHTML = '';
+  const items = (svglIndex || []).filter(it => !query || normName(it.title).includes(query));
+  if (!items.length){
+    const typed = String(q || '').trim();
+    if (typed){
+      const b = document.createElement('button');
+      b.className = 'logo-item';
+      b.textContent = 'Fetch “' + typed + '”';
+      b.addEventListener('click', () => { if (pickerNode) fetchLogoByName(typed, pickerNode); });
+      pickerGrid.appendChild(b);
+    } else {
+      pickerGrid.innerHTML = '<div class="logo-empty">no brands loaded — use FROM FILE</div>';
+    }
+    return;
+  }
+  DATA_BRANDS.filter(n => !query || normName(n).includes(query))
+    .forEach(n => pickerGrid.appendChild(brandTile(n)));
+  items.slice(0, 600).forEach(it => pickerGrid.appendChild(pickerItem(it)));
+}
+function newLogoNode(){
+  const c = centrePoint();
+  const n = { id:'n'+(uid++), kind:'logo', title:'', sub:'', color:null,
+    tcolor:null, scolor:null, fs:1, x:0, y:0, w:SIZE.logo[0], h:SIZE.logo[1] };
+  n.x = Math.round(c.x - n.w/2);
+  n.y = Math.round(c.y - n.h/2);
+  nodes.push(n);
+  selectNodes([n.id], false);
+  return n;
+}
+async function useLogoSvg(it){
+  const route = svglRoute(it);
+  if (!route){ toast('no logo file for ' + it.title, 4000); return; }
+  const file = route.split('/').pop();
+  const svg = await tryLogoSvg('https://api.svgl.app/svg/' + encodeURIComponent(file));
+  if (!svg){ toast('could not download ' + it.title, 4200); return; }
+  snapshot();
+  const n = pickerNode || newLogoNode();
+  n.logo = svgDataUri(svg);
+  render();
+  closeLogoPicker();
+  toast(it.title + ' logo added');
+}
+async function openLogoPicker(n){
+  pickerNode = n;
+  pickerEl.classList.add('on');
+  pickerFilter.value = '';
+  pickerGrid.innerHTML = '<div class="logo-empty">loading brands…</div>';
+  if (!svglIndex){
+    try {
+      const r = await fetch('https://api.svgl.app');
+      const list = r.ok ? await r.json() : [];
+      svglIndex = Array.isArray(list) ? list : [];
+    } catch (e){ svglIndex = []; }
+  }
+  paintPicker('');
+  pickerFilter.focus();
+}
+pickerFilter.addEventListener('input', () => paintPicker(pickerFilter.value));
+pickerFilter.addEventListener('keydown', ev => {
+  if (ev.key !== 'Enter') return;
+  const q = pickerFilter.value.trim();
+  if (!q) return;
+  ev.preventDefault();
+  fetchLogoByName(q, pickerNode);
+});
+document.getElementById('logo-close').addEventListener('click', closeLogoPicker);
+pickerEl.addEventListener('click', ev => { if (ev.target === pickerEl) closeLogoPicker(); });
+pickerEl.addEventListener('keydown', ev => {
+  if (ev.key === 'Escape'){ ev.stopPropagation(); closeLogoPicker(); }
+});
 ['left','center','right'].forEach(al => {
   const b = document.createElement('button');
   b.innerHTML = `<svg viewBox="0 0 24 24">${ALIGN_ICON[al]}</svg>`;
@@ -2046,12 +2242,6 @@ function syncInspector(){
       ? S.selNodes.length + ' shapes'
       : (S.selLinks.length ? 'arrow selected' : 'nothing selected');
   }
-  const alignable = S.selNodes.length > 1 &&
-    S.selNodes.every(id => { const m = byId(id); return m && m.kind !== 'zone'; });
-  inspectEl.querySelectorAll('[data-align]').forEach(b => { b.disabled = !alignable; });
-  const distributable = S.selNodes.length > 2 &&
-    S.selNodes.every(id => { const m = byId(id); return m && m.kind !== 'zone'; });
-  inspectEl.querySelectorAll('[data-dist]').forEach(b => { b.disabled = !distributable; });
 }
 
 function commitBox(){
@@ -2083,41 +2273,7 @@ function commitBox(){
   render();
 }
 
-function alignSelection(mode){
-  const selected = S.selNodes.map(id => byId(id)).filter(n => n && n.kind !== 'zone');
-  if (selected.length < 2) return;
-  snapshot();
-  const minX = Math.min(...selected.map(n => n.x));
-  const maxX = Math.max(...selected.map(n => n.x + n.w));
-  const minY = Math.min(...selected.map(n => n.y));
-  const maxY = Math.max(...selected.map(n => n.y + n.h));
-  selected.forEach(n => {
-    if (mode === 'left') n.x = minX;
-    else if (mode === 'right') n.x = maxX - n.w;
-    else if (mode === 'center') n.x = minX + (maxX - minX - n.w) / 2;
-    else if (mode === 'top') n.y = minY;
-    else if (mode === 'bottom') n.y = maxY - n.h;
-    else if (mode === 'middle') n.y = minY + (maxY - minY - n.h) / 2;
-    n.x = Math.round(n.x); n.y = Math.round(n.y);
-  });
-  render();
-}
 
-function distributeSelection(axis){
-  const selected = S.selNodes.map(id => byId(id)).filter(n => n && n.kind !== 'zone');
-  if (selected.length < 3) return;
-  snapshot();
-  const key = axis === 'v' ? 'y' : 'x';
-  const dim = axis === 'v' ? 'h' : 'w';
-  const list = selected.slice().sort((a,b) => a[key] - b[key]);
-  const first = list[0], last = list[list.length-1];
-  const span = (last[key] + last[dim]) - first[key];
-  const used = list.reduce((acc, n) => acc + n[dim], 0);
-  const gap = (span - used) / (list.length - 1);
-  let at = first[key];
-  list.forEach(n => { n[key] = Math.round(at); at += n[dim] + gap; });
-  render();
-}
 
 [iX,iY,iW,iH].forEach(el => {
   el.addEventListener('focus', () => {
@@ -2130,12 +2286,6 @@ function distributeSelection(axis){
     if (e.key === 'Enter'){ e.preventDefault(); el.blur(); }
   });
 });
-inspectEl.querySelectorAll('[data-align]').forEach(b => {
-  b.addEventListener('click', () => alignSelection(b.dataset.align));
-});
-inspectEl.querySelectorAll('[data-dist]').forEach(b => {
-  b.addEventListener('click', () => distributeSelection(b.dataset.dist));
-});
 
 /* ---------- sidebar ---------- */
 const fileInput = document.createElement('input');
@@ -2145,15 +2295,16 @@ fileInput.style.display = 'none';
 document.body.appendChild(fileInput);
 
 const IMG_MAX = 960, IMG_QUALITY = 0.85, IMG_MAX_CHARS = 1.2e6;
-function shrinkImage(img, dataUrl, type){
+function shrinkImage(img, dataUrl, type, limit){
   try {
+    const cap = limit || IMG_MAX;
     const nw = img.naturalWidth || 200, nh = img.naturalHeight || 150;
     if ((type === 'image/svg+xml' || type === 'image/gif') && dataUrl.length <= IMG_MAX_CHARS)
       return dataUrl;
-    if (nw <= IMG_MAX && nh <= IMG_MAX && dataUrl.length <= IMG_MAX_CHARS)
+    if (nw <= cap && nh <= cap && dataUrl.length <= IMG_MAX_CHARS)
       return dataUrl;
     let out = dataUrl;
-    for (const max of [IMG_MAX, 640, 420]){
+    for (const max of [cap, Math.min(cap, 640), Math.min(cap, 420)]){
       const sc = Math.min(1, max / Math.max(nw, nh));
       const w = Math.max(1, Math.round(nw*sc)), h = Math.max(1, Math.round(nh*sc));
       const c = document.createElement('canvas');
@@ -2196,6 +2347,132 @@ function insertFile(file, at){
     img.src = fr.result;
   };
   fr.onerror = () => toast('image could not be read');
+  fr.readAsDataURL(file);
+}
+let svglIndex = null;
+const normName = s => String(s || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+function svglRoute(item){
+  const r = item && item.route;
+  if (!r) return null;
+  return typeof r === 'string' ? r : (r.light || r.dark || null);
+}
+function pickSvg(list, name){
+  const q = normName(name);
+  if (!q) return null;
+  const loose = [];
+  for (const it of list || []){
+    const t = normName(it && it.title);
+    if (!t) continue;
+    if (t === q) return it;
+    if (t.includes(q)) loose.push({ it, len: t.length });
+  }
+  loose.sort((a, b) => a.len - b.len);
+  return loose.length ? loose[0].it : null;
+}
+function normaliseSvg(svg){
+  let out = String(svg || '').replace(/^<\?xml[^>]*\?>\s*/i, '').trim();
+  if (!/^<svg[^>]*\sxmlns\s*=/i.test(out))
+    out = out.replace(/<svg/i, '<svg xmlns="http://www.w3.org/2000/svg"');
+  return out;
+}
+function svgDataUri(svg){
+  const bytes = new TextEncoder().encode(normaliseSvg(svg));
+  let bin = '';
+  bytes.forEach(b => { bin += String.fromCharCode(b); });
+  return 'data:image/svg+xml;base64,' + btoa(bin);
+}
+const logoSlug = s => String(s || '').toLowerCase().trim()
+  .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+function svgAspect(svg){
+  const vb = /viewBox\s*=\s*"([^"]+)"/i.exec(String(svg || ''));
+  if (vb){
+    const p = vb[1].trim().split(/[\s,]+/).map(Number);
+    if (p.length === 4 && p[2] > 0 && p[3] > 0) return p[2] / p[3];
+  }
+  const w = /<svg[^>]*\swidth\s*=\s*"([\d.]+)/i.exec(String(svg || ''));
+  const h = /<svg[^>]*\sheight\s*=\s*"([\d.]+)/i.exec(String(svg || ''));
+  if (w && h && Number(h[1]) > 0) return Number(w[1]) / Number(h[1]);
+  return 1;
+}
+async function tryLogoSvg(url){
+  try {
+    const r = await fetch(url);
+    if (!r.ok) return null;
+    const t = await r.text();
+    return t.trim().startsWith('<svg') ? t : null;
+  } catch (e){ return null; }
+}
+async function fetchLogoByName(name, n){
+  try {
+    toast('looking up ' + name + '…');
+    const slug = logoSlug(name);
+    let svg = null, from = '';
+    if (!svglIndex){
+      try {
+        const r = await fetch('https://api.svgl.app');
+        if (r.ok){
+          const list = await r.json();
+          svglIndex = Array.isArray(list) ? list : [];
+        } else svglIndex = [];
+      } catch (e){ svglIndex = []; }
+    }
+    const hit = pickSvg(svglIndex, name);
+    const route = hit && svglRoute(hit);
+    if (route){
+      const file = route.split('/').pop();
+      svg = await tryLogoSvg('https://api.svgl.app/svg/' + encodeURIComponent(file));
+      if (svg) from = 'svgl · ' + hit.title;
+    }
+    if (!svg){
+      const cands = [slug + '-icon', slug, 'microsoft-' + slug];
+      const found = [];
+      for (const c of cands){
+        if (!c) continue;
+        const body = await tryLogoSvg('https://cdn.jsdelivr.net/gh/gilbarbara/logos/logos/' + c + '.svg');
+        if (body) found.push({ c, body, d: Math.abs(Math.log(svgAspect(body))) });
+      }
+      if (found.length){
+        found.sort((a, b) => a.d - b.d);
+        svg = found[0].body;
+        from = 'logos · ' + found[0].c;
+      }
+    }
+    if (!svg){
+      const compact = slug.replace(/-/g, '');
+      for (const c of [compact, 'google' + compact, 'apache' + compact]){
+        svg = await tryLogoSvg('https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/' + c + '.svg');
+        if (svg){ from = 'simple-icons · ' + c; break; }
+      }
+    }
+    if (!svg){ toast('no logo found for “' + name + '”', 4000); return; }
+    if (svg.length > 200000){ toast('logo is large', 4000); return; }
+    snapshot();
+    const target = (n && byId(n.id) === n) ? n : newLogoNode();
+    target.logo = svgDataUri(svg);
+    render();
+    closeLogoPicker();
+    toast('logo added (' + from + ')');
+  } catch (e){
+    toast('logo fetch failed: ' + e.message, 5000);
+  }
+}
+function attachLogo(file, n){
+  if (!file || !file.type || !file.type.startsWith('image/')) return;
+  const fr = new FileReader();
+  fr.onload = () => {
+    if (!fr.result){ toast('logo could not be read'); return; }
+    const img = new Image();
+    img.onload = () => {
+      const src = shrinkImage(img, fr.result, file.type, 96);
+      snapshot();
+      n.logo = src;
+      render();
+      closeLogoPicker();
+    };
+    img.onerror = () => toast('logo could not be read');
+    img.src = fr.result;
+  };
+  fr.onerror = () => toast('logo could not be read');
   fr.readAsDataURL(file);
 }
 function centrePoint(){
@@ -2308,7 +2585,14 @@ stage.addEventListener('dragover', ev => { ev.preventDefault(); });
 stage.addEventListener('drop', ev => {
   ev.preventDefault();
   const f = ev.dataTransfer && ev.dataTransfer.files && ev.dataTransfer.files[0];
-  if (f) insertFile(f, toWorld(ev));
+  if (!f) return;
+  const p = toWorld(ev);
+  const hit = nodeAt(p, 0);
+  if (hit && LOGO_KINDS.has(hit.kind) && f.type && f.type.startsWith('image/')){
+    attachLogo(f, hit);
+    return;
+  }
+  insertFile(f, p);
 });
 
 function buildGrid(el, list, group){
@@ -2616,6 +2900,8 @@ function parseNode(raw){
   };
   if (!['left','center','right'].includes(n.align)) delete n.align;
   if (typeof n.src !== 'string' || !n.src.startsWith('data:image/')) delete n.src;
+  if (typeof n.logo !== 'string' || !n.logo.startsWith('data:image/')) delete n.logo;
+  if (isNum(raw.step) && raw.step > 0) n.step = Math.round(raw.step); else delete n.step;
   n.bold = n.bold === true;
   n.italic = n.italic === true;
   n.tint = n.tint === true;
@@ -2770,22 +3056,24 @@ async function buildSVG(){
   const css = (await fontFace('VD Code','fonts/SourceCodePro.ttf'))
             + (await fontFace('VD Sans','fonts/DMSans.ttf'));
   const clone = viewport.cloneNode(true);
-  clone.querySelectorAll('.ui').forEach(el => el.remove());
+  clone.querySelectorAll('.ui').forEach(el => {
+    if (el.classList.contains('march')) el.classList.remove('ui');
+    else el.remove();
+  });
   clone.querySelectorAll('.linkhit').forEach(el => el.remove());
   clone.querySelectorAll('[data-sel]').forEach(el => {
     el.setAttribute('stroke-width', el.getAttribute('data-lw') || '1.5');
     el.removeAttribute('data-sel');
     el.removeAttribute('data-lw');
   });
-  clone.querySelectorAll('[data-flow]').forEach(el => {
-    el.setAttribute('opacity','1');
-    el.setAttribute('stroke-dasharray','8 6');
-    el.removeAttribute('data-flow');
-  });
+  clone.querySelectorAll('[data-flow]').forEach(el => el.removeAttribute('data-flow'));
+  const motionCss = '.march{stroke-dasharray:8 6;animation:march 1.4s linear infinite}'
+    + '.march.rev{animation-direction:reverse}'
+    + '@keyframes march{to{stroke-dashoffset:-56}}';
   clone.removeAttribute('transform');
   const body = new XMLSerializer().serializeToString(clone);
   return `<svg xmlns="${NS}" width="${w}" height="${h}" viewBox="${b.x-pad} ${b.y-pad} ${w} ${h}">`
-    + `<style>${css}</style>`
+    + `<style>${css}${motionCss}</style>`
     + `<rect x="${b.x-pad}" y="${b.y-pad}" width="${w}" height="${h}" fill="${PAPER}"/>`
     + body + '</svg>';
 }
@@ -2856,17 +3144,231 @@ helpEl.addEventListener('click', ev => ev.stopPropagation());
 document.addEventListener('click', () => helpEl.classList.remove('on'));
 
 document.getElementById('btn-image').addEventListener('click', () => fileInput.click());
+document.getElementById('btn-logo').addEventListener('click', () => openLogoPicker(null));
 
 const presentBtn = document.getElementById('btn-present');
+const presentBadge = document.getElementById('present-badge');
+let presentSteps = [], presentIndex = 0, presentZoneId = null, presentAnim = null;
+function presentZones(){
+  const rank = n => {
+    const m = /^\s*(\d+)/.exec(String(n.title || ''));
+    return m ? Number(m[1]) : null;
+  };
+  return nodes.filter(n => n.kind === 'zone').slice().sort((a, b) => {
+    if (a.step != null && b.step != null && a.step !== b.step) return a.step - b.step;
+    if (a.step != null && b.step == null) return -1;
+    if (a.step == null && b.step != null) return 1;
+    const ra = rank(a), rb = rank(b);
+    if (ra != null && rb != null && ra !== rb) return ra - rb;
+    if (ra != null && rb == null) return -1;
+    if (ra == null && rb != null) return 1;
+    return (a.x - b.x) || (a.y - b.y);
+  });
+}
+function stepMembers(f){
+  const out = new Set();
+  (f.members || []).forEach(id => {
+    const n = byId(id);
+    if (!n) return;
+    out.add(n.id);
+    if (n.kind === 'zone'){
+      nodes.forEach(m => {
+        if (m.kind !== 'zone' && m.id !== n.id &&
+            m.x >= n.x && m.y >= n.y &&
+            m.x + m.w <= n.x + n.w && m.y + m.h <= n.y + n.h)
+          out.add(m.id);
+      });
+    }
+  });
+  return out;
+}
+function membersBox(f){
+  const list = Array.from(stepMembers(f)).map(byId).filter(Boolean);
+  if (!list.length) return null;
+  const x = Math.min(...list.map(n => n.x)), y = Math.min(...list.map(n => n.y));
+  const r = Math.max(...list.map(n => n.x + n.w)), b = Math.max(...list.map(n => n.y + n.h));
+  return { x: x - 16, y: y - 16, w: r - x + 32, h: b - y + 32 };
+}
+function presentFrames(){
+  return nodes.filter(n => n.kind === 'frame').slice().sort((a, b) => {
+    if (a.step != null && b.step != null && a.step !== b.step) return a.step - b.step;
+    if (a.step != null && b.step == null) return -1;
+    if (a.step == null && b.step != null) return 1;
+    return (a.x - b.x) || (a.y - b.y);
+  });
+}
+function stepKey(ids){
+  return Array.from(stepMembers({ members: ids })).sort().join('|');
+}
+function addStep(){
+  const ids = Array.from(new Set(S.selNodes.filter(id => {
+    const n = byId(id); return n && n.kind !== 'frame';
+  })));
+  if (!ids.length){ toast('select the shapes for this step first', 3200); return; }
+  const key = stepKey(ids);
+  const frames = presentFrames();
+  const dup = frames.find(f => stepKey(f.members || []) === key);
+  if (dup){
+    toast('those shapes are already step ' + (frames.indexOf(dup) + 1), 4200);
+    return;
+  }
+  snapshot();
+  const f = { id:'n'+(uid++), kind:'frame', title:'Step ' + (frames.length + 1),
+    sub:'', color:null, tcolor:null, scolor:null, fs:1, x:0, y:0, w:1, h:1,
+    members: ids.slice(), step: frames.length + 1 };
+  const box = membersBox(f);
+  if (box){ f.x = box.x; f.y = box.y; f.w = box.w; f.h = box.h; }
+  nodes.push(f);
+  render();
+  toast('step ' + f.step + ' added');
+}
+function moveStep(id, dir){
+  const list = presentFrames();
+  const i = list.findIndex(f => f.id === id);
+  const j = i + dir;
+  if (i < 0 || j < 0 || j >= list.length) return;
+  snapshot();
+  const tmp = list[i];
+  list[i] = list[j];
+  list[j] = tmp;
+  list.forEach((f, idx) => { f.step = idx + 1; });
+  render();
+}
+function removeStep(id){
+  snapshot();
+  nodes = nodes.filter(n => n.id !== id);
+  render();
+}
+function renderStepsMenu(){
+  const el = document.getElementById('steps-menu');
+  if (!el) return;
+  el.innerHTML = '';
+  const add = document.createElement('button');
+  add.textContent = '+ STEP FROM SELECTION';
+  add.disabled = !S.selNodes.length;
+  add.addEventListener('click', () => { addStep(); renderStepsMenu(); });
+  el.appendChild(add);
+  const list = presentFrames();
+  if (!list.length){
+    const d = document.createElement('div');
+    d.className = 'step-empty';
+    d.textContent = 'no steps — present falls back to zones';
+    el.appendChild(d);
+    return;
+  }
+  list.forEach((f, i) => {
+    const row = document.createElement('div');
+    row.className = 'step-row';
+    const num = document.createElement('span');
+    num.className = 'num';
+    num.textContent = String(i + 1).padStart(2, '0');
+    const name = document.createElement('span');
+    name.className = 'name';
+    name.textContent = f.title || 'step';
+    name.title = 'Show this step';
+    name.addEventListener('click', () => {
+      selectNodes(Array.from(stepMembers(f)).filter(id => byId(id)), false);
+      const b = membersBox(f);
+      if (b) glideTo(viewFor({ x:b.x, y:b.y, w:b.w, h:b.h }));
+      render();
+    });
+    const up = document.createElement('button');
+    up.textContent = '↑';
+    up.title = 'Move earlier';
+    up.disabled = i === 0;
+    up.addEventListener('click', () => { moveStep(f.id, -1); renderStepsMenu(); });
+    const down = document.createElement('button');
+    down.textContent = '↓';
+    down.title = 'Move later';
+    down.disabled = i === list.length - 1;
+    down.addEventListener('click', () => { moveStep(f.id, 1); renderStepsMenu(); });
+    const del = document.createElement('button');
+    del.textContent = '×';
+    del.title = 'Delete step';
+    del.addEventListener('click', () => { removeStep(f.id); renderStepsMenu(); });
+    row.appendChild(num);
+    row.appendChild(name);
+    row.appendChild(up);
+    row.appendChild(down);
+    row.appendChild(del);
+    el.appendChild(row);
+  });
+}
+function presentBox(){
+  const z = presentZoneId ? nodes.find(n => n.id === presentZoneId) : null;
+  if (z && z.kind === 'frame'){
+    const b = membersBox(z);
+    if (b) return b;
+  }
+  if (z) return { x: z.x - 20, y: z.y - 20, w: z.w + 40, h: z.h + 40 };
+  const b = contentBBox();
+  return { x: b.x, y: b.y, w: b.w, h: b.h };
+}
+function viewFor(b){
+  const r = stage.getBoundingClientRect();
+  const pad = 60;
+  const k = Math.max(0.2, Math.min((r.width - pad*2)/Math.max(1, b.w),
+                                   (r.height - pad*2)/Math.max(1, b.h), 1.3));
+  return { k, x: (r.width - b.w*k)/2 - b.x*k, y: (r.height - b.h*k)/2 - b.y*k };
+}
+function glideTo(target){
+  if (presentAnim) cancelAnimationFrame(presentAnim);
+  presentAnim = null;
+  const from = { x: view.x, y: view.y, k: view.k };
+  const t0 = performance.now(), dur = 320;
+  const step = now => {
+    const t = Math.min(1, (now - t0) / dur);
+    const e = t < 0.5 ? 2*t*t : 1 - Math.pow(-2*t + 2, 2)/2;
+    view.x = from.x + (target.x - from.x)*e;
+    view.y = from.y + (target.y - from.y)*e;
+    view.k = from.k + (target.k - from.k)*e;
+    applyView();
+    if (t < 1) presentAnim = requestAnimationFrame(step);
+    else presentAnim = null;
+  };
+  presentAnim = requestAnimationFrame(step);
+}
+function showStep(i){
+  if (!presentSteps.length) return;
+  presentIndex = Math.min(presentSteps.length - 1, Math.max(0, i));
+  const z = presentSteps[presentIndex];
+  presentZoneId = z ? z.id : null;
+  render();
+  glideTo(viewFor(presentBox()));
+  const label = z ? (z.title || 'zone') : 'overview';
+  presentBadge.textContent = (presentIndex + 1) + ' / ' + presentSteps.length + ' · ' + label;
+}
+function stepPresent(dir){
+  if (!document.body.classList.contains('present')) return;
+  showStep(presentIndex + dir);
+}
 function setPresent(on){
   document.body.classList.toggle('present', on);
   presentBtn.textContent = on ? 'EXIT' : 'PRESENT';
-  if (on) clearSel();
-  render();
-  fit();
+  if (presentAnim){ cancelAnimationFrame(presentAnim); presentAnim = null; }
+  if (on){
+    clearSel();
+    const frames = presentFrames();
+    presentSteps = [null].concat(frames.length ? frames : presentZones());
+    render();
+    showStep(0);
+  } else {
+    presentSteps = []; presentIndex = 0; presentZoneId = null;
+    presentBadge.textContent = '';
+    render();
+    fit();
+  }
 }
 presentBtn.addEventListener('click', () =>
   setPresent(!document.body.classList.contains('present')));
+const stepsMenu = document.getElementById('steps-menu');
+document.getElementById('btn-steps').addEventListener('click', ev => {
+  ev.stopPropagation();
+  renderStepsMenu();
+  stepsMenu.classList.toggle('on');
+});
+stepsMenu.addEventListener('click', ev => ev.stopPropagation());
+document.addEventListener('click', () => stepsMenu.classList.remove('on'));
 
 document.getElementById('btn-clear').addEventListener('click', () => {
   if ((nodes.length || links.length) &&
@@ -2953,7 +3455,17 @@ function syncHud(){
 /* ---------- keys ---------- */
 window.addEventListener('keydown', e => {
   if (editableTarget(e.target)) return;
+  if (document.body.classList.contains('present')){
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ' ||
+        e.key === 'PageDown'){
+      e.preventDefault(); stepPresent(1); return;
+    }
+    if (e.key === 'ArrowLeft' || e.key === 'ArrowUp' || e.key === 'PageUp'){
+      e.preventDefault(); stepPresent(-1); return;
+    }
+  }
   if (e.key === 'Escape'){
+    if (pickerEl.classList.contains('on')){ closeLogoPicker(); return; }
     if (document.body.classList.contains('present')){ setPresent(false); return; }
     clearSel(); setTool('select', 'draw'); render();
     return;
@@ -2972,7 +3484,7 @@ window.addEventListener('keydown', e => {
   }
   if (meta && e.key.toLowerCase() === 'a'){
     e.preventDefault();
-    S.selNodes = nodes.map(n => n.id); S.selLinks = [];
+    S.selNodes = nodes.filter(n => n.kind !== 'frame').map(n => n.id); S.selLinks = [];
     render();
     return;
   }
@@ -3097,6 +3609,25 @@ if (/[?&]test/.test(location.search)){
   drag({x:1250,y:640},{x:1370,y:700});
   const box = nodes[nodes.length-1];
   ok('create box by drag', nodes.length === n0+1 && box.kind === 'box');
+
+  box.logo = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+  render();
+  ok('card logo', !!stage.querySelector(`g.node[data-id="${box.id}"] [data-role="logo"]`));
+  ok('logo name match', pickSvg([{ title:'Snowflake', route:'x' }], 'snow flake').title === 'Snowflake' &&
+     !pickSvg([{ title:'Snowflake', route:'x' }], 'oracle'));
+  ok('logo slug', logoSlug('Power BI') === 'power-bi' && logoSlug('  Apache Kafka ') === 'apache-kafka');
+  ok('brand tile url', brandThumb('dbt').endsWith('/dbt.svg') &&
+     brandThumb('power-bi').includes('microsoft-power-bi'));
+  ok('logo aspect', Math.abs(svgAspect('<svg viewBox="0 0 512 196"></svg>') - 2.612) < 0.01 &&
+     Math.abs(svgAspect('<svg viewBox="0 0 256 256"></svg>') - 1) < 0.01);
+  const lgNode = { id:'lgx', kind:'logo', title:'', sub:'', color:null, tcolor:null,
+    scolor:null, fs:1, x:420, y:420, w:100, h:100,
+    logo:'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7' };
+  nodes.push(lgNode); render();
+  ok('logo node', !!stage.querySelector('g.node[data-id="lgx"] [data-role="logo"]'));
+  nodes.pop(); render();
+  delete box.logo;
+  render();
 
   const l0 = links.length;
   setTool('arrow', 'draw');
@@ -3363,26 +3894,45 @@ if (/[?&]test/.test(location.search)){
   const ib = byId(box.id);
   ok('size inspector', ib.x === 500);
 
-  const a2 = byId('dash');
-  S.selNodes = [ib.id, a2.id]; S.selLinks = []; render();
-  const leftBtn = document.querySelector('#inspect button[data-align="left"]');
-  leftBtn.click();
-  ok('align left', ib.x === a2.x);
-  undo(); undo();
-
-  const a3 = byId('spark');
-  S.selNodes = [ib.id, a2.id, a3.id]; S.selLinks = []; render();
-  distributeSelection('h');
-  const row = [ib, a2, a3].sort((a,b) => a.x - b.x);
-  const g1 = row[1].x - (row[0].x + row[0].w);
-  const g2 = row[2].x - (row[1].x + row[1].w);
-  ok('distribute horizontally', Math.abs(g1 - g2) <= 1);
-  undo();
-
   setPresent(true);
   const asideHidden = getComputedStyle(document.querySelector('aside')).display === 'none';
   ok('present mode', document.body.classList.contains('present') && asideHidden);
   setPresent(false);
+
+  const pzA = { id:'pz1', kind:'zone', title:'02 / Later', x:900, y:0, w:80, h:80 };
+  const pzB = { id:'pz2', kind:'zone', title:'01 / First', x:0, y:400, w:80, h:80 };
+  nodes.push(pzA, pzB);
+  const order = presentZones().map(z => z.id);
+  ok('present step order', order.indexOf('pz2') !== -1 && order.indexOf('pz1') !== -1 &&
+     order.indexOf('pz2') < order.indexOf('pz1'));
+  nodes.pop(); nodes.pop();
+
+  const selIds = [box.id, byId('dash').id];
+  S.selNodes = selIds.slice();
+  const nf = nodes.length;
+  addStep();
+  const fr = nodes[nodes.length-1];
+  ok('step add', nodes.length === nf+1 && fr.kind === 'frame' &&
+     fr.members.length === 2 && presentFrames().some(f => f.id === fr.id));
+  removeStep(fr.id);
+  S.selNodes = [];
+
+  const zT = { id:'zt', kind:'zone', title:'', color:null, tcolor:null, scolor:null,
+    fs:1, x:0, y:0, w:100, h:100 };
+  const cT = { id:'ct', kind:'box', title:'', color:null, tcolor:null, scolor:null,
+    fs:1, x:10, y:10, w:20, h:20 };
+  nodes.push(zT, cT);
+  ok('step zone members', stepMembers({ members:['zt'] }).has('ct'));
+  nodes.pop(); nodes.pop();
+
+  S.selNodes = [box.id];
+  const beforeSteps = presentFrames().length;
+  addStep();
+  addStep();
+  ok('step duplicate guard', presentFrames().length === beforeSteps + 1);
+  presentFrames().filter(f => (f.members || []).includes(box.id))
+    .forEach(f => removeStep(f.id));
+  S.selNodes = [];
 
   const doc = JSON.parse(docJSON());
   ok('json export document', doc.format === 'yoruma' && doc.version === 1 &&

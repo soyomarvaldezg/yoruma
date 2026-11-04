@@ -6,7 +6,7 @@ Capability names follow Omar's [enterprise data architecture reference](https://
 
 ```sh
 open spike/index.html        # the editor
-open spike/index.html?test   # 44 tests, report in the ? panel
+open spike/index.html?test   # 52 tests, report in the ? panel
 ```
 
 ## Persistence
@@ -27,9 +27,20 @@ One **Draw** palette, no sections: select, arrow, line, rectangle, ellipse, zone
 text, heading, database, queue, cloud, file, service/API, security, consumers, AI agent,
 data contract, video, image data. Every shortcut is a letter.
 
-**PRESENT** hides the header, the sidebar and the status bar and fits the diagram to the
-window; `Esc` or **EXIT** brings the chrome back. Zoom and fit stay in the corner, dimmed
-until you hover them.
+**PRESENT** hides the header, the sidebar and the status bar and walks the diagram step by
+step. A **step** is an ordered set of shapes, not a box: select what belongs together, open
+**STEPS ▾** next to PRESENT and choose `+ STEP FROM SELECTION`. Steps are invisible on the
+canvas — nothing is drawn around their shapes — and the menu moves them ↑/↓ or deletes them.
+Selecting a zone for a step pulls in every shape fully inside that zone, so a zone step is never
+an empty band, and adding the same set twice is refused with the number of the step that already
+holds it — partial overlap between steps stays allowed.
+The first slide is always the **overview** (the whole diagram, fitted), then each step glides
+the camera to the bounds of its shapes and dims everything else; a badge shows
+`2 / 5 · Ingestion`. `→`, `↓`, space or a click advances, `←`/`↑` goes back, `Esc` or **EXIT**
+restores the chrome. With no steps defined, present falls back to walking the zones, ordered by
+a number in their title (`01 / Sources`) or by position.
+
+Zone titles render at 20px — they read as section headers, not captions.
 
 **Arrow** draws a free arrow unless both ends land on shapes, in which case it becomes a
 connected flow. **Line** is always free.
@@ -37,7 +48,7 @@ connected flow. **Line** is always free.
 Images: `+ IMAGE` in the header, or paste from the clipboard, or drop a file on the canvas.
 They are downscaled to at most 960 px on the long edge and stored inline (WebP where
 available); small GIF and SVG files keep their original data.
-**Catalog**: the reference capabilities in ten groups, mirroring the architecture
+**Blocks**: the reference building blocks in ten groups, mirroring the architecture
 reference's planes and bands — Sources, Integration, Platform, Serving & Data Products,
 Consumption, Metadata & Knowledge, Governance & Trust, Control Plane, Platform Engineering,
 ML & AI. It lists the capabilities the reference's nine worked flows actually draw, plus the
@@ -72,13 +83,11 @@ Enter again commits, Escape cancels. Long text wraps and ellipsizes.
   between them, a selected zone brings its children, and pastes cascade by 24px
 - **z-order**: `⇧⌘]` brings the selection forward, `⇧⌘[` sends it back; zones stay behind
   shapes
-- **inspector**: sidebar X/Y/W/H for one shape; with two or more non-zone shapes, six align
-  buttons (left/centre/right/top/middle/bottom); with three or more, two distribute buttons
-  (horizontal/vertical) that even out the gaps and leave the outer two shapes where they are
+- **inspector**: sidebar X/Y/W/H for one shape
 - **resize** — corner handles; shapes scale their text and icon with them. Icons are sized
   from the box (up to 170px), not from a fixed small ceiling
-- **snap** — dragging shows alignment guides against other shapes' edges and centres, and
-  snaps within 6px
+- **free movement** — dragging puts a shape exactly where the pointer is: no snapping, no guide
+  lines, so nothing jumps while you move
 - **zones carry their children** — moving a zone moves every shape fully inside it
 - **draw an arrow like draw.io** — drag from the **border** of any shape (the outer 10px) and
   a line follows the cursor; drop it on another shape. Connection dots also appear on hover
@@ -92,6 +101,15 @@ Enter again commits, Escape cancels. Long text wraps and ellipsizes.
   button stops the flow and leaves a solid line (dots stay in dots+dashes mode); a start-only
   arrow runs its animation backwards so the flow follows the visible head
 - **shape switch** — the floating bar above a selected shape morphs it
+- **card logo** — drop an image on a rectangle or ellipse, or use **+ LOGO** in the header to
+  open the brand picker: it lists svgl's whole catalogue with thumbnails and a filter box, and
+  when a name is not in that catalogue it offers to fetch it from gilbarbara/logos, then
+  simple-icons. The chosen mark is drawn 40px at the left of the title, stored in the document
+  as an inlined data URI. The header's **+ LOGO** runs the same picker and drops the mark as a
+  standalone shape (no card around it), resizable and movable like any other; to clear a card's
+  logo, drop a different image on it or delete the card. Typing a name that svgl does not carry (dbt, snowflake) and pressing
+  Enter runs the fallback chain; the twenty data-platform brands are always offered as tiles at
+  the top of the picker
 - **text size** — `[` and `]`, from 0.4× to 4×, for the selected shapes and for an
   arrow's note; the arrow note defaults to 18px
 - **text alignment** — three buttons at the end of the floating shape bar (headings included,
@@ -112,8 +130,8 @@ of across it.
 The swatch row sits at the top of the sidebar and colours whatever you last clicked —
 **border** → outline, **title** → title, **subtitle** → subtitle, **body** → tinted card: the
 border takes the colour and the body a 10% tint of the same hue, which is how a coloured
-reference card reads. Underneath, four icons (outline, T, t, tinted card) show which of
-those is armed and let you override it by hand. Arrows always take the outline colour.
+reference card reads. Underneath, four icons (outline, T, t, tinted card) show which of those
+is armed and let you override it by hand. Arrows always take the outline colour.
 12 colours plus one custom swatch — picking a new custom colour
 replaces it instead of adding another. Swatches can be **dragged onto a shape or an arrow**
 to colour that one object, or clicked to colour the selection.
@@ -128,7 +146,9 @@ Key: `M` cycles. Dots breathe in and out as they travel. `,` and `.` change the 
 ## Export
 
 `EXPORT ▾` — SVG, PNG (fonts inlined), JSON document, Mermaid source, D2 source, and a ready
-`kroki.io/…/svg/<deflate+base64>` link for Mermaid and D2. Kroki is free and open source and
+`kroki.io/…/svg/<deflate+base64>` link for Mermaid and D2. The SVG keeps motion: animated
+arrows are exported as a CSS keyframe animation inside the file, so a downloaded SVG still
+shows the flow moving. Kroki is free and open source and
 renders ~25 diagram languages; Mermaid and D2 are the two that map cleanly onto this model.
 
 ## Verified
@@ -140,13 +160,13 @@ and reverse flow,
 create an edge from a paddle with its side, resize,
 drag a swatch onto a shape, dots render, free line shape, drag a swatch tints a card,
 tinted card,
-drag moves a shape,
+drag moves a shape, card logo, logo name match, logo slug, logo node, brand tile url, logo aspect,
 zone creation, zone click-through, zone border selection, zone resize scaling its children,
-heading colour, subtitle colour, present mode, undo,
-redo, duplicate, paste, z-order, size inspector, align, distribute, catalog filter, JSON export/import,
-and persistence. 44/44 green.
+heading colour, subtitle colour, present mode, present step order, step add, step zone members, step duplicate guard, undo,
+redo, duplicate, paste, z-order, size inspector, catalog filter, JSON export/import,
+and persistence. 52/52 green.
 
 ## Still open
 
-Resizing a zone scales its children. Still open: no grid snap (only shape-to-shape), no
+Resizing a zone scales its children. Still open: no snapping or grid, no
 lasso, no groups/frames, no multiplayer.
