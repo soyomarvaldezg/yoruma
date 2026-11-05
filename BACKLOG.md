@@ -5,8 +5,9 @@ Open work, roughly in the order it earns attention. Finished work lives in the g
 ## Publishing
 
 - [x] Create the GitHub repository and add it as `origin`.
-- [ ] Delete `soyomarvaldezg/yoruma-old`, the repository left behind when the stuck Pages
-      deployment forced a rename and a fresh start (needs the `delete_repo` scope).
+- [ ] Delete `soyomarvaldezg/yoruma-old` and `soyomarvaldezg/yoruma-old-2`, the repositories
+      left behind when a stuck Pages deployment forced a rename and a fresh start (needs the
+      `delete_repo` scope, or the GitHub UI).
 - [x] MIT licence in `LICENSE`; the fonts stay SIL OFL 1.1.
 - [x] Publish on GitHub Pages from `main` at the repository root, with `.nojekyll` so `js/` is
       served as files.
@@ -27,7 +28,7 @@ Open work, roughly in the order it earns attention. Finished work lives in the g
 ## Site and identity
 
 - [x] GitHub mark in the header linking to the repository.
-- [ ] Omar's logo in the header, in place of, or beside, the `yoruma` wordmark.
+- [x] ValdezData minimark in the header, plus the `> o_o` prompt pet in the canvas corner.
 - [x] First-visit tour — dropped by Omar: no walkthrough.
 
 ## Top bar
