@@ -77,8 +77,9 @@ just shots     # regenerate the README screenshots
 ```
 
 `ARCHITECTURE.md` has the load order, what each file owns and where a feature belongs;
-`BACKLOG.md` has what is open. No framework, no bundler, no runtime dependency: classic
-`<script>` tags in numbered order, one shared scope, opened straight from disk.
+`BACKLOG.md` has what is open. `assets/` holds the ValdezData minimark used in the header.
+No framework, no bundler, no runtime dependency: classic `<script>` tags in numbered order,
+one shared scope, opened straight from disk.
 
 ## Limits
 
