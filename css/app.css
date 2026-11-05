@@ -17,18 +17,18 @@
     display:flex; align-items:center; gap:10px; flex-wrap:wrap; flex:none;
     padding:8px 16px; background:var(--ink); color:var(--on-dark);
   }
-  .brand{display:flex; align-items:center; gap:12px; min-width:0}
-  .brand-logo{display:block; width:44px; aspect-ratio:820 / 560; overflow:hidden;
-    position:relative; flex:none}
+  .brand{display:flex; align-items:center; min-width:0}
+  .brand-logo{display:block; width:30px; aspect-ratio:820 / 560; overflow:hidden;
+    position:relative; flex:none; margin-left:4px; border-radius:2px}
+  .brand-logo:focus-visible{outline:2px solid var(--paper); outline-offset:3px}
   .brand-logo img{position:absolute; max-width:none; height:auto; width:131.7073%;
     left:-15.8537%; top:-46.0714%}
   .brand-product{font-family:'VD Code',monospace; font-weight:600; font-size:13px;
-    letter-spacing:.16em; text-transform:uppercase; color:var(--on-dark);
-    padding-left:12px; border-left:1px solid var(--edge)}
+    letter-spacing:.16em; text-transform:uppercase; color:var(--on-dark)}
   .brand-product span{color:var(--muted-on-dark); font-weight:400; letter-spacing:.02em;
     text-transform:none; margin-left:9px; font-size:11px; font-family:'VD Sans',sans-serif}
   @media (max-width: 760px){
-    .brand-logo{width:38px}
+    .brand-logo{width:26px}
     .brand-product span{display:none}
   }
   .paint{display:grid; grid-template-columns:repeat(4,1fr); gap:3px; padding:3px;
@@ -53,26 +53,6 @@
     font-family:'VD Code',monospace; font-size:10.5px; color:var(--ink);
     background:var(--card); border:1px solid var(--line); border-radius:2px}
   .inspect-grid input:disabled{opacity:.45}
-  .vd-pet-wrap{position:absolute; top:10px; right:14px; z-index:6}
-  .vd-pet-wrap::before{content:''; position:absolute; inset:-2px; border-radius:6px;
-    background:var(--ink); opacity:.92}
-  .vd-pet{position:relative; display:block; margin:0; padding:6px; background:transparent;
-    border:0; font-family:'VD Code','Source Code Pro',monospace; color:var(--mint); cursor:pointer}
-  .vd-pet-face{display:inline-flex; align-items:center; gap:.38em; font-size:34px; line-height:1}
-  .vd-pet-chev{flex:none; width:.38em; height:.38em; border-top:.13em solid var(--mint);
-    border-right:.13em solid var(--mint); transform:rotate(45deg)}
-  .vd-pet-eyes{display:inline-flex; align-items:center}
-  .vd-pet-eye::before{content:"o"}
-  .vd-pet.is-blink .vd-pet-eye::before{content:"-"}
-  .vd-pet.is-happy .vd-pet-eye::before{content:"^"}
-  .vd-pet.is-surprised .vd-pet-eye::before{content:"O"}
-  .vd-pet.is-wink .vd-pet-eye--l::before{content:"^"}
-  .vd-pet:focus-visible{outline:2px solid var(--paper); outline-offset:6px; border-radius:2px}
-  @media (max-width: 700px){
-    .vd-pet-wrap{top:8px; right:10px}
-    .vd-pet{padding:4px}
-    .vd-pet-face{font-size:24px}
-  }
   .spacer{flex:1}
   button{
     font-family:'VD Code',monospace; font-size:10.5px; letter-spacing:.06em;
