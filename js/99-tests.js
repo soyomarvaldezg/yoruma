@@ -113,6 +113,16 @@ if (/[?&]test/.test(location.search)){
     ok('re-point arrow to another shape', lnk.to === 'analysts' && !!lnk.toSide);
   }
 
+  S.selNodes = []; S.selLinks = [lnk.id]; render();
+  const anchorFrom = anchors(byId(lnk.from), byId(lnk.to), lnk).p1;
+  const repl = byId('repl');
+  const linkCount = links.length;
+  send('pointerdown', { x:anchorFrom.x + 9, y:anchorFrom.y });
+  send('pointermove', { x:repl.x + repl.w/2, y:repl.y + repl.h/2 });
+  send('pointerup', { x:repl.x + repl.w/2, y:repl.y + repl.h/2 });
+  ok('re-point near endpoint', links.length === linkCount && lnk.from === 'repl');
+  S.selLinks = [];
+
   S.selLinks = [lnk.id]; S.selNodes = []; setMotion('off');
   const wBtn = document.querySelector('#linkbar button[data-lw="3"]');
   const dBtn = document.querySelector('#linkbar button[data-dash]');

@@ -14,6 +14,26 @@ stage.addEventListener('pointerdown', ev => {
   const p = toWorld(ev);
   if (editing) commitEdit();
 
+  const selectedLink = S.selLinks.length === 1 && !S.selNodes.length
+    ? links.find(x => x.id === S.selLinks[0]) : null;
+  if (selectedLink){
+    const a = byId(selectedLink.from), b = byId(selectedLink.to);
+    if (a && b){
+      const { p1, p2 } = anchors(a, b, selectedLink);
+      const tol = 18 / view.k;
+      if (Math.hypot(p.x - p1.x, p.y - p1.y) <= tol){
+        lend = { l:selectedLink, end:'from', other:b };
+        cap(ev);
+        return;
+      }
+      if (Math.hypot(p.x - p2.x, p.y - p2.y) <= tol){
+        lend = { l:selectedLink, end:'to', other:a };
+        cap(ev);
+        return;
+      }
+    }
+  }
+
   const h = handleAt(p);
   if (h){
     if (h.kind === 'newedge'){

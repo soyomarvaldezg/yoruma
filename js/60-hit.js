@@ -54,11 +54,12 @@ function nearestAnchor(n, p){
   const cy = Math.max(n.y, Math.min(n.y+n.h, p.y));
   const dl = Math.abs(p.x - n.x), dr = Math.abs(p.x - (n.x+n.w));
   const dt = Math.abs(p.y - n.y), db = Math.abs(p.y - (n.y+n.h));
+  const clamp = v => Math.max(0.08, Math.min(0.92, v));
   const m = Math.min(dl, dr, dt, db);
-  if (m === dl) return { side:'w', t:(cy - n.y) / Math.max(1,n.h) };
-  if (m === dr) return { side:'e', t:(cy - n.y) / Math.max(1,n.h) };
-  if (m === dt) return { side:'n', t:(cx - n.x) / Math.max(1,n.w) };
-  return { side:'s', t:(cx - n.x) / Math.max(1,n.w) };
+  if (m === dl) return { side:'w', t:clamp((cy - n.y) / Math.max(1,n.h)) };
+  if (m === dr) return { side:'e', t:clamp((cy - n.y) / Math.max(1,n.h)) };
+  if (m === dt) return { side:'n', t:clamp((cx - n.x) / Math.max(1,n.w)) };
+  return { side:'s', t:clamp((cx - n.x) / Math.max(1,n.w)) };
 }
 function handleAt(p){
   for (const h of handles) if (Math.hypot(p.x-h.x, p.y-h.y) <= h.r) return h;

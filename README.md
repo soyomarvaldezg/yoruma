@@ -72,7 +72,7 @@ budget at the demo size and at 200 shapes; `just measure` reproduces the curve.
 
 ```
 just deps      # once: verifier deps and Chromium
-just check     # 60 assertions in headless Chromium, non-zero exit on red
+just check     # 61 assertions in headless Chromium, non-zero exit on red
 just shots     # regenerate the README screenshots
 ```
 

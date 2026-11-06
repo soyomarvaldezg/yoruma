@@ -12,8 +12,9 @@ function render(){
   viewport.innerHTML = '';
   const defs = mk('defs');
   const mkArrow = (id, fill) => {
-    const m = mk('marker', { id, viewBox:'0 0 10 10', refX:'9', refY:'5',
-      markerWidth:'7', markerHeight:'7', orient:'auto-start-reverse' });
+    const m = mk('marker', { id, viewBox:'0 0 10 10', refX:'9.5', refY:'5',
+      markerWidth:'12', markerHeight:'12', markerUnits:'userSpaceOnUse',
+      orient:'auto-start-reverse' });
     m.appendChild(mk('path', { d:'M0 0 L10 5 L0 10 z', fill }));
     return m;
   };
@@ -215,7 +216,7 @@ function render(){
         [[p1,'from'],[p2,'to']].forEach(([p,end]) => {
           viewport.appendChild(mk('circle', { cx:p.x, cy:p.y, r:hs*0.6, fill:'#fff',
             stroke:FIBER, 'stroke-width':1.5/view.k, 'pointer-events':'none', class:'ui' }));
-          handles.push({ kind:'linkend', id:l.id, end, x:p.x, y:p.y, r:hs });
+          handles.push({ kind:'linkend', id:l.id, end, x:p.x, y:p.y, r:hs * 1.7 });
         });
         const wp = midPoint(route(a, b, l.way, l));
         viewport.appendChild(mk('circle', { cx:wp.x, cy:wp.y, r:hs*0.72, fill:FIBER,

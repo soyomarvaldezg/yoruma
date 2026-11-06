@@ -83,7 +83,7 @@ overlays. The scaling curve lives in the README and can be reproduced with `just
 ## Verifying work
 
 ```
-just check     # 60 assertions in headless Chromium; non-zero exit on red
+just check     # 61 assertions in headless Chromium; non-zero exit on red
 ```
 
 The suite drives the real page, including synthetic pointer events, so a green run means the
