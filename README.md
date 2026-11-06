@@ -7,6 +7,11 @@ real brand logos, notes on arrows, and a present mode that walks the diagram ste
 Nothing to install, no build step. It starts on a blank canvas; **EXAMPLES ▾** loads a modern
 BI stack, a real-time streaming pipeline or an ML platform, built only from the Blocks.
 
+**Beta, and it moves.** yoruma is a work in progress. Expect rough edges: a gesture that
+behaves oddly, an export that misses a detail, a feature that changes shape next week. The
+suite runs on every push and the document format is versioned, but nothing here is a promise.
+Download a JSON copy of anything you would hate to redraw.
+
 ![The editor with the modern BI example open](docs/editor.png)
 
 ## What it does
