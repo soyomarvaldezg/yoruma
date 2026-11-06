@@ -39,6 +39,7 @@ without renaming its neighbours.
 | `js/84-inspector.js` | sidebar X/Y/W/H and `commitBox` |
 | `js/86-sidebar.js` | Draw palette, Blocks catalog and filter, clipboard paste |
 | `js/88-colour-motion.js` | paint targets, swatches, `applyColor`, motion, dot and font size |
+| `js/89-lint.js` | text overflow and arrow-crossing lint, the LINT pill and its click cycle |
 | `js/90-export.js` | `diagramId`, `diagramSkip`, Mermaid and D2 builders |
 | `js/92-parse.js` | schema validation, import flow, downloads and Kroki links |
 | `js/94-hud.js` | zoom bar, status line, toasts, the steps model, present walkthrough, menus |
@@ -83,7 +84,7 @@ overlays. The scaling curve lives in the README and can be reproduced with `just
 ## Verifying work
 
 ```
-just check     # 61 assertions in headless Chromium; non-zero exit on red
+just check     # 67 assertions in headless Chromium; non-zero exit on red
 ```
 
 The suite drives the real page, including synthetic pointer events, so a green run means the

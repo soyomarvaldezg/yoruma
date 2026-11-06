@@ -467,6 +467,43 @@ if (/[?&]test/.test(location.search)){
   } catch (e){ badLinks = true; }
   ok('json import rejects bad links', badLinks);
 
+  const lintN = nodes, lintL = links;
+  nodes = [
+    { id:'LX', kind:'box', title:'A', sub:'', color:null, tcolor:null, scolor:null,
+      fill:null, fs:1, x:100, y:100, w:180, h:110 },
+    { id:'LY', kind:'box', title:'B', sub:'', color:null, tcolor:null, scolor:null,
+      fill:null, fs:1, x:700, y:100, w:180, h:110 },
+    { id:'LZ', kind:'box', title:'wall', sub:'', color:null, tcolor:null, scolor:null,
+      fill:null, fs:1, x:380, y:60, w:160, h:180 },
+    { id:'LW', kind:'box', title:'supercalifragilisticexpialidocious', sub:'', color:null,
+      tcolor:null, scolor:null, fill:null, fs:1, x:100, y:400, w:140, h:80 },
+    { id:'LC', kind:'box', title:'one two three four five six seven eight', sub:'', color:null,
+      tcolor:null, scolor:null, fill:null, fs:1, x:100, y:560, w:140, h:80 }
+  ];
+  links = [{ id:'lk1', from:'LX', to:'LY', color:null, motion:null, label:'',
+    way:null, head:true, fromSide:'e', fromT:0.5, toSide:'w', toT:0.5 }];
+  render();
+  const li = lintIssues();
+  ok('lint flags text outside the shape',
+    li.some(i => i.id === 'LW' && i.type === 'text' && /outside/.test(i.msg)));
+  ok('lint flags cut-off text',
+    li.some(i => i.id === 'LC' && i.type === 'text' && /cut/.test(i.msg)));
+  ok('lint flags an arrow crossing a shape',
+    li.some(i => i.id === 'lk1' && i.type === 'cross'));
+  nodes = nodes.filter(n => n.id !== 'LZ');
+  render();
+  ok('lint stays quiet without the crossing',
+    !lintIssues().some(i => i.type === 'cross'));
+  syncLint();
+  const chip = document.getElementById('lint-chip');
+  ok('lint chip lists the issues', !!chip && !chip.hidden && /LINT/.test(chip.textContent));
+  chip.click();
+  ok('lint chip click selects the offender',
+    S.selNodes.length === 1 && lintList.some(i => i.id === S.selNodes[0]));
+  nodes = lintN;
+  links = lintL;
+  render();
+
   setTimeout(() => {
     render();
     setTimeout(() => {

@@ -25,6 +25,10 @@ BI stack, a real-time streaming pipeline or an ML platform, built only from the 
 - **Blocks**: the reference capabilities in ten groups, mirroring Omar's
   [enterprise data architecture reference](https://github.com/soyomarvaldezg/enterprise-data-architecture-reference)
   (CC BY 4.0), narrowed to what its nine worked flows actually draw.
+- **Lint**: a small **LINT · n** pill appears above the status line when text runs outside or is
+  cut off in a shape, or an arrow crosses a shape it is not attached to. Hover lists the
+  problems, clicking steps through them and selects the offender. It only points; fixing stays
+  with you.
 
 ![Nested zones: VPC, region and subnet, with header bands](docs/zones.png)
 

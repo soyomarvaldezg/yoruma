@@ -140,7 +140,7 @@ function render(){
 
   const zoneLabels = mk('g');
   nodes.filter(n => n.kind === 'zone').forEach(n => {
-    const g = mk('g');
+    const g = mk('g', { 'data-id':n.id });
     drawText(g, n);
     if (dimmed(n)) g.setAttribute('opacity', '.22');
     zoneLabels.appendChild(g);
@@ -242,5 +242,6 @@ function render(){
   placeShaper();
   placeLinkbar();
   save();
+  if (!lite) lintSoon();
 }
 
