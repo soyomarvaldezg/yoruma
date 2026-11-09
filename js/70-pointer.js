@@ -9,6 +9,12 @@ stage.addEventListener('pointerdown', ev => {
     return;
   }
   if (ev.button !== 0) return;
+  if (S.tool === 'hand'){
+    pan = { sx:ev.clientX, sy:ev.clientY, vx:view.x, vy:view.y };
+    stage.classList.add('panning');
+    cap(ev);
+    return;
+  }
   if (document.body.classList.contains('present')){ stepPresent(1); return; }
 
   const p = toWorld(ev);
@@ -48,11 +54,7 @@ stage.addEventListener('pointerdown', ev => {
       bend = { l: links.find(x => x.id === h.id), moved:false };
     } else if (h.kind === 'resize'){
       const n = byId(h.id);
-      const kids = n.kind === 'zone'
-        ? zoneMembers(n).map(m => ({ m, rx:(m.x - n.x)/n.w, ry:(m.y - n.y)/n.h,
-              rw:m.w/n.w, rh:m.h/n.h }))
-        : [];
-      resize = { n, corner:h.corner, ox:n.x, oy:n.y, ow:n.w, oh:n.h, kids, moved:false };
+      resize = { n, corner:h.corner, ox:n.x, oy:n.y, ow:n.w, oh:n.h, moved:false };
     } else {
       const l = links.find(x => x.id === h.id);
       lend = { l, end:h.end, other: h.end === 'from' ? byId(l.to) : byId(l.from) };
@@ -179,12 +181,6 @@ stage.addEventListener('pointermove', ev => {
     n.y = Math.round(Math.min(y1,y2));
     n.w = Math.max(60, Math.round(Math.abs(x2-x1)));
     n.h = Math.max(36, Math.round(Math.abs(y2-y1)));
-    resize.kids.forEach(k => {
-      k.m.x = Math.round(n.x + k.rx*n.w);
-      k.m.y = Math.round(n.y + k.ry*n.h);
-      k.m.w = Math.max(12, Math.round(k.rw*n.w));
-      k.m.h = Math.max(12, Math.round(k.rh*n.h));
-    });
     renderSoon();
     return;
   }

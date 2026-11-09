@@ -138,6 +138,16 @@ if (/[?&]test/.test(location.search)){
   const styledPath = Array.from(stage.querySelectorAll(`[data-link="${lnk.id}"] path`))
     .find(p => (p.getAttribute('marker-start') || '').startsWith('url('));
   ok('arrow style renders', !!styledPath && styledPath.getAttribute('stroke-dasharray') === '7 5');
+  const accentBefore = links.find(l => l.id === lnk.id).color;
+  box.color = '#E03131';
+  delete links.find(l => l.id === lnk.id).color;
+  render();
+  const plainPath = stage.querySelector(
+    `[data-link="${lnk.id}"] path:not(.linkhit):not(.ui)`);
+  const staysNeutral = plainPath && plainPath.getAttribute('stroke') === LINE;
+  links.find(l => l.id === lnk.id).color = accentBefore;
+  render();
+  ok('arrows keep their own colour, not the shape accent', staysNeutral);
 
   setMotion('dashes');
   const march = stage.querySelector(`[data-link="${lnk.id}"] path.march`);
@@ -186,7 +196,24 @@ if (/[?&]test/.test(location.search)){
 
   setMotion('dots');
   ok('dots render', motionEls.length > 0);
+  const dotEl = motionEls[0];
+  dotEl.el.setAttribute('cx', '');
+  tickFrame(performance.now() + 200);
+  tickFrame(performance.now() + 600);
+  const dotMoved = dotEl.el.getAttribute('cx') !== '' &&
+                   Number.isFinite(Number(dotEl.el.getAttribute('cx')));
+  ok('dots travel along their arrows', dotMoved && dotEl.el.getAttribute('opacity') === '.9');
+  setMotion('live');
+  const comets = stage.querySelectorAll('path.comet');
+  const halos = stage.querySelectorAll('path.comet-halo');
+  const cometDash = comets[0] && comets[0].getAttribute('stroke-dasharray');
+  ok('live motion draws a travelling comet',
+     comets.length === links.length && halos.length === links.length &&
+     !!cometDash && cometDash.split(' ').length === 2 &&
+     comets[0].getAnimations().length === 1 &&
+     Number(comets[0].getAttribute('data-lap')) > 20);
   setMotion('off');
+  ok('leaving live removes the comets', stage.querySelectorAll('path.comet').length === 0);
 
   const pe = (type, cx, cy) => stage.dispatchEvent(new PointerEvent(type, {
     bubbles:true, cancelable:true, clientX:cx, clientY:cy, button:0,
@@ -256,7 +283,7 @@ if (/[?&]test/.test(location.search)){
   sw2.dispatchEvent(new PointerEvent('pointerdown', { bubbles:true, clientX:rb.left+7, clientY:rb.top+7, pointerId:1 }));
   const fb = toScreen({ x:box.x+box.w/2, y:box.y+box.h/2 });
   window.dispatchEvent(new PointerEvent('pointerup', { bubbles:true, clientX:fb.x, clientY:fb.y }));
-  ok('drag a swatch tints a card', box.color === sw2.dataset.hex && box.tint === true);
+  ok('drag a swatch tints a card', box.fill === sw2.dataset.hex && box.tint === true);
   S.paint = prevPaint;
 
   const keptFill = box.fill;
@@ -268,6 +295,13 @@ if (/[?&]test/.test(location.search)){
   render();
   const trect = stage.querySelector(`g.node[data-id="${box.id}"] rect`);
   ok('tinted card', !!trect && trect.getAttribute('fill') === hexA('#08829C', .1));
+  box.color = '#E03131';
+  render();
+  const combo = stage.querySelector(`g.node[data-id="${box.id}"] rect`);
+  ok('outline and tint keep separate colours',
+     box.fill === '#08829C' && box.tint === true &&
+     combo.getAttribute('fill') === hexA('#08829C', .1) &&
+     combo.getAttribute('stroke') === '#E03131');
   box.tint = false; box.color = null; box.fill = keptFill;
   S.paint = 'line';
   render();
@@ -293,6 +327,14 @@ if (/[?&]test/.test(location.search)){
   send('pointerdown', {x:zone.x+2, y:zone.y+zone.h/2});
   send('pointerup', {x:zone.x+2, y:zone.y+zone.h/2});
   ok('zone border selects', S.selNodes[0] === zone.id);
+  clearSel(); setTool('hand', 'draw'); render();
+  const vx0 = view.x, vy0 = view.y;
+  send('pointerdown', { x:600, y:600 });
+  send('pointermove', { x:660, y:640 });
+  send('pointerup', { x:660, y:640 });
+  ok('hand tool pans without selecting',
+     view.x === vx0 + 60 && view.y === vy0 + 40 && S.selNodes.length === 0);
+  setTool('select', 'draw'); render();
 
   setTool('box', 'draw');
   drag({x:zone.x+40,y:zone.y+40},{x:zone.x+240,y:zone.y+160});
@@ -300,12 +342,11 @@ if (/[?&]test/.test(location.search)){
   setTool('select', 'draw');
   selectNodes([zone.id], false);
   render();
-  const zw = zone.w, kw = kid.w;
+  const zw = zone.w, kw = kid.w, kx = kid.x, ky = kid.y, kh = kid.h;
   drag({x:zone.x+zone.w,y:zone.y+zone.h},{x:zone.x+zone.w+120,y:zone.y+zone.h+80});
-  ok('zone resize scales children',
-    zone.w >= zw+100 && kid.w >= kw+30 &&
-    kid.x >= zone.x && kid.y >= zone.y &&
-    kid.x + kid.w <= zone.x + zone.w && kid.y + kid.h <= zone.y + zone.h);
+  ok('zone resize leaves children alone',
+    zone.w >= zw+100 && zone.h >= 240 &&
+    kid.w === kw && kid.h === kh && kid.x === kx && kid.y === ky);
 
   const zo1 = { id:'zo1', kind:'zone', title:'Outer', color:null, tcolor:null, scolor:null,
     fs:1, x:400, y:1250, w:300, h:220 };
@@ -376,16 +417,75 @@ if (/[?&]test/.test(location.search)){
   cf.dispatchEvent(new Event('input', { bubbles:true }));
 
   S.selNodes = [box.id]; S.selLinks = []; render();
-  const ix = document.getElementById('i-x');
-  ix.value = '500';
-  ix.dispatchEvent(new Event('change', { bubbles:true }));
-  const ib = byId(box.id);
-  ok('size inspector', ib.x === 500);
+  const sbar = document.getElementById('stylebar');
+  ok('style bar follows the selection',
+     getComputedStyle(sbar).display === 'block' &&
+     document.getElementById('swatches').children.length > 12 &&
+     getComputedStyle(document.getElementById('paint')).display !== 'none');
+  ok('inspector is gone', !document.getElementById('i-x'));
+  setTool('box', 'draw');
+  ok('style bar steps out of the way while drawing',
+     getComputedStyle(document.getElementById('stylebar')).display === 'none');
+  setTool('select', 'draw');
+  render();
+  S.selNodes = [box.id]; S.selLinks = []; render();
+  const sbRect = sbar.getBoundingClientRect();
+  ok('style bar docks at the top right',
+     sbRect.right <= window.innerWidth && sbRect.right > window.innerWidth - 60 &&
+     sbRect.top < 140);
+  const openMenus = () => ['insert-menu','steps-menu','demo-menu','menu']
+    .filter(id => document.getElementById(id).classList.contains('on'));
+  const menuFor = { 'btn-insert':'insert-menu', 'btn-steps':'steps-menu',
+    'btn-demo':'demo-menu', 'btn-file':'menu' };
+  let menuOk = true, fileClipped = 0;
+  Object.keys(menuFor).forEach(id => {
+    document.getElementById(id).click();
+    const open = openMenus();
+    if (open.length !== 1 || open[0] !== menuFor[id]) menuOk = false;
+    if (id === 'btn-file')
+      fileClipped = Array.from(document.querySelectorAll('#menu button'))
+        .filter(btn => btn.scrollWidth > btn.clientWidth + 1).length;
+  });
+  const fileRight = document.getElementById('menu').getBoundingClientRect().right;
+  document.body.click();
+  ok('only one top menu opens at a time', menuOk && openMenus().length === 0);
+  ok('file menu fits its labels on screen',
+     fileClipped === 0 && fileRight <= window.innerWidth);
+  const firstLink = links[0];
+  S.selNodes = []; S.selLinks = [firstLink.id]; render();
+  ok('style bar serves arrows too',
+     getComputedStyle(sbar).display === 'block' &&
+     document.getElementById('paint').style.display === 'none');
+  S.selNodes = []; S.selLinks = []; render();
+  ok('style bar hides without a selection',
+     getComputedStyle(sbar).display === 'none');
 
+  const keepAllN = nodes, keepAllL = links;
+  nodes = [
+    { id:'lgz', kind:'zone', title:'Lane', color:'#099268', x:0, y:0, w:600, h:320 },
+    { id:'lgx', kind:'box', title:'A', color:null, x:40, y:40, w:180, h:90 },
+    { id:'lgy', kind:'box', title:'B', color:null, x:320, y:40, w:180, h:90 }
+  ];
+  links = [{ id:'lgl1', from:'lgx', to:'lgy', label:'', color:null, motion:null, dash:true, way:null }];
+  render();
   setPresent(true);
   const asideHidden = getComputedStyle(document.querySelector('aside')).display === 'none';
   ok('present mode', document.body.classList.contains('present') && asideHidden);
+  const lg = document.getElementById('legend');
+  const lgText = lg.innerText;
+  const lgRows = lg.querySelectorAll('.lg-row').length;
+  toggleLegend();
+  const lgOff = !lg.classList.contains('on');
+  toggleLegend();
+  ok('present legend lists zones and arrow styles',
+     lg.classList.contains('on') && lgRows === 2 &&
+     /Lane/.test(lgText) && /batch/i.test(lgText));
+  ok('legend toggles off', lgOff);
   setPresent(false);
+  nodes = keepAllN; links = keepAllL;
+  ok('legend hides when leaving present mode',
+     !document.getElementById('legend').classList.contains('on'));
+  render();
 
   const pzA = { id:'pz1', kind:'zone', title:'02 / Later', x:900, y:0, w:80, h:80 };
   const pzB = { id:'pz2', kind:'zone', title:'01 / First', x:0, y:400, w:80, h:80 };
@@ -504,15 +604,201 @@ if (/[?&]test/.test(location.search)){
   links = lintL;
   render();
 
+  const TXT = [
+    '# a comment',
+    'dir: right',
+    'zone Azure:',
+    '  dir: down',
+    '  card Gateway:',
+    '    sub: entry point',
+    '  card API',
+    '  db Events:',
+      '    brand: kafka',
+      'db Postgres:',
+      '  brand: postgres',
+    '  tint: true',
+    'Gateway -> API',
+    'API -> Postgres: reads',
+    'Gateway -- Events'
+  ].join('\n');
+  const TXT_ERRORS = [
+    ['duplicate name', 'card A\ncard A'],
+    ['unknown kind', 'widget A'],
+    ['missing arrow target', 'card A\nA -> B'],
+    ['tab indent', 'card A:\n\tsub: x'],
+    ['unknown prop', 'card A:\n  sn: x'],
+    ['nameless shape', 'card:']
+  ];
+  let tParse = null;
+  try { tParse = parseText(TXT); }
+  catch (e){ tParse = 'threw: ' + e.message; }
+  const tOk = Array.isArray(tParse && tParse.shapes);
+  const tShapes = tOk ? tParse.shapes : [];
+  const tFind = name => tShapes.find(s => s.name === name) || { props:{} };
+  ok('text parser reads shapes and props', tOk &&
+     tShapes.length === 5 &&
+     tFind('Gateway').kind === 'box' && tFind('Gateway').props.sub === 'entry point' &&
+     tFind('Events').kind === 'store' && tFind('Events').props.brand === 'kafka' &&
+     tFind('Postgres').props.tint === true &&
+     tFind('Azure').kind === 'zone' && tFind('Azure').props.dir === 'down' &&
+     tParse.dir === 'right');
+  ok('text parser reads arrows', tOk && tParse.links.length === 3 &&
+     tParse.links[0].from === 'Gateway' && tParse.links[0].to === 'API' &&
+     tParse.links[1].label === 'reads' && tParse.links[2].head === false);
+  ok('arrow motion accepts live',
+     parseText('card A\ncard B\nA -> B:\n  motion: live').links[0].motion === 'live');
+  ok('text parser reads arrow props',
+     parseText('card A\ncard B\nA -> B:\n  color: "#4263EB"\n  dash: true\n  motion: dots')
+       .links[0].color === '#4263EB' &&
+     parseText('card A\ncard B\nA -> B:\n  dash: true').links[0].dash === true &&
+     parseText('card A\ncard B\nA <-> B:\n  motion: both')
+       .links.every(l => l.motion === 'both') &&
+     parseText('card A\ncard B\ncard C\ncard D\nA -> B\nC -> D:\n  color: "#099268"')
+       .links[0].color == null);
+  ok('text arrow props reach the document', (() => {
+    const d = textDoc('card A\ncard B\nA -> B:\n  color: "#4263EB"\n  motion: dashes\n  dash: true');
+    const l = d.links[0];
+    if (!(l.color === '#4263EB' && l.motion === 'dashes' && l.dash === true)) return false;
+    const r = parseDoc(JSON.stringify(d));
+    const rl = r.links[0];
+    return rl.color === '#4263EB' && rl.motion === 'dashes' && rl.dash === true;
+  })());
+  let tArrowBad = 0;
+  for (const [what, src] of [
+    ['bad arrow colour', 'card A\ncard B\nA -> B:\n  color: red'],
+    ['bad arrow motion', 'card A\ncard B\nA -> B:\n  motion: sideways'],
+    ['bad arrow dash', 'card A\ncard B\nA -> B:\n  dash: maybe'],
+    ['unknown arrow prop', 'card A\ncard B\nA -> B:\n  speed: fast'],
+    ['shape under arrow', 'card A\ncard B\nA -> B:\n  card C']
+  ]){
+    let threw = '';
+    try { parseText(src); } catch (e){ threw = e.message; }
+    if (threw) tArrowBad++;
+    else console.log('arrow error miss:', what);
+  }
+  ok('text parser rejects bad arrow props', tArrowBad === 5);
+  ok('text parser reads colonless props',
+     parseText('card A:\n  brand kafka\ncard B\nA -> B').shapes[0].props.brand === 'kafka');
+  ok('text parser reads colour props',
+     parseText('card A:\n  color: "#4263EB"\n  fill: "#F6B26B"\ncard B\nA -> B')
+       .shapes[0].props.fill === '#F6B26B' &&
+     parseText('zone Z:\n  color: "#F6B26B"\n  card A\ncard B\nA -> B')
+       .shapes[0].props.color === '#F6B26B');
+  let tBad = 0;
+  for (const [what, src] of TXT_ERRORS){
+    let threw = '';
+    try { parseText(src); } catch (e){ threw = e.message; }
+    if (threw) tBad++;
+    else console.log('text error miss:', what);
+  }
+  ok('text parser rejects the six bad inputs', tBad === TXT_ERRORS.length);
+  let tRound = null;
+  try { tRound = parseDoc(JSON.stringify(textDoc(TXT))); }
+  catch (e){ tRound = null; }
+  ok('text document passes the trust boundary', !!tRound &&
+     tRound.nodes.length === 5 && tRound.links.length === 3);
+  const tZone = tRound && tRound.nodes.find(n => n.id === 'azure');
+  const tInside = ['gateway','api','events'].every(idn => {
+    const c = tRound.nodes.find(n => n.id === idn);
+    return c.x >= tZone.x && c.y >= tZone.y &&
+           c.x + c.w <= tZone.x + tZone.w && c.y + c.h <= tZone.y + tZone.h;
+  });
+  ok('text layout packs the zone around its children', !!tZone &&
+     tZone.w > 300 && tZone.h > 200 && tInside);
+  const tOver = (() => {
+    const list = tRound.nodes.filter(n => n.kind !== 'zone');
+    for (let i = 0; i < list.length; i++)
+      for (let j = i + 1; j < list.length; j++){
+        const a = list[i], b = list[j];
+        if (a.x < b.x + b.w && b.x < a.x + a.w &&
+            a.y < b.y + b.h && b.y < a.y + b.h) return true;
+      }
+    return false;
+  })();
+  ok('text layout never overlaps shapes', !tOver);
+  const tFlow = textDoc('card A\ncard B\nA -> B');
+  const tA = tFlow.nodes.find(n => n.title === 'A');
+  const tB = tFlow.nodes.find(n => n.title === 'B');
+  ok('text layout flows right by default', tB.x > tA.x && Math.abs(tB.y - tA.y) < 1);
+  const tDown = textDoc('dir: down\ncard A\ncard B\nA -> B');
+  const tDA = tDown.nodes.find(n => n.title === 'A');
+  const tDB = tDown.nodes.find(n => n.title === 'B');
+  ok('text layout flows down on request', tDB.y > tDA.y);
+  const tPin = textDoc('card A:\n  x: 500\n  y: 300\ncard B\nA -> B');
+  const tWide = textDoc('card A:\n  w: 320\ncard B\nA -> B');
+  ok('text layout honours a lone width',
+     tWide.nodes[0].w === 320 && tWide.nodes[0].h === SIZE.box[1]);
+  ok('text layout respects explicit coordinates',
+     tPin.nodes[0].x === 500 && tPin.nodes[0].y === 300);
+  ok('text layout is deterministic',
+     JSON.stringify(textDoc(TXT)) === JSON.stringify(textDoc(TXT)));
+  const tFan = textDoc('card A\ncard B\ncard C\nA -> B\nA -> C');
+  const yCtr = (d, t) => {
+    const n = d.nodes.find(x => x.title === t);
+    return n.y + n.h / 2;
+  };
+  ok('text layout aligns shapes to their neighbours',
+     Math.abs((yCtr(tFan, 'B') + yCtr(tFan, 'C')) / 2 - yCtr(tFan, 'A')) < 2 &&
+     Math.abs(yCtr(textDoc('card A\ndb B\nA -> B'), 'A') -
+              yCtr(textDoc('card A\ndb B\nA -> B'), 'B')) < 2);
+  const tHead = textDoc('title: Mock Pipeline\nsubtitle: three sources\ncard A\ncard B\nA -> B');
+  const hTitle = tHead.nodes.find(n => n.kind === 'heading');
+  const hSub = tHead.nodes.find(n => n.kind === 'text');
+  const hA = tHead.nodes.find(n => n.title === 'A');
+  ok('text header renders title and subtitle above the diagram',
+     !!hTitle && hTitle.title === 'Mock Pipeline' && hTitle.align === 'center' &&
+     !!hSub && hSub.title === 'three sources' &&
+     hTitle.y < hSub.y && hSub.y + hSub.h <= hA.y && hTitle.w >= hA.w);
+  const hRound = parseDoc(JSON.stringify(tHead));
+  ok('text header survives the trust boundary',
+     hRound.nodes.filter(n => n.kind === 'heading').length === 1 &&
+     hRound.nodes.filter(n => n.kind === 'text').length === 1);
+  let tHeadBad = 0;
+  for (const src of ['title:\ncard A', 'subtitle:\ncard A'])
+    try { parseText(src); } catch (e){ tHeadBad++; }
+  ok('text parser rejects an empty title or subtitle', tHeadBad === 2);
+  const tTheme = textDoc('theme: data\ndb Orders\ncard Card A\nqueue Events\nOrders -> Card A');
+  const thDb = tTheme.nodes.find(n => n.title === 'Orders');
+  const thCard = tTheme.nodes.find(n => n.title === 'Card A');
+  const thQ = tTheme.nodes.find(n => n.title === 'Events');
+  ok('theme data tones shapes by kind',
+     thDb.color === '#099268' && thQ.color === '#F76707' && thCard.color === null &&
+     textDoc('db Orders\ncard Card A\nOrders -> Card A').nodes[0].color === null);
+  let thBad = 0;
+  try { parseText('theme: neon\ncard A'); } catch (e){ thBad++; }
+  ok('theme rejects unknown palettes', thBad === 1);
+
   setTimeout(() => {
     render();
-    setTimeout(() => {
+    setTimeout(async () => {
       let saved = false;
       try {
         const raw = localStorage.getItem('yoruma.doc.v1');
         saved = !!raw && JSON.parse(raw).nodes.length === nodes.length;
       } catch (e){}
       ok('document saved', saved);
+
+      const got = { dl: [], toasts: [], clip: [] };
+      const realDownload = window.download, realToast = window.toast;
+      window.download = (name, blob) => got.dl.push({ name, blob });
+      window.toast = m => got.toasts.push(m);
+      const realWrite = navigator.clipboard && navigator.clipboard.write;
+      if (navigator.clipboard)
+        navigator.clipboard.write = items => (got.clip.push(items), Promise.resolve());
+      const btn = x => document.querySelector('#menu button[data-x="' + x + '"]');
+      btn('webp').click();
+      await new Promise(r => setTimeout(r, 250));
+      btn('png-copy').click();
+      await new Promise(r => setTimeout(r, 250));
+      window.download = realDownload;
+      window.toast = realToast;
+      if (navigator.clipboard && realWrite) navigator.clipboard.write = realWrite;
+      const wb = got.dl.find(d => d.name === 'yoruma.webp');
+      const cp = got.clip[0] && got.clip[0][0];
+      ok('webp export and png clipboard copy',
+         !!wb && wb.blob.type === 'image/webp' && got.toasts.includes('webp downloaded') &&
+         !!cp && [...cp.types].includes('image/png') &&
+         got.toasts.includes('image copied to clipboard'));
 
       const times = [];
       for (let i = 0; i < 24; i++){

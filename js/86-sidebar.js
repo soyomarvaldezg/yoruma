@@ -326,6 +326,7 @@ function setTool(id, group){
     b.classList.toggle('on', b.dataset.tool === id));
   document.body.dataset.tool = id;
   syncHud();
+  if (typeof placeStylebar === 'function') placeStylebar();
 }
 
 const catalogEl = document.getElementById('catalog');

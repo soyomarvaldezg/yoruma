@@ -2,6 +2,23 @@
 let motionEls = [], handles = [];
 const lenCache = new Map();
 
+function tick(now){
+  requestAnimationFrame(tick);
+  tickFrame(now);
+}
+function tickFrame(now){
+  if (!motionEls.length || document.hidden) return;
+  motionEls.forEach(m => {
+    const t = (now * m.speed + m.phase) % 1;
+    const p = m.path.getPointAtLength((m.dir < 0 ? 1 - t : t) * m.len);
+    const el = m.el;
+    el.setAttribute('cx', p.x);
+    el.setAttribute('cy', p.y);
+    el.setAttribute('r', m.base);
+    el.setAttribute('opacity', '.9');
+  });
+}
+
 function renderSoon(){
   if (rafPending) return;
   rafPending = true;
@@ -22,8 +39,7 @@ function render(){
   const colors = new Set([LINE, FIBER]);
   ACCENTS.forEach(c => colors.add(c));
   links.forEach(l => {
-    const a = byId(l.from);
-    const c = colorAt(l.color) || (a && accentOf(a));
+    const c = colorAt(l.color);
     if (c) colors.add(c);
   });
   nodes.forEach(n => {
@@ -61,18 +77,19 @@ function render(){
     world.appendChild(g);
   });
 
-  const drawn = [];
+  const drawn = [], liveQ = [];
   links.forEach(l => {
     const a = byId(l.from), b = byId(l.to);
     if (!a || !b) return;
     const pts = route(a, b, l.way, l);
     const d = rounded(pts, 7);
-    const col = colorAt(l.color) || accentOf(a);
+    const col = colorAt(l.color) || LINE;
     const selected = isSelLink(l.id);
     const mode = l.motion || S.motion;
     const animated = mode === 'dashes' || mode === 'both';
     const flow = animated;
-    const staticDash = l.dash === true && !animated;
+    const live = mode === 'live' && !lite;
+    const staticDash = l.dash === true && !animated && !live;
     const dir = l.head === false && l.headStart === true ? -1 : 1;
     const lw = l.lw || 1.5;
     const g = mk('g', { 'data-link':l.id });
@@ -83,7 +100,7 @@ function render(){
       'stroke-width': selected ? Math.max(2.6, lw + 1.1) : lw, 'stroke-linecap':'round',
       'marker-end': l.head === false ? 'none' : `url(#${markerId(col || LINE)})`,
       'marker-start': l.headStart ? `url(#${markerId(col || LINE)})` : 'none',
-      opacity: flow && !lite ? 0.22 : 1,
+      opacity: flow && !lite ? 0.22 : (live ? 0.3 : 1),
       ...(staticDash ? { 'stroke-dasharray':'7 5' } : {}),
       ...(flow ? { 'data-flow':'1' } : {}),
       ...(selected ? { 'data-sel':'1', 'data-lw':lw } : {}) }));
@@ -94,6 +111,18 @@ function render(){
         opacity:'.95', 'pointer-events':'none',
         'marker-end': l.head === false ? 'none' : `url(#${markerId(col || LINE)})`,
         'marker-start': l.headStart ? `url(#${markerId(col || LINE)})` : 'none' }));
+    if (live){
+      const halo = mk('path', { d, fill:'none', stroke: col || LINE,
+        'stroke-width': lw + 6, 'stroke-linecap':'round', opacity:'.13',
+        'pointer-events':'none', class:'ui comet-halo',
+        'data-live':dir < 0 ? '-1' : '1' });
+      const comet = mk('path', { d, fill:'none', stroke: col || LINE,
+        'stroke-width': lw + 1.3, 'stroke-linecap':'round', opacity:'.95',
+        'pointer-events':'none', class:'ui comet', 'data-live':dir < 0 ? '-1' : '1' });
+      g.appendChild(halo);
+      g.appendChild(comet);
+      liveQ.push({ el: comet, halo, dir });
+    }
     if (selected)
       g.appendChild(mk('path', { d, fill:'none', stroke:FIBER, 'stroke-width':1,
         'stroke-dasharray':'2 4', opacity:'.9', 'pointer-events':'none', class:'ui' }));
@@ -151,20 +180,40 @@ function render(){
 
   motionEls = [];
   if (!lite) drawn.forEach(({ link, d, mode, col }) => {
-    if (mode !== 'dots' && mode !== 'both') return;
-    const c = mk('circle', { r:'2.8', opacity:'0',
-      fill: col || (accentOf(byId(link.from)) || FIBER), class:'ui' });
-    viewport.appendChild(c);
-    const ghost = mk('path', { d, fill:'none', stroke:'none', class:'ui' });
-    viewport.appendChild(ghost);
-    let len = lenCache.get(d);
-    if (len == null){ len = ghost.getTotalLength(); lenCache.set(d, len); }
-    const lw = link.lw || 1.5;
-    const dir = link.head === false && link.headStart === true ? -1 : 1;
-    motionEls.push({ id:link.id, path:ghost, el:c, len, dir,
-      phase:(hash(link.id)%1000)/1000, speed:0.00022,
-      base: S.dotSize * Math.max(0.85, Math.min(1.5, lw / 1.5)),
-      seed:(hash(link.id)%97)/97 });
+    if (mode === 'dots' || mode === 'both'){
+      const c = mk('circle', { r:'2.8', opacity:'0',
+        fill: col || FIBER, class:'ui' });
+      viewport.appendChild(c);
+      const ghost = mk('path', { d, fill:'none', stroke:'none', class:'ui' });
+      viewport.appendChild(ghost);
+      let len = lenCache.get(d);
+      if (len == null){ len = ghost.getTotalLength(); lenCache.set(d, len); }
+      const lw = link.lw || 1.5;
+      const dir = link.head === false && link.headStart === true ? -1 : 1;
+      motionEls.push({ id:link.id, path:ghost, el:c, len, dir,
+        phase:(hash(link.id)%1000)/1000, speed:0.00022,
+        base: S.dotSize * Math.max(0.85, Math.min(1.5, lw / 1.5)),
+        seed:(hash(link.id)%97)/97 });
+    }
+  });
+  if (!lite) liveQ.forEach(({ el, halo, dir }) => {
+    const len = el.getTotalLength();
+    if (!len) return;
+    const tail = Math.round(Math.max(18, len * 0.16));
+    const lap = Math.round(len + 1);
+    const dash = `${tail} ${Math.max(1, lap - tail)}`;
+    const dur = Math.max(1200, Math.round(len * 5));
+    [el, halo].forEach(node => {
+      node.setAttribute('stroke-dasharray', dash);
+      node.setAttribute('data-lap', String(lap));
+      node.setAttribute('data-dur', String(dur));
+      try {
+        node.animate(
+          dir < 0 ? [{ strokeDashoffset: -lap }, { strokeDashoffset: 0 }]
+                  : [{ strokeDashoffset: 0 }, { strokeDashoffset: -lap }],
+          { duration: dur, iterations: Infinity, easing: 'linear' });
+      } catch (e){}
+    });
   });
 
   handles = [];
@@ -238,9 +287,9 @@ function render(){
 
   document.body.dataset.tool = S.tool;
   syncHud();
-  syncInspector();
   placeShaper();
   placeLinkbar();
+  placeStylebar();
   save();
   if (!lite) lintSoon();
 }

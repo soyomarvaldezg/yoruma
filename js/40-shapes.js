@@ -8,7 +8,9 @@ const LOGO_KINDS = new Set(['box','ellipse']);
 function shape(n){
   const { x, y, w, h } = n;
   const stroke = accentOf(n) || LINE;
-  const fillC = fillOf(n) || (n.tint && accentOf(n) ? hexA(accentOf(n), .10) : CARD);
+  const fillC = n.tint && (fillOf(n) || accentOf(n))
+    ? hexA(fillOf(n) || accentOf(n), .10)
+    : (fillOf(n) || CARD);
   const g = mk('g');
   const rect = () => g.appendChild(mk('rect', {
     x, y, width:w, height:h, rx:3, fill:fillC, stroke, 'stroke-width':1.2
@@ -212,7 +214,7 @@ function drawText(g, n){
   if (n.kind === 'heading'){
     const al = n.align || 'left';
     const hx = al === 'right' ? n.x + n.w - 6 : al === 'center' ? n.x + n.w/2 : n.x + 6;
-    addLines(g, hx, n.y + 19, al === 'right' ? 'end' : al === 'center' ? 'middle' : 'start',
+    addLines(g, hx, n.y + 19*k, al === 'right' ? 'end' : al === 'center' ? 'middle' : 'start',
       ink, CODE, 18*k, W1, '.14em', [title.toUpperCase()], 0, ST, 'title');
     return;
   }

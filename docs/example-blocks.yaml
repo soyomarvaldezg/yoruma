@@ -1,0 +1,133 @@
+# The Blocks palette itself, written as yoruma text — one zone per plane, one card per
+# chip. Every palette entry is a named card, so the text format can express all of it.
+dir: right
+theme: data
+title: The Blocks palette
+subtitle: every catalog chip as a card — 10 planes, 89 blocks
+
+zone Sources:
+  card Databases
+  card Applications
+  card Files & Documents
+  card Unstructured Data
+  card Messages & Events
+  card IoT Devices
+  card SaaS Applications
+  card APIs
+  card External Databases
+  card External Files
+  card Streaming Data
+  card Third-Party Data
+
+zone Integration:
+  card Batch
+  card Streaming
+  card Micro-batch
+  card CDC
+  card Publish & Subscribe
+  card Event Streaming
+  card Log-Based Replication:
+    w: 223
+  card Database Connectivity:
+    w: 223
+  card File Transfer
+  card VPN
+  card Private Service Connectivity:
+    w: 289
+  card Network Peering
+  card Dedicated Private Connectivity:
+    w: 308
+  card Secure Connectors
+
+zone Platform:
+  card Raw
+  card Standardized
+  card Curated
+  card Serving Views
+  card Data Transformation
+  card Batch Processing
+  card Stream Processing
+  card Event Processing
+  card Data Enrichment
+  card Schema Evolution
+  card Data Validation
+  card Published Datasets
+  card Materialized Views
+  card Data Marts
+  card Search Indexes
+
+zone Serving & Data Products:
+  card Business Metrics & KPIs:
+    w: 242
+  card Business Definitions:
+    w: 214
+  card Semantic Models
+  card Metric Models
+  card Semantic Query APIs
+  card SQL Access
+  card REST APIs
+  card GraphQL APIs
+  card Data Virtualization
+  card Secure Data Sharing
+  card Data Exchange
+  card Federated Data Access:
+    w: 223
+  card Data Products
+
+zone Consumption:
+  card Business Users
+  card Analysts
+  card Data Scientists
+  card ML Engineers
+  card Application Teams
+  card Operational Applications:
+    w: 252
+  card Downstream Systems
+  card Embedded Analytics
+  card Partner Applications:
+    w: 214
+  card Partners
+  card External Consumers
+  card Analytics & Reporting:
+    w: 223
+  card Advanced Analytics & Data Science:
+    w: 336
+  card Self-Service Analytics:
+    w: 233
+
+zone Metadata & Knowledge:
+  card Enterprise Catalog
+  card Data Lineage
+  card Data Classification
+  card Business Glossary
+
+zone Governance & Trust:
+  card Data Quality
+  card Data Observability
+  card Contract Policies
+  card Data Product Governance:
+    w: 242
+  card Policy as Code
+  card Lifecycle, Retention & Deletion:
+    w: 317
+  card Audit & Compliance Reporting:
+    w: 289
+
+zone Control Plane:
+  card Access Management
+  card Data Contracts Enforcement:
+    w: 270
+  card Workflow & Orchestration:
+    w: 252
+
+zone Platform Engineering:
+  card CI/CD & DevOps
+  card Observability & Monitoring:
+    w: 270
+
+zone ML & AI:
+  card Feature Store
+  card Experiment Tracking
+  card Model Registry
+  card Model Serving
+  card Evaluation & Drift

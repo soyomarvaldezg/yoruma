@@ -216,12 +216,12 @@ LINK_STYLE.forEach(opt => {
       if (b.dataset.lw != null) l.lw = +b.dataset.lw;
       else if (b.dataset.dash){
         const mode = l.motion || S.motion;
-        const animated = mode === 'dashes' || mode === 'both';
+        const animated = mode === 'dashes' || mode === 'both' || mode === 'live';
         const on = animated || l.dash === true;
         l.dash = !on;
         if (on){
           if (mode === 'both') l.motion = 'dots';
-          else if (mode === 'dashes') l.motion = 'off';
+          else if (mode === 'dashes' || mode === 'live') l.motion = 'off';
         }
       }
       else if (b.dataset.head) l.head = l.head === false;
@@ -264,7 +264,7 @@ function placeLinkbar(){
   linkbar.style.top = (above < 8 ? s.y + 18 : above) + 'px';
   const lw = l.lw || 1.5;
   const mode = l.motion || S.motion;
-  const animated = mode === 'dashes' || mode === 'both';
+  const animated = mode === 'dashes' || mode === 'both' || mode === 'live';
   const dashOn = animated || l.dash === true;
   linkbar.querySelectorAll('button').forEach(btn => {
     if (btn.dataset.lw){
@@ -284,5 +284,5 @@ function placeLinkbar(){
     }
   });
 }
-window.addEventListener('resize', () => { placeShaper(); placeLinkbar(); });
+window.addEventListener('resize', () => { placeShaper(); placeLinkbar(); placeStylebar(); });
 

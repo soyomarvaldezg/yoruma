@@ -31,17 +31,17 @@ without renaming its neighbours.
 | `js/20-view.js` | pan, zoom, fit, `applyView` |
 | `js/30-routing.js` | anchors, the 26px stubs, bend handling, `midPoint` |
 | `js/40-shapes.js` | every shape kind, glyph icons, zone bands, `drawText` |
-| `js/50-render.js` | `render()`, present dimming, handles, motion dots, the lite drag path |
+| `js/50-render.js` | `render()`, present dimming, handles, motion dots, live comets, the tick that moves them, the lite drag path |
 | `js/60-hit.js` | `nodeAt`, `handleAt`, `zoneHit`, the paint-target picker |
 | `js/70-pointer.js` | pointer listeners: drag, resize, bend, marquee, pan, arrow pen |
 | `js/80-editor.js` | the inline title, subtitle and note editor |
 | `js/82-shaper.js` | floating shape bar, arrow style bar, brand picker and logo fetch |
-| `js/84-inspector.js` | sidebar X/Y/W/H and `commitBox` |
 | `js/86-sidebar.js` | Draw palette, Blocks catalog and filter, clipboard paste |
-| `js/88-colour-motion.js` | paint targets, swatches, `applyColor`, motion, dot and font size |
+| `js/88-colour-motion.js` | paint targets, swatches, the floating style bar, `applyColor`, motion, dot and font size |
 | `js/89-lint.js` | text overflow and arrow-crossing lint, the LINT pill and its click cycle |
 | `js/90-export.js` | `diagramId`, `diagramSkip`, Mermaid and D2 builders |
 | `js/92-parse.js` | schema validation, import flow, downloads and Kroki links |
+| `js/93-text.js` | the text format: YAML-subset parser, deterministic packer, text import |
 | `js/94-hud.js` | zoom bar, status line, toasts, the steps model, present walkthrough, menus |
 | `js/96-keys.js` | the global key handler and present navigation |
 | `js/98-boot.js` | restore-or-blank, initial fit, animation tick |
@@ -59,6 +59,8 @@ without renaming its neighbours.
 - **A new panel or menu**: build it in `86-sidebar.js` or `94-hud.js`, style it in `app.css`.
 - **A new node field**: validate it in `parseNode` (`92-parse.js`) or it will be dropped on
   load; document it here and in the README.
+- **A text-format change**: grammar and packer live in `93-text.js`; anything the parser
+  accepts must survive `parseDoc` unchanged.
 - **Something visual about zones or cards**: `40-shapes.js` draws it; state lives in `00-core`
   and the floating bar controls it in `82-shaper.js`.
 
@@ -84,7 +86,7 @@ overlays. The scaling curve lives in the README and can be reproduced with `just
 ## Verifying work
 
 ```
-just check     # 67 assertions in headless Chromium; non-zero exit on red
+just check     # 77 assertions in headless Chromium; non-zero exit on red
 ```
 
 The suite drives the real page, including synthetic pointer events, so a green run means the

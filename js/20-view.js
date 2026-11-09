@@ -63,7 +63,7 @@ function contentBBox(){
 function fit(){
   const b = contentBBox();
   const r = stage.getBoundingClientRect();
-  const pad = 70;
+  const pad = 28;
   const k = Math.min((r.width-pad*2)/Math.max(1,b.w), (r.height-pad*2)/Math.max(1,b.h), 1.4);
   view.k = Math.max(0.2, k);
   view.x = (r.width - b.w*view.k)/2 - b.x*view.k;

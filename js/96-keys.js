@@ -17,6 +17,9 @@ window.addEventListener('keydown', e => {
     return;
   }
   if (e.key === '?' ){ helpEl.classList.toggle('on'); return; }
+  if ((e.key === 'l' || e.key === 'L') && document.body.classList.contains('present')){
+    toggleLegend(); return;
+  }
   const meta = e.metaKey || e.ctrlKey;
   if (meta && (e.key.toLowerCase() === 'b' || e.key.toLowerCase() === 'i')){
     e.preventDefault();

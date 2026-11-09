@@ -144,17 +144,17 @@ function loadDoc(doc){
   return saveNow(true);
 }
 
-function importText(text, name){
+function importText(text, name, label){
   let doc;
   try { doc = parseDoc(text); }
-  catch (e){ toast('open failed: ' + e.message); return; }
+  catch (e){ toast('open failed: ' + e.message); return false; }
   const conflictNote = tabConflict
     ? '\n\nAnother tab changed the saved document; opening this file overwrites that version.'
     : '';
   if ((nodes.length || links.length || tabConflict) &&
       !confirm(`Open ${name}?\n\nThis replaces the current document with ` +
                `${doc.nodes.length} shapes and ${doc.links.length} arrows. Undo restores it.` + conflictNote))
-    return;
+    return false;
   tabConflict = false;
   const tb = document.getElementById('tab-warn');
   if (tb) tb.classList.remove('on');
@@ -162,9 +162,11 @@ function importText(text, name){
   snapshot();
   let saved = false;
   try { saved = loadDoc(doc); }
-  catch (e){ toast('open failed: ' + e.message); return; }
-  toast(saved ? 'json opened' : 'json opened: not saved (storage full or blocked)',
+  catch (e){ toast('open failed: ' + e.message); return false; }
+  const what = label || 'json';
+  toast(saved ? what + ' opened' : what + ' opened: not saved (storage full or blocked)',
         saved ? 1800 : 6000);
+  return true;
 }
 
 const jsonInput = document.createElement('input');
@@ -212,6 +214,22 @@ async function buildSVG(){
   const clone = viewport.cloneNode(true);
   clone.querySelectorAll('.ui').forEach(el => {
     if (el.classList.contains('march')) el.classList.remove('ui');
+    else if (el.classList.contains('comet') || el.classList.contains('comet-halo')){
+      el.classList.remove('ui');
+      const lap = Number(el.getAttribute('data-lap') || 400);
+      const dur = Number(el.getAttribute('data-dur') || 2000);
+      const rev = el.getAttribute('data-live') === '-1';
+      const a = document.createElementNS(NS, 'animate');
+      a.setAttribute('attributeName', 'stroke-dashoffset');
+      a.setAttribute('from', String(rev ? -lap : 0));
+      a.setAttribute('to', String(rev ? 0 : -lap));
+      a.setAttribute('dur', (dur / 1000) + 's');
+      a.setAttribute('repeatCount', 'indefinite');
+      el.appendChild(a);
+      el.removeAttribute('data-lap');
+      el.removeAttribute('data-dur');
+      el.removeAttribute('data-live');
+    }
     else el.remove();
   });
   clone.querySelectorAll('.linkhit').forEach(el => el.remove());
@@ -253,6 +271,7 @@ menu.querySelectorAll('button').forEach(b => {
     const x = b.dataset.x;
     try {
       if (x === 'open'){ jsonInput.click(); return; }
+      if (x === 'open-text'){ openTextFile(); return; }
       if (x === 'clear'){ clearDoc(); return; }
       if (x === 'mermaid') return copy(mermaid(), 'mermaid source copied');
       if (x === 'd2') return copy(d2(), 'd2 source copied');
@@ -263,19 +282,41 @@ menu.querySelectorAll('button').forEach(b => {
         toast('svg downloaded');
         return;
       }
-      if (x === 'png'){
+      if (x === 'png' || x === 'webp' || x === 'png-copy'){
         const svg = await buildSVG();
-        const img = new Image();
-        img.onload = () => {
-          const c = document.createElement('canvas');
-          c.width = img.width*2; c.height = img.height*2;
-          const ctx = c.getContext('2d');
-          ctx.scale(2,2);
-          ctx.drawImage(img, 0, 0);
+        const c = await new Promise((resolve, reject) => {
+          const img = new Image();
+          img.onload = () => {
+            const cnv = document.createElement('canvas');
+            cnv.width = img.width*2; cnv.height = img.height*2;
+            const ctx = cnv.getContext('2d');
+            ctx.scale(2,2);
+            ctx.drawImage(img, 0, 0);
+            resolve(cnv);
+          };
+          img.onerror = () => reject(new Error('render failed'));
+          img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+        });
+        if (x === 'png')
           c.toBlob(blob => { download('yoruma.png', blob); toast('png downloaded'); });
-        };
-        img.onerror = () => toast('png export failed');
-        img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+        else if (x === 'webp')
+          c.toBlob(blob => {
+            if (!blob || blob.type !== 'image/webp'){
+              toast('webp export is not supported in this browser'); return;
+            }
+            download('yoruma.webp', blob); toast('webp downloaded');
+          }, 'image/webp');
+        else {
+          if (!navigator.clipboard || !window.ClipboardItem){
+            toast('copy needs a browser with clipboard images'); return;
+          }
+          c.toBlob(blob => {
+            if (!blob){ toast('copy failed'); return; }
+            navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })])
+              .then(() => toast('image copied to clipboard'))
+              .catch(() => toast('copy failed: the browser blocked it'));
+          });
+        }
         return;
       }
       if (x === 'json'){

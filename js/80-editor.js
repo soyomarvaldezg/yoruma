@@ -8,6 +8,7 @@ function editNode(n, focusSub){
   edNode = n; edLink = null; editing = n.id;
   const s = toScreen({ x:n.x, y:n.y });
   edEl.style.display = 'block';
+  placeStylebar();
   edEl.style.left = Math.max(8, s.x) + 'px';
   edEl.style.top = Math.max(8, s.y + n.h*view.k + 8) + 'px';
   edEl.style.width = Math.max(200, Math.min(340, n.w*view.k)) + 'px';
@@ -27,6 +28,7 @@ function editLink(l){
   const m = a && b ? midPoint(route(a, b, l.way, l)) : { x:0, y:0 };
   const s = toScreen(m);
   edEl.style.display = 'block';
+  placeStylebar();
   edEl.style.left = Math.max(8, s.x - 100) + 'px';
   edEl.style.top = Math.max(8, s.y + 10) + 'px';
   edEl.style.width = '220px';

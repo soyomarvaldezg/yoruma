@@ -5,10 +5,12 @@ const INK = '#2D3141', MUTED = '#4A5670', LINE = '#657486',
 
 const ACCENTS = ['#1D1D1D','#9FA8B2','#E599F7','#AE3EC9',
                  '#4263EB','#4DABF7','#F6B26B','#F76707',
-                 '#099268','#40C057','#FF8787','#E03131'];
+                 '#099268','#40C057','#FF8787','#E03131',
+                 '#0C8599','#66A80F','#846358','#D6336C'];
 
 const ICON = {
   select:'<path d="M6 3l12 7-5 1.3L10 18z"/>',
+  hand:'<path d="M8 11V5.7a1.35 1.35 0 0 1 2.7 0V10m0-5.6a1.35 1.35 0 0 1 2.7 0V10m0-4.4a1.35 1.35 0 0 1 2.7 0v6.2m0-3a1.35 1.35 0 0 1 2.7 0v5c0 4.4-2.8 7-6.7 7-2.9 0-4.3-1-5.9-3.5l-2.3-3.6c-.5-.8.2-1.9 1.2-1.8.6.1 1.1.5 1.5 1.1L8 11z"/>',
   arrow:'<path d="M4.5 19.5L19 5M12 5h7v7"/>',
   line:'<path d="M4.5 19.5L19.5 4.5"/>',
   box:'<rect x="4" y="5.5" width="16" height="13" rx="1.5"/>',
@@ -35,13 +37,14 @@ const ICON = {
 
 const DRAW = [
   { id:'select',  key:'v', icon:'select',  label:'Select' },
+  { id:'hand',    key:'h', icon:'hand',    label:'Hand (pan)' },
   { id:'arrow',   key:'a', icon:'arrow',   label:'Arrow' },
   { id:'line',    key:'l', icon:'line',    label:'Line (no arrowhead)' },
   { id:'box',     key:'r', icon:'box',     label:'Rectangle' },
   { id:'ellipse', key:'o', icon:'ellipse', label:'Ellipse' },
   { id:'zone',    key:'z', icon:'zone',    label:'Zone / layer (dashed)' },
   { id:'text',    key:'t', icon:'text',    label:'Text' },
-  { id:'heading', key:'h', icon:'heading', label:'Heading' }
+  { id:'heading', key:'g', icon:'heading', label:'Heading' }
 ];
 const DATA = [
   { id:'store',     key:'d', icon:'store',     label:'Database' },

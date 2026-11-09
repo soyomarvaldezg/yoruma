@@ -14,3 +14,7 @@ shots:
 # Measure full-render cost at 50, 100, 200 and 400 shapes.
 measure:
     node tools/measure.mjs
+
+# Regenerate the Blocks palette as text (docs/example-blocks.yaml) from the catalog.
+blocks:
+    node tools/blocks-text.mjs

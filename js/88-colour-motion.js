@@ -22,7 +22,7 @@ function buildSwatches(){
         if (n){
           snapshot();
           if (S.paint === 'tint' && n.kind !== 'zone'){
-            n.color = hex; n.tint = !!hex; n.fill = null;
+            n.fill = hex; n.tint = !!hex;
           } else {
             n[{ line:'color', text:'tcolor', sub:'scolor' }[S.paint]] = hex;
           }
@@ -66,12 +66,49 @@ buildSwatches();
 
 
 
+const stylebar = document.getElementById('stylebar');
+const paintRow = document.getElementById('paint');
+function placeStylebar(){
+  const edOpen = document.getElementById('editor').style.display === 'block';
+  if (S.tool !== 'select' || editing || edOpen){
+    stylebar.style.display = 'none';
+    return;
+  }
+  const hasNodes = S.selNodes.length > 0;
+  const forArrow = !hasNodes && S.selLinks.length > 0;
+  if ((!hasNodes && !forArrow) || document.body.classList.contains('present')){
+    stylebar.style.display = 'none';
+    return;
+  }
+  if (forArrow) S.paint = 'line';
+  paintRow.style.display = forArrow ? 'none' : '';
+  stylebar.style.display = 'block';
+  syncSwatchState();
+}
+function currentPaintColor(){
+  if (S.selLinks.length && !S.selNodes.length){
+    const l = links.find(x => x.id === S.selLinks[0]);
+    return l ? l.color : null;
+  }
+  const n = S.selNodes.length ? byId(S.selNodes[0]) : null;
+  if (!n) return null;
+  return n[{ line:'color', text:'tcolor', sub:'scolor', tint:'fill' }[S.paint]] || null;
+}
+function syncSwatchState(){
+  paintRow.querySelectorAll('button').forEach(b => {
+    b.classList.toggle('on', b.dataset.target === S.paint);
+  });
+  const hex = currentPaintColor() || '';
+  swEl.querySelectorAll('.sw').forEach(sw => {
+    sw.classList.toggle('on', (sw.dataset.hex || '') === hex);
+  });
+}
 function applyColor(hex){
   if (S.paint === 'tint'){
     if (S.selNodes.length){
       snapshot();
       nodes.filter(n => S.selNodes.includes(n.id) && n.kind !== 'zone')
-        .forEach(n => { n.color = hex; n.tint = !!hex; n.fill = null; });
+        .forEach(n => { n.fill = hex; n.tint = !!hex; });
       render();
     } else {
       S.color = hex; S.tint = !!hex;
@@ -92,8 +129,8 @@ function applyColor(hex){
 }
 
 /* ---------- motion / font size ---------- */
-const MODES = ['off','dots','dashes','both'];
-const MLABEL = { off:'OFF', dots:'DOTS', dashes:'DASHES', both:'DASHES+DOTS' };
+const MODES = ['off','dots','dashes','both','live'];
+const MLABEL = { off:'OFF', dots:'DOTS', dashes:'DASHES', both:'DASHES+DOTS', live:'LIVE' };
 const motionBtn = document.getElementById('btn-motion');
 motionBtn.addEventListener('click', () => setMotion('next'));
 function setMotion(mode){

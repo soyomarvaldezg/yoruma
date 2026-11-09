@@ -12,7 +12,9 @@ document.addEventListener('click', () => helpEl.classList.remove('on'));
 
 const insertMenu = document.getElementById('insert-menu');
 document.getElementById('btn-insert').addEventListener('click', ev => {
-  ev.stopPropagation(); insertMenu.classList.toggle('on');
+  ev.stopPropagation();
+  closeTopMenus(insertMenu.classList.contains('on') ? null : 'insert-menu');
+  insertMenu.classList.toggle('on');
 });
 insertMenu.addEventListener('click', ev => ev.stopPropagation());
 document.addEventListener('click', () => insertMenu.classList.remove('on'));
@@ -213,6 +215,47 @@ function stepPresent(dir){
   if (!document.body.classList.contains('present')) return;
   showStep(presentIndex + dir);
 }
+function renderLegend(){
+  const el = document.getElementById('legend');
+  const rows = [];
+  const zones = nodes.filter(n => n.kind === 'zone' && n.title);
+  zones.forEach(z => {
+    const accent = accentOf(z) || LINE;
+    rows.push(`<div class="lg-row"><span class="lg-sw" style="background:${hexA(accent, .14)};` +
+      `border:1.4px dashed ${accent}"></span>${escapeHtml(z.title)}</div>`);
+  });
+  const styles = [];
+  const seen = new Set();
+  links.forEach(l => {
+    const mode = l.motion || S.motion;
+    let key = 'solid', label = 'flow';
+    if (l.dash === true && mode === 'off'){ key = 'dashed'; label = 'batch / retiring'; }
+    else if (mode === 'dots'){ key = 'dots'; label = 'events'; }
+    else if (mode === 'dashes'){ key = 'dashes'; label = 'stream'; }
+    else if (mode === 'both'){ key = 'both'; label = 'stream + events'; }
+    else if (mode === 'live'){ key = 'live'; label = 'live path'; }
+    if (seen.has(key)) return;
+    seen.add(key);
+    const col = colorAt(l.color) || LINE;
+    const dash = key === 'dashed' ? 'dashed' : key === 'dots' ? 'dotted' : 'solid';
+    const label2 = key === 'solid' ? 'dependency' : label;
+    styles.push(`<div class="lg-row"><span class="lg-line" style="border-top-color:${col};` +
+      `border-top-style:${dash}"></span>${escapeHtml(label2)}</div>`);
+  });
+  if (!rows.length && !styles.length){ el.classList.remove('on'); return; }
+  el.innerHTML = '<div class="lg-head">Key</div>' + rows.join('') +
+    (rows.length && styles.length ? '<div class="lg-sep"></div>' : '') + styles.join('');
+  el.classList.add('on');
+}
+function toggleLegend(){
+  const el = document.getElementById('legend');
+  if (el.classList.contains('on')){ el.classList.remove('on'); return; }
+  renderLegend();
+}
+function escapeHtml(v){
+  return String(v == null ? '' : v).replace(/[&<>"]/g, c =>
+    ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;' }[c]));
+}
 function setPresent(on){
   document.body.classList.toggle('present', on);
   presentBtn.textContent = on ? 'EXIT' : 'PRESENT';
@@ -223,19 +266,29 @@ function setPresent(on){
     presentSteps = [null].concat(frames.length ? frames : presentZones());
     render();
     showStep(0);
+    renderLegend();
   } else {
     presentSteps = []; presentIndex = 0; presentZoneId = null;
     presentBadge.textContent = '';
+    document.getElementById('legend').classList.remove('on');
     render();
     fit();
   }
 }
 presentBtn.addEventListener('click', () =>
   setPresent(!document.body.classList.contains('present')));
+function closeTopMenus(keep){
+  ['insert-menu', 'steps-menu', 'demo-menu', 'menu'].forEach(id => {
+    if (id === keep) return;
+    const el = document.getElementById(id);
+    if (el) el.classList.remove('on');
+  });
+}
 const stepsMenu = document.getElementById('steps-menu');
 document.getElementById('btn-steps').addEventListener('click', ev => {
   ev.stopPropagation();
   renderStepsMenu();
+  closeTopMenus(stepsMenu.classList.contains('on') ? null : 'steps-menu');
   stepsMenu.classList.toggle('on');
 });
 stepsMenu.addEventListener('click', ev => ev.stopPropagation());
@@ -273,6 +326,7 @@ const demoMenu = document.getElementById('demo-menu');
 document.getElementById('btn-demo').addEventListener('click', ev => {
   ev.stopPropagation();
   renderDemoMenu();
+  closeTopMenus(demoMenu.classList.contains('on') ? null : 'demo-menu');
   demoMenu.classList.toggle('on');
 });
 demoMenu.addEventListener('click', ev => ev.stopPropagation());

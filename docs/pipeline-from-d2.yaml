@@ -1,0 +1,68 @@
+# The D2 map example (docs/map_example_from_d2.svg), redrawn in the yoruma text format.
+# Every shape and arrow line ends with a colon, so this file is also valid YAML.
+dir: right
+title: Local Mock-Data Pipeline — Data Flow
+subtitle: Three sources, one grain, one dashboard — WBD greenfield test
+
+card Mocksmith:
+  sub: Go binary, seeded
+
+zone Raw (as-landed):
+  color: "#F6B26B"
+  fill: "#F6B26B"
+  card Landing:
+    sub: unmodified
+    color: "#4263EB"
+  card Arrival checks:
+    sub: findings counted
+    color: "#4263EB"
+
+zone Standardized (cleanse and conform):
+  color: "#F6B26B"
+  fill: "#F6B26B"
+  dir: right
+  card Cleanse:
+    sub: dedup, null rule, normalization
+    color: "#4263EB"
+  card sqlite3 load:
+    sub: orders.db
+    color: "#4263EB"
+  card duckdb COPY:
+    sub: parquet
+    color: "#4263EB"
+
+zone Curated (purpose-built):
+  color: "#F6B26B"
+  fill: "#F6B26B"
+  card Join:
+    sub: at customer grain
+    color: "#4263EB"
+
+zone Serving and access:
+  color: "#F6B26B"
+  fill: "#F6B26B"
+  db pipeline.duckdb:
+    sub: customer_summary
+    color: "#4263EB"
+
+zone Consumption (not a layer):
+  color: "#F6B26B"
+  fill: "#F6B26B"
+  card Rill dashboard:
+    sub: ":9009"
+    color: "#4263EB"
+  people You:
+    sub: just run, then queries
+    color: "#4263EB"
+
+Mocksmith -> Landing: ingest
+Landing -> Arrival checks:
+Arrival checks -> Cleanse: pass
+Cleanse -> sqlite3 load:
+Cleanse -> duckdb COPY:
+sqlite3 load -> Join:
+duckdb COPY -> Join:
+Join -> pipeline.duckdb:
+pipeline.duckdb -> Rill dashboard:
+pipeline.duckdb -> You: queries
+Rill dashboard -> You:

@@ -1,0 +1,52 @@
+# Worked example for `theme: data` — no colours picked by hand, the theme tones shapes
+# by role: queues orange, stores green, files blue, services and dashboards indigo,
+# agents purple, people and clouds gray. Arrows keep their own optional styling.
+dir: right
+theme: data
+title: Real-time product analytics
+subtitle: three sources, one stream, one feature store, one board to watch
+
+zone Capture:
+  card Checkout events:
+    sub: React SDK
+  file Clickstream logs:
+    sub: S3 parquet
+
+queue Event bus:
+  sub: Kafka, 12 partitions
+
+zone Processing:
+  dir: right
+  api Normalizer:
+    sub: dedupe, schema
+  agent Enricher:
+    sub: geo, device
+
+db Feature store:
+  sub: Redis + Iceberg
+
+zone Serving:
+  card Metrics API:
+    sub: Go, 40ms p99
+  dashboard Ops board:
+    sub: Superset
+  people On-call:
+    sub: two engineers
+
+cloud Legacy DW:
+  sub: retiring in Q3
+
+Checkout events -> Event bus:
+Clickstream logs -> Event bus:
+Event bus -> Normalizer:
+  color: "#F76707"
+  motion: live
+Normalizer -> Enricher:
+Enricher -> Feature store:
+Feature store -> Metrics API:
+Metrics API -> Ops board:
+Metrics API -> On-call:
+Ops board -> On-call: alert
+Legacy DW -> Feature store:
+  dash: true
+  color: "#657486"

@@ -1,0 +1,22 @@
+# Open this with FILE ▾ → Open text…
+dir: right
+
+zone Azure:
+  dir: down
+  card Gateway:
+    sub: entry point
+    brand: nginx
+  card API:
+  db Events:
+    brand: kafka
+
+zone Storage:
+  card Lakehouse:
+  db Postgres:
+    brand: postgres
+    tint: true
+
+Gateway -> API:
+API -> Postgres: reads
+Events -> Lakehouse:
+Lakehouse -> Postgres: serves

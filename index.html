@@ -38,9 +38,12 @@
       <button id="btn-file" title="Open, export or clear the document">FILE ▾</button>
       <div id="menu">
         <button data-x="open">Open JSON…</button>
+        <button data-x="open-text">Open text…</button>
         <div class="menu-sep"></div>
         <button data-x="svg">Download SVG</button>
         <button data-x="png">Download PNG</button>
+        <button data-x="webp">Download WebP</button>
+        <button data-x="png-copy">Copy image to clipboard</button>
         <button data-x="json">Download JSON</button>
         <button data-x="mermaid">Copy Mermaid source</button>
         <button data-x="d2">Copy D2 source</button>
@@ -62,31 +65,6 @@
 
 <div class="app">
   <aside>
-    <div class="swatches" id="swatches"></div>
-    <div class="paint" id="paint">
-      <button data-target="line" title="outline">
-        <svg viewBox="0 0 24 24"><rect x="5" y="5" width="14" height="14" rx="2" fill="none" stroke="currentColor" stroke-width="2.4"/></svg>
-      </button>
-      <button data-target="text" title="title">
-        <svg viewBox="0 0 24 24"><path d="M6 7h12M12 7v11" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>
-      </button>
-      <button data-target="sub" title="subtitle">
-        <svg viewBox="0 0 24 24"><path d="M12 7.5v8.2c0 1.3.9 2 2.3 2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M9 10.4h5.6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-      </button>
-      <button data-target="tint" title="tinted card (outline + 10% fill)">
-        <svg viewBox="0 0 24 24"><rect x="5" y="5" width="14" height="14" rx="2" fill="currentColor" opacity=".18"/><rect x="5" y="5" width="14" height="14" rx="2" fill="none" stroke="currentColor" stroke-width="2.4"/></svg>
-      </button>
-    </div>
-    <details id="inspect" open>
-      <summary>Inspector</summary>
-      <div id="i-status">nothing selected</div>
-      <div class="inspect-grid">
-        <label>X <input id="i-x" type="number" step="1" disabled></label>
-        <label>Y <input id="i-y" type="number" step="1" disabled></label>
-        <label>W <input id="i-w" type="number" step="1" min="1" disabled></label>
-        <label>H <input id="i-h" type="number" step="1" min="1" disabled></label>
-      </div>
-    </details>
     <h4>Draw</h4>
     <div class="grid" id="tools"></div>
     <h4>Blocks</h4>
@@ -103,6 +81,7 @@
       <button id="z-fit">FIT</button>
     </div>
     <div id="present-badge"></div>
+    <div id="legend" hidden></div>
     <div class="status" id="status">nothing selected</div>
     <button id="lint-chip" title="Problems in this diagram: text that overflows or arrows crossing shapes. Click to step through them" hidden></button>
   </main>
@@ -110,15 +89,32 @@
 
 <div id="shaper"></div>
 <div id="linkbar"></div>
+<div id="stylebar">
+  <div class="swatches" id="swatches"></div>
+  <div class="paint" id="paint">
+    <button data-target="line" title="outline">
+      <svg viewBox="0 0 24 24"><rect x="5" y="5" width="14" height="14" rx="2" fill="none" stroke="currentColor" stroke-width="2.4"/></svg>
+    </button>
+    <button data-target="text" title="title">
+      <svg viewBox="0 0 24 24"><path d="M6 7h12M12 7v11" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>
+    </button>
+    <button data-target="sub" title="subtitle">
+      <svg viewBox="0 0 24 24"><path d="M12 7.5v8.2c0 1.3.9 2 2.3 2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M9 10.4h5.6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+    </button>
+    <button data-target="tint" title="tinted card (outline + 10% fill)">
+      <svg viewBox="0 0 24 24"><rect x="5" y="5" width="14" height="14" rx="2" fill="currentColor" opacity=".18"/><rect x="5" y="5" width="14" height="14" rx="2" fill="none" stroke="currentColor" stroke-width="2.4"/></svg>
+    </button>
+  </div>
+</div>
 <div id="editor">
   <input type="text" id="e-title" placeholder="Title" spellcheck="false">
   <input type="text" id="e-sub" placeholder="Subtitle (optional)" spellcheck="false">
 </div>
 <div class="help" id="help">
   <h3>Keys</h3>
-  <div><span><kbd>V</kbd><kbd>A</kbd><kbd>L</kbd></span><span>select · arrow · line</span></div>
+  <div><span><kbd>V</kbd><kbd>H</kbd><kbd>A</kbd><kbd>L</kbd></span><span>select · hand · arrow · line</span></div>
   <div><span><kbd>R</kbd><kbd>O</kbd><kbd>Z</kbd></span><span>rectangle · ellipse · zone</span></div>
-  <div><span><kbd>T</kbd><kbd>H</kbd></span><span>text · heading</span></div>
+  <div><span><kbd>T</kbd><kbd>G</kbd></span><span>text · heading</span></div>
   <div><span><kbd>⌘Z</kbd><kbd>⇧⌘Z</kbd><kbd>⌫</kbd></span><span>undo · redo · delete</span></div>
   <div><span><kbd>⌘C</kbd><kbd>⌘V</kbd><kbd>⌘D</kbd></span><span>copy · paste · duplicate</span></div>
   <div><span><kbd>[</kbd><kbd>]</kbd><kbd>,</kbd><kbd>.</kbd><kbd>M</kbd></span><span>text size · dot size · motion</span></div>
@@ -173,12 +169,12 @@ function tick(now){
 <script src="js/70-pointer.js"></script>
 <script src="js/80-editor.js"></script>
 <script src="js/82-shaper.js"></script>
-<script src="js/84-inspector.js"></script>
 <script src="js/86-sidebar.js"></script>
 <script src="js/88-colour-motion.js"></script>
 <script src="js/89-lint.js"></script>
 <script src="js/90-export.js"></script>
 <script src="js/92-parse.js"></script>
+<script src="js/93-text.js"></script>
 <script src="js/94-hud.js"></script>
 <script src="js/96-keys.js"></script>
 <script src="js/98-boot.js"></script>
