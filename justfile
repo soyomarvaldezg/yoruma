@@ -22,3 +22,4 @@ blocks:
 # Screenshot docs/pipeline-from-d2.yaml into docs/pipeline-from-d2.png.
 shot-d2:
     node tools/shot-d2.mjs
+

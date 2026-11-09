@@ -296,6 +296,19 @@ stage.addEventListener('drop', ev => {
   ev.preventDefault();
   const f = ev.dataTransfer && ev.dataTransfer.files && ev.dataTransfer.files[0];
   if (!f) return;
+  const name = String(f.name || '').toLowerCase();
+  if (/\.(ya?ml|txt)$/.test(name) || f.type === 'text/yaml' || f.type === 'text/plain'){
+    if (f.size > DOC_MAX_CHARS){ toast('that file is too large to open', 4200); return; }
+    f.text().then(t => openTextDoc(t, f.name))
+      .catch(() => toast('open failed: could not read file'));
+    return;
+  }
+  if (/\.json$/.test(name)){
+    if (f.size > DOC_MAX_CHARS){ toast('that file is too large to open', 4200); return; }
+    f.text().then(t => importText(t, f.name))
+      .catch(() => toast('open failed: could not read file'));
+    return;
+  }
   const p = toWorld(ev);
   const hit = nodeAt(p, 0);
   if (hit && LOGO_KINDS.has(hit.kind) && f.type && f.type.startsWith('image/')){

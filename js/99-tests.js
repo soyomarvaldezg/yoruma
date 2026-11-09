@@ -460,32 +460,9 @@ if (/[?&]test/.test(location.search)){
   ok('style bar hides without a selection',
      getComputedStyle(sbar).display === 'none');
 
-  const keepAllN = nodes, keepAllL = links;
-  nodes = [
-    { id:'lgz', kind:'zone', title:'Lane', color:'#099268', x:0, y:0, w:600, h:320 },
-    { id:'lgx', kind:'box', title:'A', color:null, x:40, y:40, w:180, h:90 },
-    { id:'lgy', kind:'box', title:'B', color:null, x:320, y:40, w:180, h:90 }
-  ];
-  links = [{ id:'lgl1', from:'lgx', to:'lgy', label:'', color:null, motion:null, dash:true, way:null }];
-  render();
   setPresent(true);
   const asideHidden = getComputedStyle(document.querySelector('aside')).display === 'none';
   ok('present mode', document.body.classList.contains('present') && asideHidden);
-  const lg = document.getElementById('legend');
-  const lgText = lg.innerText;
-  const lgRows = lg.querySelectorAll('.lg-row').length;
-  toggleLegend();
-  const lgOff = !lg.classList.contains('on');
-  toggleLegend();
-  ok('present legend lists zones and arrow styles',
-     lg.classList.contains('on') && lgRows === 2 &&
-     /Lane/.test(lgText) && /batch/i.test(lgText));
-  ok('legend toggles off', lgOff);
-  setPresent(false);
-  nodes = keepAllN; links = keepAllL;
-  ok('legend hides when leaving present mode',
-     !document.getElementById('legend').classList.contains('on'));
-  render();
 
   const pzA = { id:'pz1', kind:'zone', title:'02 / Later', x:900, y:0, w:80, h:80 };
   const pzB = { id:'pz2', kind:'zone', title:'01 / First', x:0, y:400, w:80, h:80 };
@@ -795,6 +772,18 @@ if (/[?&]test/.test(location.search)){
       if (navigator.clipboard && realWrite) navigator.clipboard.write = realWrite;
       const wb = got.dl.find(d => d.name === 'yoruma.webp');
       const cp = got.clip[0] && got.clip[0][0];
+      const dropKeepN = nodes, dropKeepL = links;
+      nodes = []; links = []; render();
+      const dt = new DataTransfer();
+      dt.items.add(new File(['card Dropped\ncard Next\nDropped -> Next'], 'dropped.yaml',
+        { type:'text/yaml' }));
+      stage.dispatchEvent(new DragEvent('drop',
+        { bubbles:true, cancelable:true, dataTransfer:dt }));
+      await new Promise(r => setTimeout(r, 200));
+      const droppedOk = nodes.some(n => n.title === 'Dropped') && nodes.some(n => n.title === 'Next');
+      ok('dropping a text file opens it', droppedOk);
+      nodes = dropKeepN; links = dropKeepL; render();
+
       ok('webp export and png clipboard copy',
          !!wb && wb.blob.type === 'image/webp' && got.toasts.includes('webp downloaded') &&
          !!cp && [...cp.types].includes('image/png') &&
@@ -832,6 +821,9 @@ if (/[?&]test/.test(location.search)){
       links = keepLinks;
       render();
       ok('heavy render ' + heavyMedian.toFixed(1) + 'ms', heavyMedian < 16);
+      setPresent(false);
+      fit();
+      render();
       const fails = R.filter(r => r.startsWith('FAIL')).length;
       const el2 = document.getElementById('help');
       el2.innerHTML = '<h3>Self test</h3>' + R.map(r =>

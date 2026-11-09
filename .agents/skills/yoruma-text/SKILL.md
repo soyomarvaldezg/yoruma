@@ -103,6 +103,21 @@ its neighbours, so arrows come out short and straight. Zones hug their children 
 title, and a rank of zones advances with a tight 48px lane gap. The result is deterministic:
 the same file always lays out the same way, and `x:`/`y:` pins survive.
 
+## Handing the diagram over
+
+Yoruma is a static page: whoever wants the picture opens `index.html` from a clone of the repo
+(or the published site) and loads the file there. There is no server, no CLI and nothing to
+install — the yaml is the deliverable.
+
+- Give the yaml in one fenced block, ready to save as `diagram.yaml`.
+- Tell them: **FILE ▾ → Open text…**, or drop the saved file on the canvas.
+- Close the loop in plain language: they say what should change, you answer with the updated
+  block. Say what to look at ("the queue should now be orange, between Capture and Processing")
+  so a mistake is visible at a glance.
+
+Stay near the 400-token target: the file is meant to be read and edited by a human in a text
+editor as much as by a model.
+
 ## Keep it small
 
 Target roughly 400 tokens per diagram. Do not add a schema, a CLI, a parser wrapper or a

@@ -1,6 +1,6 @@
-# yoruma — Data Architecture
+# yoruma — Data Diagrams
 
-A data-architecture diagram editor that runs as one static page. Zones that nest, cards with
+A diagram editor for data work that runs as one static page. Zones that nest, cards with
 real brand logos, notes on arrows, and a present mode that walks the diagram step by step.
 
 **Use it:** <https://soyomarvaldezg.github.io/yoruma/> — or open `index.html` from a clone.
@@ -49,16 +49,16 @@ Download a JSON copy of anything you would hate to redraw.
 | `⌘C` `⌘V` `⌘D` | copy · paste · duplicate |
 | `[` `]` `,` `.` `M` | text size · dot size · motion |
 | `F` `Esc` `?` | fit · deselect · quick reference |
-| `L` | key in present mode |
 
-Double-click a shape to name it, or an arrow to give it a note. Right-drag pans, `⌘` + wheel
+Drop a `.yaml` text file (or a `.json` document) anywhere on the canvas and it opens; images
+land where you drop them. Double-click a shape to name it, or an arrow to give it a note. Right-drag pans, `⌘` + wheel
 zooms. Selecting anything opens the style bar docked top-right — swatches plus what to paint
 (outline, title, subtitle, tinted card); arrows get the swatch row alone. It stays out of the
 way while you draw or edit text. Dragging a swatch
 onto the canvas colours whatever it lands on. Palette buttons carry their letters on hover.
 Resizing a zone moves its own frame only: children stay where they are.
 
-![Present mode on the overview slide, with the generated key bottom left](docs/present.png)
+![Present mode on the overview slide](docs/present.png)
 
 ## Saving and loading
 
@@ -126,6 +126,7 @@ so arrows come out short and straight and fan-outs stay symmetric. The format wa
 designed to be written by an LLM: names, kinds
 and connections are what models get right, and layout stays with the editor.
 
+
 ## Export
 
 `FILE ▾` exports SVG, PNG (2x, fonts inlined), WebP (2x, same canvas path), the JSON document,
@@ -150,6 +151,7 @@ just check     # the in-page suite in headless Chromium, non-zero exit on red
 just shots     # regenerate the README screenshots
 just measure   # render cost at 50, 100, 200 and 400 shapes
 just blocks    # regenerate docs/example-blocks.yaml from the Blocks catalog
+just render docs/example-theme.yaml   # text file straight to PNG, no app, --watch to follow
 just shot-d2   # screenshot docs/pipeline-from-d2.yaml
 ```
 

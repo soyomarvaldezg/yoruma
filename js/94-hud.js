@@ -215,47 +215,6 @@ function stepPresent(dir){
   if (!document.body.classList.contains('present')) return;
   showStep(presentIndex + dir);
 }
-function renderLegend(){
-  const el = document.getElementById('legend');
-  const rows = [];
-  const zones = nodes.filter(n => n.kind === 'zone' && n.title);
-  zones.forEach(z => {
-    const accent = accentOf(z) || LINE;
-    rows.push(`<div class="lg-row"><span class="lg-sw" style="background:${hexA(accent, .14)};` +
-      `border:1.4px dashed ${accent}"></span>${escapeHtml(z.title)}</div>`);
-  });
-  const styles = [];
-  const seen = new Set();
-  links.forEach(l => {
-    const mode = l.motion || S.motion;
-    let key = 'solid', label = 'flow';
-    if (l.dash === true && mode === 'off'){ key = 'dashed'; label = 'batch / retiring'; }
-    else if (mode === 'dots'){ key = 'dots'; label = 'events'; }
-    else if (mode === 'dashes'){ key = 'dashes'; label = 'stream'; }
-    else if (mode === 'both'){ key = 'both'; label = 'stream + events'; }
-    else if (mode === 'live'){ key = 'live'; label = 'live path'; }
-    if (seen.has(key)) return;
-    seen.add(key);
-    const col = colorAt(l.color) || LINE;
-    const dash = key === 'dashed' ? 'dashed' : key === 'dots' ? 'dotted' : 'solid';
-    const label2 = key === 'solid' ? 'dependency' : label;
-    styles.push(`<div class="lg-row"><span class="lg-line" style="border-top-color:${col};` +
-      `border-top-style:${dash}"></span>${escapeHtml(label2)}</div>`);
-  });
-  if (!rows.length && !styles.length){ el.classList.remove('on'); return; }
-  el.innerHTML = '<div class="lg-head">Key</div>' + rows.join('') +
-    (rows.length && styles.length ? '<div class="lg-sep"></div>' : '') + styles.join('');
-  el.classList.add('on');
-}
-function toggleLegend(){
-  const el = document.getElementById('legend');
-  if (el.classList.contains('on')){ el.classList.remove('on'); return; }
-  renderLegend();
-}
-function escapeHtml(v){
-  return String(v == null ? '' : v).replace(/[&<>"]/g, c =>
-    ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;' }[c]));
-}
 function setPresent(on){
   document.body.classList.toggle('present', on);
   presentBtn.textContent = on ? 'EXIT' : 'PRESENT';
@@ -266,11 +225,9 @@ function setPresent(on){
     presentSteps = [null].concat(frames.length ? frames : presentZones());
     render();
     showStep(0);
-    renderLegend();
   } else {
     presentSteps = []; presentIndex = 0; presentZoneId = null;
     presentBadge.textContent = '';
-    document.getElementById('legend').classList.remove('on');
     render();
     fit();
   }

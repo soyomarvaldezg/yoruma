@@ -144,14 +144,14 @@ function loadDoc(doc){
   return saveNow(true);
 }
 
-function importText(text, name, label){
+function importText(text, name, label, quiet){
   let doc;
   try { doc = parseDoc(text); }
   catch (e){ toast('open failed: ' + e.message); return false; }
   const conflictNote = tabConflict
     ? '\n\nAnother tab changed the saved document; opening this file overwrites that version.'
     : '';
-  if ((nodes.length || links.length || tabConflict) &&
+  if (!quiet && (nodes.length || links.length || tabConflict) &&
       !confirm(`Open ${name}?\n\nThis replaces the current document with ` +
                `${doc.nodes.length} shapes and ${doc.links.length} arrows. Undo restores it.` + conflictNote))
     return false;

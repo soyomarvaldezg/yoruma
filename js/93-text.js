@@ -441,14 +441,14 @@ textInput.addEventListener('change', async () => {
   catch (e){ toast('open failed: could not read file'); return; }
   openTextDoc(text, file.name);
 });
-async function openTextDoc(text, name){
+async function openTextDoc(text, name, quiet){
   let model;
   try { model = parseText(text); }
   catch (e){ toast('open failed: ' + e.message, 6000); return; }
   let doc;
   try { doc = buildTextDoc(model); }
   catch (e){ toast('open failed: ' + e.message, 6000); return; }
-  if (!importText(JSON.stringify(doc), name, 'text')) return;
+  if (!importText(JSON.stringify(doc), name, 'text', quiet)) return;
   const wanted = model.shapes.filter(s => s.props.brand);
   for (const s of wanted){
     const n = byId(s.id);
