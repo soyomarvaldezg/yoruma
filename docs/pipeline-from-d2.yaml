@@ -1,4 +1,5 @@
-# The D2 map example (docs/map_example_from_d2.svg), redrawn in the yoruma text format.
+# The D2 map example (github.com/soyomarvaldezg/enterprise-data-architecture-reference),
+# redrawn in the yoruma text format.
 # Every shape and arrow line ends with a colon, so this file is also valid YAML.
 dir: right
 title: Local Mock-Data Pipeline — Data Flow

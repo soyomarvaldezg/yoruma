@@ -18,3 +18,7 @@ measure:
 # Regenerate the Blocks palette as text (docs/example-blocks.yaml) from the catalog.
 blocks:
     node tools/blocks-text.mjs
+
+# Screenshot docs/pipeline-from-d2.yaml into docs/pipeline-from-d2.png.
+shot-d2:
+    node tools/shot-d2.mjs

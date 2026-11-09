@@ -4,7 +4,6 @@
   "type": "module",
   "description": "Dev-only verification. Not shipped with the app.",
   "dependencies": {
-    "elkjs": "^0.9.3",
     "playwright": "^1.64.1"
   }
 }

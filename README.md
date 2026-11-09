@@ -16,11 +16,12 @@ Download a JSON copy of anything you would hate to redraw.
 
 ## What it does
 
-- **Zones** nest: an outer zone's members are everything inside it at any depth, so moving or
-  resizing a VPC carries the region, the group and the shapes, and children keep their
-  proportions. A zone can show a **header band** with its title and drop its dashes for a
+- **Zones** nest: an outer zone's members are everything inside it at any depth, so moving a
+  VPC carries the region, the group and the shapes. Resizing a zone moves its own frame only —
+  neither the position nor the size of the shapes inside it changes. A zone can show a **header band** with its title and drop its dashes for a
   solid outline.
-- **Cards** take a border and a 10% tint in one click, and can carry a **real brand logo**,
+- **Cards** take an outline colour and a tint of their own colour, independently, and can carry
+  a **real brand logo**,
   fetched from svgl (gilbarbara and simple-icons as fallbacks) or dropped in as a file. Logos
   are stored inside the document and never recoloured.
 - **Arrows** attach anywhere along a border, enter perpendicular to it, can be bent, styled,
@@ -48,6 +49,7 @@ Download a JSON copy of anything you would hate to redraw.
 | `⌘C` `⌘V` `⌘D` | copy · paste · duplicate |
 | `[` `]` `,` `.` `M` | text size · dot size · motion |
 | `F` `Esc` `?` | fit · deselect · quick reference |
+| `L` | key in present mode |
 
 Double-click a shape to name it, or an arrow to give it a note. Right-drag pans, `⌘` + wheel
 zooms. Selecting anything opens the style bar docked top-right — swatches plus what to paint
@@ -56,7 +58,7 @@ way while you draw or edit text. Dragging a swatch
 onto the canvas colours whatever it lands on. Palette buttons carry their letters on hover.
 Resizing a zone moves its own frame only: children stay where they are.
 
-![Present mode on the overview slide](docs/present.png)
+![Present mode on the overview slide, with the generated key bottom left](docs/present.png)
 
 ## Saving and loading
 
@@ -71,8 +73,8 @@ shapes that exist, documents over 8 MB or 5000 shapes are refused, and dropped i
 ### The text format
 
 **Open text…** takes the same diagram as a small declarative text format, YAML-shaped with no
-positions required (worked files live at `docs/example-text.yoruma`,
-`docs/pipeline-from-d2.yoruma`, a redraw of the D2 map example, `docs/example-theme.yaml`,
+positions required (worked files live at `docs/example-text.yaml`,
+`docs/pipeline-from-d2.yaml`, a redraw of the D2 map example, `docs/example-theme.yaml`,
 which leans on `theme: data` and per-arrow styling, and `docs/example-blocks.yaml`, the whole
 Blocks palette written out as text — every chip is just a named card, so no palette block is
 out of reach of the format):
@@ -114,7 +116,7 @@ and hug their content, so a `dir: right` inside a zone lays that lane out as a h
 instead. Props read `key: value` (a missing colon is tolerated on the known
 shape props, since models and humans both drop it). `color:` and `fill:` take `#RRGGBB`,
 `brand:` fetches the logo from svgl after import; arrows take `color:`, `dash:` (static dashes)
-and `motion:` (`off`, `dots`, `dashes`, `both`). End every shape and arrow line with a colon and the
+and `motion:` (`off`, `dots`, `dashes`, `both`, `live`). End every shape and arrow line with a colon and the
 file is also valid YAML — editors stay quiet and the file opens anywhere (the worked files do
 this); the parser accepts the loose form too. A
 deterministic packer places everything, so the text is a seed: load it, then move things by
@@ -144,18 +146,22 @@ budget at the demo size and at 200 shapes; `just measure` reproduces the curve.
 
 ```
 just deps      # once: verifier deps and Chromium
-just check     # 77 assertions in headless Chromium, non-zero exit on red
+just check     # the in-page suite in headless Chromium, non-zero exit on red
 just shots     # regenerate the README screenshots
+just measure   # render cost at 50, 100, 200 and 400 shapes
+just blocks    # regenerate docs/example-blocks.yaml from the Blocks catalog
+just shot-d2   # screenshot docs/pipeline-from-d2.yaml
 ```
 
 `ARCHITECTURE.md` has the load order, what each file owns and where a feature belongs;
-`assets/` holds the ValdezData minimark used in the header.
+`assets/` holds the ValdezData minimark used in the header, and
+`.agents/skills/yoruma-text/SKILL.md` teaches the text format to a model.
 No framework, no bundler, no runtime dependency: classic `<script>` tags in numbered order,
 one shared scope, opened straight from disk.
 
 ## Limits
 
-No snapping or grid, no lasso, no groups, no multiplayer.
+No snapping or grid, no groups, no multiplayer.
 
 ## Licence
 
