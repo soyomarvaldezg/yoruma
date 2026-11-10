@@ -4,6 +4,7 @@ MORPHS.forEach(kind => {
   const b = document.createElement('button');
   b.innerHTML = `<svg viewBox="0 0 24 24">${ICON[kind] || ICON.box}</svg>`;
   b.title = kind;
+  b.setAttribute('aria-label', 'shape ' + kind);
   b.dataset.kind = kind;
   b.addEventListener('mousedown', ev => ev.preventDefault());
   b.addEventListener('click', () => {
@@ -176,6 +177,8 @@ ZONE_STYLE.forEach(opt => {
   const b = document.createElement('button');
   b.innerHTML = `<svg viewBox="0 0 24 24">${opt.svg}</svg>`;
   b.title = opt.title;
+  b.setAttribute('aria-label', opt.title);
+  b.setAttribute('aria-pressed', 'false');
   b.dataset.zone = opt.flag;
   b.style.marginLeft = opt.flag === 'band' ? '6px' : '0';
   b.addEventListener('mousedown', ev => ev.preventDefault());
@@ -202,6 +205,8 @@ LINK_STYLE.forEach(opt => {
   const b = document.createElement('button');
   b.innerHTML = `<svg viewBox="0 0 24 24">${opt.svg}</svg>`;
   b.title = opt.title;
+  b.setAttribute('aria-label', opt.title);
+  b.setAttribute('aria-pressed', 'false');
   if (opt.lw != null) b.dataset.lw = opt.lw;
   if (opt.dash) b.dataset.dash = '1';
   if (opt.head) b.dataset.head = '1';
@@ -242,11 +247,14 @@ function placeShaper(){
   const above = s.y - 78;
   shaper.style.top = (above < 8 ? s.y + n.h*view.k + 46 : above) + 'px';
   shaper.querySelectorAll('button').forEach(b => {
+    let on = false;
     if (b.dataset.zone){
       b.style.display = n.kind === 'zone' ? '' : 'none';
-      b.classList.toggle('on', n.kind === 'zone' && n[b.dataset.zone] === true);
-    } else if (b.dataset.align) b.classList.toggle('on', (n.align || 'center') === b.dataset.align);
-    else b.classList.toggle('on', b.dataset.kind === n.kind);
+      on = n.kind === 'zone' && n[b.dataset.zone] === true;
+    } else if (b.dataset.align) on = (n.align || 'center') === b.dataset.align;
+    else on = b.dataset.kind === n.kind;
+    b.classList.toggle('on', on);
+    b.setAttribute('aria-pressed', on ? 'true' : 'false');
   });
 }
 
@@ -267,21 +275,24 @@ function placeLinkbar(){
   const animated = mode === 'dashes' || mode === 'both' || mode === 'live';
   const dashOn = animated || l.dash === true;
   linkbar.querySelectorAll('button').forEach(btn => {
+    let on = false;
     if (btn.dataset.lw){
       btn.disabled = false;
-      btn.classList.toggle('on', +btn.dataset.lw === lw);
+      on = +btn.dataset.lw === lw;
     } else if (btn.dataset.dash){
       btn.disabled = false;
-      btn.classList.toggle('on', dashOn);
+      on = dashOn;
       btn.title = animated ? 'Stop animated dashes' : (l.dash === true ? 'Hide dashes' : 'Show dashes');
     } else if (btn.dataset.head){
       btn.disabled = false;
-      btn.classList.toggle('on', l.head !== false);
+      on = l.head !== false;
     } else if (btn.dataset.headstart){
       btn.disabled = false;
-      btn.classList.toggle('on', l.headStart === true);
+      on = l.headStart === true;
       btn.title = (l.head === false && l.headStart) ? 'Start arrow (flow reversed)' : 'Start arrow';
     }
+    btn.classList.toggle('on', on);
+    btn.setAttribute('aria-pressed', on ? 'true' : 'false');
   });
 }
 window.addEventListener('resize', () => { placeShaper(); placeLinkbar(); placeStylebar(); });

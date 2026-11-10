@@ -1,6 +1,8 @@
 /* ---------- colour ---------- */
 const swEl = document.getElementById('swatches');
 document.querySelectorAll('#paint button').forEach(b => {
+  b.setAttribute('aria-label', b.title || b.dataset.target);
+  b.setAttribute('aria-pressed', 'false');
   b.addEventListener('click', () => { S.paint = b.dataset.target; syncHud(); });
 });
 function buildSwatches(){
@@ -11,6 +13,14 @@ function buildSwatches(){
     if (hex) d.style.background = hex;
     d.dataset.hex = hex || '';
     d.title = hex || 'default';
+    d.tabIndex = 0;
+    d.setAttribute('role', 'button');
+    d.setAttribute('aria-label', hex ? 'colour ' + hex : 'no colour');
+    d.addEventListener('keydown', ev => {
+      if (ev.key !== 'Enter' && ev.key !== ' ') return;
+      ev.preventDefault();
+      applyColor(hex);
+    });
     d.addEventListener('pointerdown', ev => {
       const sx = ev.clientX, sy = ev.clientY;
       const up = e => {
@@ -43,9 +53,15 @@ function buildSwatches(){
   const lab = document.createElement('div');
   lab.className = 'sw';
   lab.title = 'custom colour';
+  lab.tabIndex = 0;
+  lab.setAttribute('role', 'button');
+  lab.setAttribute('aria-label', 'custom colour');
   lab.style.cssText = 'display:block;' +
     (CUSTOM.hex ? `background:${CUSTOM.hex}` :
       'background:conic-gradient(#8F2D45,#B4632B,#96700F,#2E6B4F,#08829C,#3D6BB3,#6D4B8F,#8F2D45)');
+  lab.addEventListener('keydown', ev => {
+    if (ev.key === 'Enter' || ev.key === ' '){ ev.preventDefault(); lab.click(); }
+  });
   lab.addEventListener('click', () => {
     const input = document.createElement('input');
     input.type = 'color';
@@ -96,7 +112,9 @@ function currentPaintColor(){
 }
 function syncSwatchState(){
   paintRow.querySelectorAll('button').forEach(b => {
-    b.classList.toggle('on', b.dataset.target === S.paint);
+    const on = b.dataset.target === S.paint;
+    b.classList.toggle('on', on);
+    b.setAttribute('aria-pressed', on ? 'true' : 'false');
   });
   const hex = currentPaintColor() || '';
   swEl.querySelectorAll('.sw').forEach(sw => {

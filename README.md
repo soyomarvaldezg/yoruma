@@ -49,6 +49,7 @@ Download a JSON copy of anything you would hate to redraw.
 | `⌘C` `⌘V` `⌘D` | copy · paste · duplicate |
 | `[` `]` `,` `.` `M` | text size · dot size · motion |
 | `F` `Esc` `?` | fit · deselect · quick reference |
+| `1`…`9` `0` | present mode · jump to a step, 0 = overview |
 
 Drop a `.yaml` text file (or a `.json` document) anywhere on the canvas and it opens; images
 land where you drop them. Double-click a shape to name it, or an arrow to give it a note. Right-drag pans, `⌘` + wheel

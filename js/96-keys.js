@@ -9,6 +9,11 @@ window.addEventListener('keydown', e => {
     if (e.key === 'ArrowLeft' || e.key === 'ArrowUp' || e.key === 'PageUp'){
       e.preventDefault(); stepPresent(-1); return;
     }
+    if (/^[0-9]$/.test(e.key)){
+      e.preventDefault();
+      showStep(e.key === '0' ? 0 : Number(e.key));
+      return;
+    }
   }
   if (e.key === 'Escape'){
     if (pickerEl.classList.contains('on')){ closeLogoPicker(); return; }

@@ -102,6 +102,10 @@
   body.present .zoombar{opacity:.35}
   body.present .zoombar:hover{opacity:1}
 
+  :focus{outline:none}
+  :focus-visible{outline:2px solid var(--accent); outline-offset:2px}
+  .sw:focus-visible,.chip:focus-visible,summary:focus-visible{
+    outline:2px solid var(--accent); outline-offset:2px}
   .app{flex:1; display:flex; min-height:0}
   aside{
     width:242px; flex:none; overflow-y:auto; padding:12px 12px 40px;

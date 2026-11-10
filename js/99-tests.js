@@ -459,6 +459,34 @@ if (/[?&]test/.test(location.search)){
   S.selNodes = []; S.selLinks = []; render();
   ok('style bar hides without a selection',
      getComputedStyle(sbar).display === 'none');
+  const toolBtn = document.querySelector('#tools button[data-tool="select"]');
+  setTool('box', 'draw');
+  const boxBtn = document.querySelector('#tools button[data-tool="box"]');
+  const ariaTools = toolBtn.getAttribute('aria-label') === 'Select' &&
+    toolBtn.getAttribute('aria-pressed') === 'false' &&
+    boxBtn.getAttribute('aria-pressed') === 'true';
+  setTool('select', 'draw');
+  const swFocus = document.querySelector('#swatches .sw');
+  const swAria = swFocus.getAttribute('role') === 'button' && swFocus.tabIndex === 0 &&
+    /colour|no colour/.test(swFocus.getAttribute('aria-label') || '');
+  const paintAria = Array.from(document.querySelectorAll('#paint button'))
+    .every(b => !!b.getAttribute('aria-label') && !!b.hasAttribute('aria-pressed'));
+  ok('controls expose labels and pressed state', ariaTools && swAria && paintAria);
+  S.selNodes = [box.id]; S.paint = 'line'; render();
+  swFocus.focus();
+  const keyHex = swFocus.dataset.hex;
+  swFocus.dispatchEvent(new KeyboardEvent('keydown', { key:'Enter', bubbles:true }));
+  const keyPainted = keyHex ? box.color === keyHex : box.color == null;
+  S.selNodes = []; render();
+  ok('swatches work from the keyboard', keyPainted && document.activeElement === swFocus);
+  setPresent(true);
+  const stepsTotal = presentSteps.length;
+  window.dispatchEvent(new KeyboardEvent('keydown', { key:'2' }));
+  const jumped = presentIndex === Math.min(1, stepsTotal - 1);
+  window.dispatchEvent(new KeyboardEvent('keydown', { key:'0' }));
+  const backToOverview = presentIndex === 0;
+  setPresent(false);
+  ok('number keys jump to a step in present mode', jumped && backToOverview);
 
   setPresent(true);
   const asideHidden = getComputedStyle(document.querySelector('aside')).display === 'none';

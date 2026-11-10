@@ -322,7 +322,10 @@ function buildGrid(el, list, group){
   list.forEach(t => {
     const b = document.createElement('button');
     b.innerHTML = `<svg viewBox="0 0 24 24">${ICON[t.icon]}</svg>`;
-    b.title = t.key ? `${t.label}  (${t.key.toUpperCase()})` : t.label;
+    const name = t.key ? `${t.label}  (${t.key.toUpperCase()})` : t.label;
+    b.title = name;
+    b.setAttribute('aria-label', t.label);
+    b.setAttribute('aria-pressed', 'false');
     b.dataset.tool = t.id;
     b.dataset.group = group;
     b.addEventListener('click', () => { if (t.pick) fileInput.click(); else setTool(t.id, group); });
@@ -335,8 +338,11 @@ function setTool(id, group){
   S.tool = id;
   S.armed = null;
   remarkChips(null);
-  document.querySelectorAll('#tools button').forEach(b =>
-    b.classList.toggle('on', b.dataset.tool === id));
+  document.querySelectorAll('#tools button').forEach(b => {
+    const on = b.dataset.tool === id;
+    b.classList.toggle('on', on);
+    b.setAttribute('aria-pressed', on ? 'true' : 'false');
+  });
   document.body.dataset.tool = id;
   syncHud();
   if (typeof placeStylebar === 'function') placeStylebar();
@@ -355,6 +361,7 @@ CATALOG.forEach(([name, items]) => {
     c.className = 'chip';
     c.textContent = label;
     c.dataset.label = label;
+    c.setAttribute('aria-label', 'place ' + label);
     c.addEventListener('click', () => {
       S.armed = label;
       remarkChips(c);
