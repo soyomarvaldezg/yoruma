@@ -1,5 +1,9 @@
 # yoruma — data diagrams
 
+<p>
+  <img src="assets/yoruma_logo.png" alt="yoruma — data architecture diagrams" width="480">
+</p>
+
 yoruma draws data diagrams. It runs as one static page.
 Nothing to install. There is no build step.
 
