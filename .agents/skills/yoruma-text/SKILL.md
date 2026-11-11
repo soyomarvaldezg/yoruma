@@ -59,9 +59,13 @@ duckdb COPY -> DuckDB:
 - **Arrows live at the top level**: `A -> B: note`, chains `A -> B -> C`, `--` for no
   arrowhead, `<->` for both ends. Only the last segment of a chain takes a label.
 - **Props are `key: value`**, indented under the shape they belong to:
-  `sub:`, `brand:` (svgl logo name, e.g. `postgres`, `kafka`), `tint:`, `band:`, `solid:`,
-  `color:` and `fill:` (`#RRGGBB`), `align:`, `x:`/`y:`/`w:`/`h:` (absolute pinning — avoid
-  it unless asked), and `dir:` on zones.
+  `sub:`, `icon:` (bundled glyph, see below), `brand:` (svgl colour logo name), `tint:`,
+  `stroke:` (`solid`, `dashed`, `dotted`), `size:` (`s`, `m`, `l`, `xl` — stroke width),
+  `sharp:` (square corners), `fillmode:` (`soft` wash or `solid`), `band:`, `solid:`, `color:`
+  and `fill:` (`#RRGGBB`), `align:`,
+  `x:`/`y:`/`w:`/`h:` (absolute pinning — avoid it unless asked), and `dir:` on zones.
+  Zones take `dir:`, `color:`, `fill:`, `band:`, `solid:` and `dash:`; `fill:` on a zone paints
+  it at 10%, which is how subnet/VPC lanes get their tint.
 - **Document props** at the top: `title:`, `subtitle:`, `dir: right|down`, `theme: data`
   (role tones by kind: stores green, queues orange, files blue, services and dashboards
   indigo, agents purple, people/clouds/shields gray; explicit `color:` still wins).
@@ -69,6 +73,9 @@ duckdb COPY -> DuckDB:
   line: `color:`, `dash: true|false`, `motion: off|dots|dashes|both|live`.
 - **Zones stack children top-to-bottom by default** (stage lanes). Give a zone
   `dir: right` when its children should read left to right (fan-outs beside the source).
+- **Overlapping boxes are a layout problem, not a text one.** Zones nest by containment, so
+  express "VPC spans the AZs" by nesting the AZs inside the VPC (or vice versa) rather than by
+  stacking two frames on top of each other; `x:`/`y:` pins only exist as an escape hatch.
 - End every shape and arrow line with `:`; the file then stays valid YAML.
 
 ## Motion and dash conventions (use these by default)
@@ -95,6 +102,41 @@ role's tone when the arrow *is* that pipeline's payload (e.g. orange from a queu
 `theme: data` already colours shapes by role, so prefer the theme over hand-picking shape
 colours, and add `color:` only where it carries meaning.
 
+## Icons: `icon:` vs `brand:`
+
+- `icon:` paints a **bundled monochrome glyph** in the shape's outline colour. It works offline,
+  costs nothing in the document, and matches the diagram's palette. Prefer it.
+- `brand:` fetches the **colour logo** at import (svgl / gilbarbara / simple-icons) and stores it
+  inline. Use it only when the brand itself is the point (a vendor deck), and expect a network.
+- Vendor service names are aliases on role glyphs, so write what the box *is*:
+  `s3`/`blob storage`/`cloud storage` → Object storage; `redshift`/`synapse`/`oracle atp` →
+  Data warehouse; `data factory`/`glue`/`data fusion` → ETL service; `eventbridge`/`event grid`/
+  `pubsub`/`event hubs` → Event bus; `sqs`/`service bus` → Message queue; `kinesis`/`dataflow`/
+  `stream analytics` → Stream processor; `sagemaker`/`vertex ai`/`azure ml` → ML platform;
+  `bedrock`/`gpt`/`gemini` → Generative AI; `purview`/`dataplex`/`glue catalog` → Data catalog;
+  `delta lake`/`iceberg`/`hudi` → Table format; `golden gate`/`dms`/`cdc` → Replication;
+  also `data lake`, `managed database`, `nosql store`, `compute cluster`, `serverless`,
+  `function`, `workflow`, `pipeline`, `notebook`, `feature store`, `model registry`,
+  `model serving`, `bi workspace`, `monitoring`, `api gateway`, `edge delivery`, `network`,
+  `load balancer`, `key vault`, `identity`, `lineage`, `catalog`, `etl service`.
+- Real brands with a bundled glyph: Kafka, Spark, Airflow, Flink, Hadoop, Hive, Pulsar, Cassandra,
+  Kafka-adjacent (RabbitMQ, NATS), Postgres, MySQL, MariaDB, MongoDB, Redis, Elasticsearch,
+  ClickHouse, DuckDB, SQLite, Trino, Snowflake, Databricks (`delta lake`/`unity catalog` too),
+  Looker, Metabase, Superset, Grafana, Prometheus, Datadog, Splunk, Docker, Kubernetes, Terraform,
+  Ansible, Git/GitHub/GitLab, Airbyte, Jupyter, Streamlit, FastAPI, Python, R, Scala, Go, Rust,
+  TypeScript, Node, Pandas, NumPy, scikit-learn, PyTorch, TensorFlow, MLflow, Hugging Face,
+  NVIDIA, Cloudflare, Google Cloud/BigQuery/Sheets, Vault, Consul, Istio, etcd, InfluxDB, ScyllaDB,
+  Druid, Presto, Timescale, Supabase, PlanetScale, Cockroach, MinIO, NiFi, Prefect, Temporal, Argo,
+  Tekton, Jenkins, GitHub Actions, WireGuard/OpenVPN/Tailscale, NGINX/HAProxy/Envoy, Jaeger, Sentry,
+  PagerDuty, Jira, Confluence, Qlik, MicroStrategy, Observable, Talend, Matillion, Netdata,
+  Fluent Bit, Kibana, Logstash, Sumo Logic, New Relic.
+- No free artwork exists for Azure service tiles, Oracle, Snowplow, Fivetran, dbt Cloud, DataHub,
+  Collibra, Dagster, Kestra, Delta Lake as a logo. Use the role glyph, or tell the user to import
+  the vendor pack once: **FILE ▾ → Import icon pack…** accepts `.svg` files (names and tags come
+  from the filename) — AWS <https://aws.amazon.com/architecture/icons/>, Azure
+  <https://learn.microsoft.com/en-us/azure/architecture/icons/>, Google
+  <https://cloud.google.com/icons>. Their browser keeps it; the repo ships no vendor artwork.
+
 ## How the layout behaves (so you can predict it)
 
 Ranks come from the arrows: a shape sits one rank after everything pointing at it. Within a
@@ -107,16 +149,27 @@ the same file always lays out the same way, and `x:`/`y:` pins survive.
 
 Yoruma is a static page: whoever wants the picture opens `index.html` from a clone of the repo
 (or the published site) and loads the file there. There is no server, no CLI and nothing to
-install — the yaml is the deliverable.
+install — a yaml file is the deliverable.
 
-- Give the yaml in one fenced block, ready to save as `diagram.yaml`.
+- Write the yaml to a file yourself; never hand back a block and wait for the user to save it.
+  Pick a name that says what the diagram is (`arquitectura-recomendada.yaml`, or the next
+  `docs/example-*.yaml` when it belongs with the shipped examples), put it in the repo, and
+  report the path.
+- A fenced block is a preview of what you wrote, never the only copy.
+- On an edit, rewrite that same file rather than printing a new one, so the path they already
+  have open stays valid.
 - Tell them: **FILE ▾ → Open text…**, or drop the saved file on the canvas.
 - Close the loop in plain language: they say what should change, you answer with the updated
-  block. Say what to look at ("the queue should now be orange, between Capture and Processing")
+  file. Say what to look at ("the queue should now be orange, between Capture and Processing")
   so a mistake is visible at a glance.
 
 Stay near the 400-token target: the file is meant to be read and edited by a human in a text
 editor as much as by a model.
+
+Load it once before saying it works: open `index.html`, call `buildTextDoc(parseText(src))`
+with the file's contents, then render and screenshot. Parser errors surface there as
+`line N: ...`, and truncated `sub:` lines or a label sitting on an arrowhead only show up in
+the picture.
 
 ## Keep it small
 
