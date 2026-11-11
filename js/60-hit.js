@@ -17,9 +17,13 @@ function nodeAt(p, pad){
   pad = pad || 0;
   for (let i=nodes.length-1;i>=0;i--){
     const n = nodes[i];
-    if (n.kind === 'zone' || n.kind === 'frame') continue;
-    if (n.kind === 'line' || n.kind === 'arrow'){ if (lineDist(n, p) <= 9 + pad) return n; continue; }
+    if (n.kind === 'zone' || n.kind === 'frame' ||
+        n.kind === 'line' || n.kind === 'arrow') continue;
     if (p.x >= n.x-pad && p.x <= n.x+n.w+pad && p.y >= n.y-pad && p.y <= n.y+n.h+pad) return n;
+  }
+  for (let i=nodes.length-1;i>=0;i--){
+    const n = nodes[i];
+    if ((n.kind === 'line' || n.kind === 'arrow') && lineDist(n, p) <= 8 + pad) return n;
   }
   for (let i=nodes.length-1;i>=0;i--){
     const n = nodes[i];

@@ -23,7 +23,7 @@ function textIssues(){
     while (g && g !== stage && !g.hasAttribute('data-id')) g = g.parentNode;
     if (!g || g === stage) return;
     const n = byId(g.getAttribute('data-id'));
-    if (!n) return;
+    if (!n || n.kind === 'logo') return;
     const label = n.title || n.kind;
     let cut = false;
     el.querySelectorAll('tspan').forEach(sp => {

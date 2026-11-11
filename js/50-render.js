@@ -1,5 +1,6 @@
 /* ---------- render ---------- */
 let motionEls = [], handles = [];
+let dimPrev = new Set(), dimNow = new Set();
 const lenCache = new Map();
 
 function tick(now){
@@ -56,9 +57,11 @@ function render(){
 
   const world = mk('g');
   const focusZone = presentZoneId ? nodes.find(n => n.id === presentZoneId) : null;
+  const spot = !focusZone && spotId ? byId(spotId) : null;
   const focusMembers = focusZone && focusZone.kind === 'frame'
     ? stepMembers(focusZone) : null;
   const dimmed = n => {
+    if (spot) return n !== spot && n.kind !== 'frame';
     if (!focusZone || n === focusZone || n.kind === 'frame') return false;
     if (focusMembers) return !focusMembers.has(n.id);
     return !(n.x >= focusZone.x && n.y >= focusZone.y &&
@@ -73,7 +76,11 @@ function render(){
         fill:'none', stroke:FIBER, 'stroke-width':1.4, 'stroke-dasharray':'3 3',
         'pointer-events':'none', class:'ui' }));
     g.appendChild(shape(n));
-    if (dimmed(n)) g.setAttribute('opacity', '.16');
+    if (dimmed(n)){
+      g.setAttribute('opacity', '.16');
+      if (!dimPrev.has(n.id)) g.classList.add('dimmed');
+      dimNow.add(n.id);
+    }
     world.appendChild(g);
   });
 
@@ -126,20 +133,24 @@ function render(){
     if (selected)
       g.appendChild(mk('path', { d, fill:'none', stroke:FIBER, 'stroke-width':1,
         'stroke-dasharray':'2 4', opacity:'.9', 'pointer-events':'none', class:'ui' }));
-    if (focusZone && (focusMembers ? (dimmed(a) || dimmed(b)) : (dimmed(a) && dimmed(b))))
+    if ((spot && a !== spot && b !== spot) ||
+        (focusZone && (focusMembers ? (dimmed(a) || dimmed(b)) : (dimmed(a) && dimmed(b))))){
       g.setAttribute('opacity', '.16');
+      if (!dimPrev.has(l.id)) g.classList.add('dimmed');
+      dimNow.add(l.id);
+    }
     if (l.label){
       const m = midPoint(pts);
       const vertical = Math.abs(pts[pts.length-1][0]-pts[0][0]) <
                        Math.abs(pts[pts.length-1][1]-pts[0][1]);
       const k = l.fs || 1;
-      const lines = wrapLines(l.label, (vertical ? 120 : 190)*k, 14*k, false, 4);
+      const lines = wrapLines(l.label, (vertical ? 130 : 210)*k, 16*k, false, 4);
       const x = vertical ? m.x + 12*k : m.x;
-      const lh = 17*k;
+      const lh = 19*k;
       const y = vertical ? m.y + 5*k - (lines.length - 1)*lh/2
                          : m.y - 7*k - (lines.length - 1)*lh;
       const t = mk('text', { x, y, 'text-anchor': vertical ? 'start' : 'middle',
-        'font-family':"'VD Sans',sans-serif", 'font-size':String(14*k),
+        'font-family':"'VD Sans',sans-serif", 'font-size':String(16*k),
         fill: colorAt(l.color) || MUTED, stroke:PAPER, 'stroke-width':'2.6',
         'paint-order':'stroke', 'pointer-events':'all', 'data-role':'label' });
       lines.forEach((ln, i) => {
@@ -162,7 +173,11 @@ function render(){
         'pointer-events':'none', class:'ui' }));
     g.appendChild(shape(n));
     drawText(g, n);
-    if (dimmed(n)) g.setAttribute('opacity', '.22');
+    if (dimmed(n)){
+      g.setAttribute('opacity', '.22');
+      if (!dimPrev.has(n.id)) g.classList.add('dimmed');
+      dimNow.add(n.id);
+    }
     nodesG.appendChild(g);
   });
   world.appendChild(nodesG);
@@ -176,25 +191,32 @@ function render(){
   });
   world.appendChild(zoneLabels);
 
+  dimPrev = dimNow; dimNow = new Set();
+
   viewport.appendChild(world);
+
+  inked.forEach(s => viewport.appendChild(mk('path', {
+    d: s.d, fill:'none', stroke: s.stroke, 'stroke-width': s.sw,
+    'stroke-linecap':'round', 'stroke-linejoin':'round', opacity:'.95',
+    'pointer-events':'none', class:'ui ink'
+  })));
 
   motionEls = [];
   if (!lite) drawn.forEach(({ link, d, mode, col }) => {
-    if (mode === 'dots' || mode === 'both'){
-      const c = mk('circle', { r:'2.8', opacity:'0',
-        fill: col || FIBER, class:'ui' });
-      viewport.appendChild(c);
-      const ghost = mk('path', { d, fill:'none', stroke:'none', class:'ui' });
-      viewport.appendChild(ghost);
-      let len = lenCache.get(d);
-      if (len == null){ len = ghost.getTotalLength(); lenCache.set(d, len); }
-      const lw = link.lw || 1.5;
-      const dir = link.head === false && link.headStart === true ? -1 : 1;
-      motionEls.push({ id:link.id, path:ghost, el:c, len, dir,
-        phase:(hash(link.id)%1000)/1000, speed:0.00022,
-        base: S.dotSize * Math.max(0.85, Math.min(1.5, lw / 1.5)),
-        seed:(hash(link.id)%97)/97 });
-    }
+    if (mode !== 'dots' && mode !== 'both') return;
+    const c = mk('circle', { r:'2.8', opacity:'0',
+      fill: col || FIBER, class:'ui' });
+    viewport.appendChild(c);
+    const ghost = mk('path', { d, fill:'none', stroke:'none', class:'ui' });
+    viewport.appendChild(ghost);
+    let len = lenCache.get(d);
+    if (len == null){ len = ghost.getTotalLength(); lenCache.set(d, len); }
+    const lw = link.lw || 1.5;
+    const dir = link.head === false && link.headStart === true ? -1 : 1;
+    motionEls.push({ id:link.id, path:ghost, el:c, len, dir,
+      phase:(hash(link.id)%1000)/1000, speed:0.00022,
+      base: S.dotSize * Math.max(0.85, Math.min(1.5, lw / 1.5)),
+      seed:(hash(link.id)%97)/97 });
   });
   if (!lite) liveQ.forEach(({ el, halo, dir }) => {
     const len = el.getTotalLength();

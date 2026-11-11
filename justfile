@@ -15,6 +15,10 @@ shots:
 measure:
     node tools/measure.mjs
 
+# Regenerate the bundled monochrome icon pack (js/84-icons.js) from simple-icons.
+icons:
+    node tools/icons.mjs
+
 # Regenerate the Blocks palette as text (docs/example-blocks.yaml) from the catalog.
 blocks:
     node tools/blocks-text.mjs

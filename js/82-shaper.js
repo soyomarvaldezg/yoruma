@@ -24,132 +24,88 @@ const ALIGN_ICON = {
   center:'<path d="M4 6h16M7.5 12h9M5.5 18h13"/>',
   right:'<path d="M4 6h16M11 12h9M7 18h13"/>'
 };
-const pickerEl = document.getElementById('logo-picker');
-const pickerGrid = document.getElementById('logo-grid');
-const pickerFilter = document.getElementById('logo-filter');
-let pickerNode = null;
-function closeLogoPicker(){
-  pickerEl.classList.remove('on');
-  pickerNode = null;
-}
-const DATA_BRANDS = ['snowflake','dbt','databricks','airflow','apache-spark','kafka','tableau',
-  'looker','power-bi','bigquery','postgresql','mysql','mongodb','elasticsearch','redis',
-  'segment','airbyte','docker','kubernetes','terraform'];
+const DATA_BRANDS = [
+  { f:'aws',            l:'AWS',              t:'aws,amazon,cloud' },
+  { f:'aws-s3',         l:'S3',               t:'s3,bucket,object storage,aws' },
+  { f:'aws-rds',        l:'RDS',              t:'rds,sql,database,aws' },
+  { f:'aws-aurora',     l:'Aurora',           t:'aurora,sql,postgres,mysql,aws' },
+  { f:'aws-redshift',   l:'Redshift',         t:'redshift,warehouse,aws' },
+  { f:'aws-glue',       l:'Glue',             t:'glue,etl,catalog,aws' },
+  { f:'aws-athena',     l:'Athena',           t:'athena,query,sql,aws' },
+  { f:'aws-kinesis',    l:'Kinesis',          t:'kinesis,streaming,events,aws' },
+  { f:'aws-msk',        l:'MSK',              t:'msk,kafka,streaming,aws' },
+  { f:'aws-sqs',        l:'SQS',              t:'sqs,queue,messaging,aws' },
+  { f:'aws-sns',        l:'SNS',              t:'sns,topic,pubsub,aws' },
+  { f:'aws-mq',         l:'MQ',               t:'mq,activemq,rabbitmq,messaging,aws' },
+  { f:'aws-eventbridge',l:'EventBridge',      t:'eventbridge,events,bus,aws' },
+  { f:'aws-dynamodb',   l:'DynamoDB',         t:'dynamodb,nosql,keyvalue,aws' },
+  { f:'aws-documentdb', l:'DocumentDB',       t:'documentdb,mongo,nosql,aws' },
+  { f:'aws-neptune',    l:'Neptune',          t:'neptune,graph,aws' },
+  { f:'aws-elasticache',l:'ElastiCache',      t:'elasticache,redis,cache,aws' },
+  { f:'aws-lambda',     l:'Lambda',           t:'lambda,functions,serverless,aws' },
+  { f:'aws-ec2',        l:'EC2',              t:'ec2,compute,vms,aws' },
+  { f:'aws-ecs',        l:'ECS',              t:'ecs,containers,aws' },
+  { f:'aws-eks',        l:'EKS',              t:'eks,kubernetes,containers,aws' },
+  { f:'aws-fargate',    l:'Fargate',          t:'fargate,containers,serverless,aws' },
+  { f:'aws-batch',      l:'Batch',            t:'batch,compute,jobs,aws' },
+  { f:'aws-api-gateway',l:'API Gateway',      t:'api,gateway,http,aws' },
+  { f:'aws-step-functions', l:'Step Functions', t:'step functions,orchestration,workflow,aws' },
+  { f:'aws-cloudwatch', l:'CloudWatch',       t:'cloudwatch,metrics,logs,aws' },
+  { f:'aws-iam',        l:'IAM',              t:'iam,identity,access,aws' },
+  { f:'aws-kms',        l:'KMS',              t:'kms,keys,encryption,aws' },
+  { f:'aws-secrets-manager', l:'Secrets Manager', t:'secrets,credentials,aws' },
+  { f:'aws-lake-formation',  l:'Lake Formation',  t:'lake formation,governance,catalog,aws' },
+  { f:'aws-quicksight', l:'QuickSight',       t:'quicksight,bi,dashboards,aws' },
+  { f:'aws-cognito',    l:'Cognito',          t:'cognito,auth,identity,aws' },
+  { f:'aws-appflow',    l:'AppFlow',          t:'appflow,ingest,connectors,aws' },
+  { f:'aws-vpc',        l:'VPC',              t:'vpc,network,subnet,aws' },
+  { f:'microsoft-azure',l:'Azure',            t:'azure,microsoft,cloud' },
+  { f:'google-cloud',   l:'Google Cloud',     t:'gcp,google,cloud' },
+  { f:'google-cloud-run', l:'Cloud Run',      t:'cloud run,run,serverless,containers,gcp' },
+  { f:'google-cloud-functions', l:'Cloud Functions', t:'cloud functions,functions,faas,serverless,gcp' },
+  { f:'power-bi',       l:'Power BI',         t:'power bi,powerbi,bi,microsoft' },
+  { f:'tableau',        l:'Tableau',          t:'tableau,bi,viz' },
+  { f:'looker',         l:'Looker',           t:'looker,bi,lookml' },
+  { f:'bigquery',       l:'BigQuery',         t:'bigquery,warehouse,gcp' },
+  { f:'dbt',            l:'dbt',              t:'dbt,transformation,modeling' },
+  { f:'snowflake',      l:'Snowflake',        t:'snowflake,warehouse' },
+  { f:'databricks',     l:'Databricks',       t:'databricks,lakehouse' },
+  { f:'airflow',        l:'Airflow',          t:'airflow,orchestration,dag' },
+  { f:'kafka',          l:'Kafka',            t:'kafka,events,streaming' },
+  { f:'airbyte',        l:'Airbyte',          t:'airbyte,connectors,etl' },
+  { f:'segment',        l:'Segment',          t:'segment,cdp,events' },
+  { f:'postgresql',     l:'PostgreSQL',       t:'postgres,postgresql,sql' },
+  { f:'mysql',          l:'MySQL',            t:'mysql,sql' },
+  { f:'mongodb',        l:'MongoDB',          t:'mongodb,nosql' },
+  { f:'elasticsearch',  l:'Elasticsearch',    t:'elasticsearch,search' },
+  { f:'redis',          l:'Redis',            t:'redis,cache' },
+  { f:'docker',         l:'Docker',           t:'docker,containers' },
+  { f:'kubernetes',     l:'Kubernetes',       t:'kubernetes,k8s' },
+  { f:'terraform',      l:'Terraform',        t:'terraform,iac' }
+];
 const BRAND_THUMB = {
   'power-bi': 'https://cdn.jsdelivr.net/gh/gilbarbara/logos/logos/microsoft-power-bi.svg',
   'bigquery': 'https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/googlebigquery.svg'
 };
-const brandThumb = name => BRAND_THUMB[name] ||
-  'https://cdn.jsdelivr.net/gh/gilbarbara/logos/logos/' + logoSlug(name) + '.svg';
-function brandTile(name){
+const brandThumb = file => BRAND_THUMB[file] ||
+  'https://cdn.jsdelivr.net/gh/gilbarbara/logos/logos/' + logoSlug(file) + '.svg';
+
+[{ order:'front', title:'Bring to front',
+   svg:'<rect x="4" y="15" width="16" height="5" rx="1.2"/><path d="M12 12V3.5M8.5 7 12 3.5 15.5 7"/>' },
+ { order:'back', title:'Send to back',
+   svg:'<rect x="4" y="4" width="16" height="5" rx="1.2"/><path d="M12 12v8.5M8.5 17 12 20.5l3.5-3.5"/>' }
+].forEach(opt => {
   const b = document.createElement('button');
-  b.className = 'logo-item';
-  const img = document.createElement('img');
-  img.loading = 'lazy';
-  img.alt = '';
-  if (BRAND_THUMB[name]) img.src = BRAND_THUMB[name];
-  else {
-    img.src = 'https://cdn.jsdelivr.net/gh/gilbarbara/logos/logos/' + logoSlug(name) + '-icon.svg';
-    img.onerror = () => {
-      img.onerror = null;
-      img.src = 'https://cdn.jsdelivr.net/gh/gilbarbara/logos/logos/' + logoSlug(name) + '.svg';
-    };
-  }
-  const sp = document.createElement('span');
-  sp.textContent = name;
-  b.appendChild(img);
-  b.appendChild(sp);
+  b.innerHTML = `<svg viewBox="0 0 24 24">${opt.svg}</svg>`;
+  b.title = opt.title;
+  b.setAttribute('aria-label', opt.title);
+  b.dataset.order = opt.order;
+  b.style.marginLeft = '6px';
   b.addEventListener('mousedown', ev => ev.preventDefault());
-  b.addEventListener('click', () => fetchLogoByName(name, pickerNode));
-  return b;
-}
-function pickerItem(it){
-  const b = document.createElement('button');
-  b.className = 'logo-item';
-  const img = document.createElement('img');
-  img.loading = 'lazy';
-  img.alt = '';
-  img.src = svglRoute(it);
-  const sp = document.createElement('span');
-  sp.textContent = it.title;
-  b.appendChild(img);
-  b.appendChild(sp);
-  b.addEventListener('mousedown', ev => ev.preventDefault());
-  b.addEventListener('click', () => useLogoSvg(it));
-  return b;
-}
-function paintPicker(q){
-  const query = normName(q);
-  pickerGrid.innerHTML = '';
-  const items = (svglIndex || []).filter(it => !query || normName(it.title).includes(query));
-  if (!items.length){
-    const typed = String(q || '').trim();
-    if (typed){
-      const b = document.createElement('button');
-      b.className = 'logo-item';
-      b.textContent = 'Fetch “' + typed + '”';
-      b.addEventListener('click', () => { if (pickerNode) fetchLogoByName(typed, pickerNode); });
-      pickerGrid.appendChild(b);
-    } else {
-      pickerGrid.innerHTML = '<div class="logo-empty">no brands loaded — use FROM FILE</div>';
-    }
-    return;
-  }
-  DATA_BRANDS.filter(n => !query || normName(n).includes(query))
-    .forEach(n => pickerGrid.appendChild(brandTile(n)));
-  items.slice(0, 600).forEach(it => pickerGrid.appendChild(pickerItem(it)));
-}
-function newLogoNode(){
-  const c = centrePoint();
-  const n = { id:'n'+(uid++), kind:'logo', title:'', sub:'', color:null,
-    tcolor:null, scolor:null, fs:1, x:0, y:0, w:SIZE.logo[0], h:SIZE.logo[1] };
-  n.x = Math.round(c.x - n.w/2);
-  n.y = Math.round(c.y - n.h/2);
-  nodes.push(n);
-  selectNodes([n.id], false);
-  return n;
-}
-async function useLogoSvg(it){
-  const route = svglRoute(it);
-  if (!route){ toast('no logo file for ' + it.title, 4000); return; }
-  const file = route.split('/').pop();
-  const svg = await tryLogoSvg('https://api.svgl.app/svg/' + encodeURIComponent(file));
-  if (!svg){ toast('could not download ' + it.title, 4200); return; }
-  snapshot();
-  const n = pickerNode || newLogoNode();
-  n.logo = svgDataUri(svg);
-  render();
-  closeLogoPicker();
-  toast(it.title + ' logo added');
-}
-async function openLogoPicker(n){
-  pickerNode = n;
-  pickerEl.classList.add('on');
-  pickerFilter.value = '';
-  pickerGrid.innerHTML = '<div class="logo-empty">loading brands…</div>';
-  if (!svglIndex){
-    try {
-      const r = await fetch('https://api.svgl.app');
-      const list = r.ok ? await r.json() : [];
-      svglIndex = Array.isArray(list) ? list : [];
-    } catch (e){ svglIndex = []; }
-  }
-  paintPicker('');
-  pickerFilter.focus();
-}
-pickerFilter.addEventListener('input', () => paintPicker(pickerFilter.value));
-pickerFilter.addEventListener('keydown', ev => {
-  if (ev.key !== 'Enter') return;
-  const q = pickerFilter.value.trim();
-  if (!q) return;
-  ev.preventDefault();
-  fetchLogoByName(q, pickerNode);
+  b.addEventListener('click', () => reorderSelection(opt.order === 'front'));
+  shaper.appendChild(b);
 });
-document.getElementById('logo-close').addEventListener('click', closeLogoPicker);
-pickerEl.addEventListener('click', ev => { if (ev.target === pickerEl) closeLogoPicker(); });
-pickerEl.addEventListener('keydown', ev => {
-  if (ev.key === 'Escape'){ ev.stopPropagation(); closeLogoPicker(); }
-});
+
 ['left','center','right'].forEach(al => {
   const b = document.createElement('button');
   b.innerHTML = `<svg viewBox="0 0 24 24">${ALIGN_ICON[al]}</svg>`;

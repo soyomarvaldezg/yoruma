@@ -36,6 +36,9 @@ function parseNode(raw){
     bold: raw.bold === true,
     italic: raw.italic === true,
     tint: raw.tint === true,
+    dash: raw.dash === true,
+    sharp: raw.sharp === true,
+    rev: raw.rev === true,
     flip: raw.flip === true,
     band: raw.band === true,
     solid: raw.solid === true
@@ -44,6 +47,10 @@ function parseNode(raw){
   const src = image(raw.src), logo = image(raw.logo);
   if (src) n.src = src;
   if (logo) n.logo = logo;
+  if (n.logo && raw.mono === true) n.mono = true;
+  if (['solid','dashed','dotted'].includes(raw.stroke)) n.stroke = raw.stroke;
+  if (raw.fillmode === 'solid') n.fillmode = 'solid';
+  if (isNum(raw.sw) && raw.sw > 0 && raw.sw <= 8) n.sw = raw.sw;
   if (isNum(raw.step) && raw.step > 0 && raw.step < 1e6) n.step = Math.round(raw.step);
   if (raw.kind === 'frame' && Array.isArray(raw.members)){
     const members = Array.from(new Set(raw.members.filter(m => idOf(m)).map(idOf))).slice(0, 500);
@@ -83,6 +90,40 @@ function parseLink(raw, ids){
 
 const DOC_MAX_CHARS = 8e6;
 const DOC_MAX_ITEMS = 5000;
+const DOC_MAX_PAGES = 40;
+function parsePage(raw, index){
+  if (!raw || typeof raw !== 'object') throw new Error('page ' + (index + 1) + ' is not an object');
+  const id = idOf(raw.id) || ('p' + (index + 1));
+  const name = String(raw.name == null ? 'Page ' + (index + 1) : raw.name).slice(0, 40);
+  const ns = Array.isArray(raw.nodes) ? raw.nodes : [];
+  const ls = Array.isArray(raw.links) ? raw.links : [];
+  if (ns.length > DOC_MAX_ITEMS || ls.length > DOC_MAX_ITEMS)
+    throw new Error('page ' + name + ' has too many shapes');
+  const ids = new Set();
+  const nodes = ns.map(rawN => {
+    const n = parseNode(rawN);
+    if (ids.has(n.id)) throw new Error('duplicate shape id ' + n.id);
+    ids.add(n.id);
+    return n;
+  });
+  nodes.forEach(n => {
+    if (!n.members) return;
+    n.members = n.members.filter(id => ids.has(id));
+    if (!n.members.length) delete n.members;
+  });
+  const linkIds = new Set();
+  const links = ls.map(rawL => {
+    const l = parseLink(rawL, ids);
+    if (linkIds.has(l.id)) throw new Error('duplicate arrow id ' + l.id);
+    linkIds.add(l.id);
+    return l;
+  });
+  const view = raw.view && isNum(raw.view.x) && isNum(raw.view.y) &&
+               isNum(raw.view.k) && raw.view.k > 0
+    ? { x: raw.view.x, y: raw.view.y, k: Math.min(3, Math.max(0.2, raw.view.k)) }
+    : null;
+  return { id, name, nodes, links, view };
+}
 function parseDoc(text){
   const body = String(text).replace(/^\uFEFF/, '');
   if (body.length > DOC_MAX_CHARS) throw new Error('document is too large');
@@ -121,7 +162,19 @@ function parseDoc(text){
                Math.abs(raw.view.x) <= 1e7 && Math.abs(raw.view.y) <= 1e7
     ? { x: raw.view.x, y: raw.view.y, k: Math.min(3, Math.max(0.2, raw.view.k)) }
     : null;
-  return { nodes: nextNodes, links: nextLinks, motion, view };
+  let pages = null, page = null;
+  if (Array.isArray(raw.pages)){
+    pages = raw.pages.slice(0, DOC_MAX_PAGES).map(parsePage);
+    if (!pages.length) pages = null;
+  }
+  if (pages){
+    const wanted = idOf(raw.page);
+    page = pages.some(p => p.id === wanted) ? wanted : pages[0].id;
+  } else {
+    pages = [{ id:'p1', name:'Page 1', nodes: nextNodes, links: nextLinks, view }];
+    page = 'p1';
+  }
+  return { nodes: nextNodes, links: nextLinks, motion, view, pages, page };
 }
 
 function loadDoc(doc){
@@ -205,9 +258,22 @@ async function fontFace(family, path){
     return `@font-face{font-family:'${family}';src:url('${path}') format('truetype')}`;
   }
 }
-async function buildSVG(){
-  const b = contentBBox();
-  const pad = 48;
+async function buildSVG(opts){
+  const sel = opts && opts.sel;
+  const keepNodes = sel ? new Set(S.selNodes) : null;
+  const keepLinks = sel ? new Set(S.selLinks) : null;
+  if (sel && !keepNodes.size && !keepLinks.size) return null;
+  let b = contentBBox();
+  if (sel){
+    const picked = nodes.filter(n => keepNodes.has(n.id));
+    if (picked.length){
+      const x1 = Math.min(...picked.map(n => n.x)), y1 = Math.min(...picked.map(n => n.y));
+      b = { x:x1, y:y1,
+        w: Math.max(...picked.map(n => n.x + n.w)) - x1,
+        h: Math.max(...picked.map(n => n.y + n.h)) - y1 };
+    }
+  }
+  const pad = sel ? 24 : 48;
   const w = Math.round(b.w + pad*2), h = Math.round(b.h + pad*2);
   const css = (await fontFace('VD Code','fonts/SourceCodePro.ttf'))
             + (await fontFace('VD Sans','fonts/DMSans.ttf'));
@@ -232,6 +298,46 @@ async function buildSVG(){
     }
     else el.remove();
   });
+  /* Dots are moved by the editor's tick, so the clone would carry a frozen
+     circle at the path start. Give each one a SMIL motion path instead. */
+  links.forEach((l, i) => {
+    const mode = l.motion || S.motion;
+    if (mode !== 'dots' && mode !== 'both') return;
+    const a = byId(l.from), b = byId(l.to);
+    if (!a || !b) return;
+    const g = clone.querySelector(`g[data-link="${l.id}"]`);
+    if (!g) return;
+    const d = rounded(route(a, b, l.way, l), 7);
+    const ghost = mk('path', { id:'yoruma-mp' + i, d, fill:'none', stroke:'none' });
+    g.appendChild(ghost);
+    const len = ghost.getTotalLength() || 1;
+    const dir = l.head === false && l.headStart === true ? -1 : 1;
+    const lw = l.lw || 1.5;
+    const dur = (Math.max(1200, len * 5) / 1000).toFixed(2) + 's';
+    const dot = mk('circle', { r: String(S.dotSize * Math.max(0.85, Math.min(1.5, lw / 1.5))),
+      fill: colorAt(l.color) || FIBER, opacity: '1' });
+    const am = mk('animateMotion', {
+      dur, repeatCount: 'indefinite', calcMode: 'linear',
+      ...(dir < 0 ? { keyPoints: '1;0', keyTimes: '0;1' } : {})
+    });
+    const mp = document.createElementNS(NS, 'mpath');
+    mp.setAttribute('href', '#yoruma-mp' + i);
+    mp.setAttributeNS('http://www.w3.org/1999/xlink', 'xlink:href', '#yoruma-mp' + i);
+    am.appendChild(mp);
+    dot.appendChild(am);
+    g.appendChild(dot);
+  });
+  if (sel){
+    clone.querySelectorAll('g.node[data-id]').forEach(el => {
+      if (!keepNodes.has(el.getAttribute('data-id'))) el.remove();
+    });
+    clone.querySelectorAll('g[data-link]').forEach(el => {
+      const id = el.getAttribute('data-link');
+      const l = links.find(x => x.id === id);
+      const both = l && keepNodes.has(l.from) && keepNodes.has(l.to);
+      if (!keepLinks.has(id) && !both) el.remove();
+    });
+  }
   clone.querySelectorAll('.linkhit').forEach(el => el.remove());
   clone.querySelectorAll('[data-sel]').forEach(el => {
     el.setAttribute('stroke-width', el.getAttribute('data-lw') || '1.5');
@@ -248,6 +354,24 @@ async function buildSVG(){
     + `<style>${css}${motionCss}</style>`
     + `<rect x="${b.x-pad}" y="${b.y-pad}" width="${w}" height="${h}" fill="${PAPER}"/>`
     + body + '</svg>';
+}
+function svgToCanvas(svg){
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      const cnv = document.createElement('canvas');
+      cnv.width = img.width*2; cnv.height = img.height*2;
+      const ctx = cnv.getContext('2d');
+      ctx.scale(2, 2);
+      ctx.drawImage(img, 0, 0);
+      resolve(cnv);
+    };
+    img.onerror = () => reject(new Error('render failed'));
+    img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+  });
+}
+function canvasBlob(cnv, type){
+  return new Promise(resolve => cnv.toBlob(b => resolve(b), type));
 }
 function download(name, blob){
   const a = document.createElement('a');
@@ -272,6 +396,8 @@ menu.querySelectorAll('button').forEach(b => {
     try {
       if (x === 'open'){ jsonInput.click(); return; }
       if (x === 'open-text'){ openTextFile(); return; }
+      if (x === 'icons-import'){ importIconPack(); return; }
+      if (x === 'icons-clear'){ clearImportedIcons(); return; }
       if (x === 'clear'){ clearDoc(); return; }
       if (x === 'mermaid') return copy(mermaid(), 'mermaid source copied');
       if (x === 'd2') return copy(d2(), 'd2 source copied');
@@ -280,6 +406,19 @@ menu.querySelectorAll('button').forEach(b => {
       if (x === 'svg'){
         download('yoruma.svg', new Blob([await buildSVG()], { type:'image/svg+xml' }));
         toast('svg downloaded');
+        return;
+      }
+      if (x === 'svg-sel' || x === 'png-sel'){
+        const svg = await buildSVG({ sel:true });
+        if (!svg){ toast('select something first'); return; }
+        if (x === 'svg-sel'){
+          download('yoruma-selection.svg', new Blob([svg], { type:'image/svg+xml' }));
+          toast('selection svg downloaded');
+          return;
+        }
+        const cnv = await svgToCanvas(svg);
+        download('yoruma-selection.png', await canvasBlob(cnv, 'image/png'));
+        toast('selection png downloaded');
         return;
       }
       if (x === 'png' || x === 'webp' || x === 'png-copy'){

@@ -31,6 +31,9 @@ const ICON = {
   media:'<rect x="3.5" y="5" width="17" height="14" rx="1.5"/><circle cx="8.5" cy="10" r="1.6"/><path d="M4 17l5-5 4 4 2.5-2.5 4.5 4.5"/>',
   contract:'<path d="M6.5 3.5h8l3 3v14h-11z"/><path d="M9.5 13.5l2 2 3.5-3.5"/>',
   people:'<circle cx="9.5" cy="9" r="3"/><path d="M4 19c0-3 2.5-5 5.5-5s5.5 2 5.5 5"/><path d="M16 6.5a2.6 2.6 0 0 1 0 5M17.5 19c0-2.2-.8-3.6-2-4.4"/>',
+  pen:'<path d="M4 20l3.6-.9 10-10a2.2 2.2 0 0 0-3.1-3.1l-10 10z"/><path d="M13.6 6.9l3.5 3.5"/>',
+  laser:'<circle cx="12" cy="12" r="2.6"/><path d="M12 3.5v3.2M12 17.3v3.2M3.5 12h3.2M17.3 12h3.2"/><path d="M6.4 6.4l2.3 2.3M15.3 15.3l2.3 2.3M17.6 6.4l-2.3 2.3M8.7 15.3l-2.3 2.3"/>',
+  eraser:'<path d="M9.5 19.5H20"/><path d="M5.5 15.5 14 7l5 5-8.5 8.5H8.5z"/><path d="M9 11l5 5"/>',
   text:'<path d="M5.5 6.5h13M12 6.5v11"/>',
   heading:'<path d="M6 5v14M18 5v14M6 12h12"/>'
 };
@@ -44,7 +47,10 @@ const DRAW = [
   { id:'ellipse', key:'o', icon:'ellipse', label:'Ellipse' },
   { id:'zone',    key:'z', icon:'zone',    label:'Zone / layer (dashed)' },
   { id:'text',    key:'t', icon:'text',    label:'Text' },
-  { id:'heading', key:'g', icon:'heading', label:'Heading' }
+  { id:'heading', key:'g', icon:'heading', label:'Heading' },
+  { id:'pen',     key:'n', icon:'pen',     label:'Pen (ink)' },
+  { id:'laser',   key:'y', icon:'laser',   label:'Laser (fades)' },
+  { id:'eraser',  key:'x', icon:'eraser',  label:'Eraser (ink and shapes)' }
 ];
 const DATA = [
   { id:'store',     key:'d', icon:'store',     label:'Database' },
@@ -57,9 +63,10 @@ const DATA = [
   { id:'agent',     key:'b', icon:'agent',     label:'AI agent' },
   { id:'contract',  key:'k', icon:'contract',  label:'Data contract' },
   { id:'video',     key:'u', icon:'video',     label:'Video' },
-  { id:'media',     key:'i', icon:'media',     label:'Image data' }
+  { id:'media',     key:'i', icon:'media',     label:'Image data' },
+  { id:'table',     key:'j', icon:'table',     label:'Table' }
 ];
-const MORPHS = ['box','ellipse','zone','store','queue','cloud','file'];
+const MORPHS = ['box','ellipse','store','queue','cloud','file'];
 
 const SIZE = {
   box:[208,100], ellipse:[190,116], zone:[420,300], table:[236,120], store:[186,112],
@@ -103,9 +110,10 @@ const CATALOG = [
 ];
 
 const S = {
-  tool:'select', motion:'off', paint:'line', armed:null, dotSize:4, tint:false,
+  tool:'select', motion:'off', paint:'line', armed:null, sticky:false, dotSize:4, tint:false,
+  stroke:'solid', sharp:false, sw:1.2, fillmode:'soft',
   color:null, tcolor:null, scolor:null, fill:null,
-  selNodes:[], selLinks:[]
+  panel:true, selNodes:[], selLinks:[]
 };
 let nodes = [], links = [], uid = 1;
 
@@ -120,6 +128,10 @@ const view = { x:0, y:0, k:1 };
 const CUSTOM = { hex:null };
 
 let drag = null, resize = null, lend = null, marquee = null, pen = null, pan = null, bend = null;
+let spotId = null, laser = null, erase = null;
+let inked = [];
+const INK_KEY = 'yoruma.ink.v1';
+const INK_MAX = 3e5;
 let hoverId = null, rafPending = false;
 let editing = null, lastHit = { id:null, t:0 };
 
@@ -129,6 +141,54 @@ const accentOf = n => n ? colorAt(n.color) : null;
 const titleColorOf = n => n ? colorAt(n.tcolor) : null;
 const subColorOf = n => n ? colorAt(n.scolor) : null;
 const fillOf = n => n ? colorAt(n.fill) : null;
+/* A tint keeps the hue and softens it in OKLCH, a perceptual space: pinning the
+   lightness in HSL made pink shout where violet whispered, because equal HSL
+   saturation is not equal perceived colour. */
+function srgbToLinear(v){ return v <= 0.04045 ? v/12.92 : Math.pow((v+0.055)/1.055, 2.4); }
+function linearToSrgb(v){
+  const c = v <= 0.0031308 ? v*12.92 : 1.055*Math.pow(v, 1/2.4) - 0.055;
+  return Math.min(1, Math.max(0, c));
+}
+function hexToOklch(hex){
+  const h = String(hex || '').replace('#','');
+  const r = srgbToLinear(parseInt(h.slice(0,2),16)/255),
+        g = srgbToLinear(parseInt(h.slice(2,4),16)/255),
+        b = srgbToLinear(parseInt(h.slice(4,6),16)/255);
+  const l = Math.cbrt(0.4122214708*r + 0.5363325363*g + 0.0514459929*b);
+  const m = Math.cbrt(0.2119034982*r + 0.6806995451*g + 0.1073969566*b);
+  const s = Math.cbrt(0.0883024619*r + 0.2817188376*g + 0.6299787005*b);
+  const L = 0.2104542553*l + 0.7936177850*m - 0.0040720468*s;
+  const A = 1.9779984951*l - 2.4285922050*m + 0.4505937099*s;
+  const B = 0.0259040371*l + 0.7827717662*m - 0.8086757660*s;
+  return { L, C: Math.hypot(A, B), h: Math.atan2(B, A) };
+}
+function oklchToSrgb(L, C, h){
+  const A = Math.cos(h)*C, B = Math.sin(h)*C;
+  const l = Math.pow(L + 0.3963377774*A + 0.2158037573*B, 3);
+  const m = Math.pow(L - 0.1055613458*A - 0.0638541728*B, 3);
+  const s = Math.pow(L - 0.0894841775*A - 1.2914855480*B, 3);
+  return [
+    linearToSrgb(+4.0767416621*l - 3.3077115913*m + 0.2309699292*s),
+    linearToSrgb(-1.2684380046*l + 2.6097574011*m - 0.3413193965*s),
+    linearToSrgb(-0.0041960863*l - 0.7034186147*m + 1.7076147010*s)
+  ];
+}
+function pastel(hex){
+  const h = String(hex || '').replace('#','');
+  if (h.length !== 6) return hex;
+  const { C, h: hue } = hexToOklch('#' + h);
+  const L = 0.925;
+  let c = Math.min(C * 0.50, 0.092);
+  let rgb = oklchToSrgb(L, c, hue);
+  for (let i = 0; i < 8 && c > 0.002; i++){
+    const raw = oklchToSrgb(L, c, hue);
+    if (raw.every(v => v > 0.001 && v < 0.999)){ rgb = raw; break; }
+    c *= 0.82;
+    rgb = raw;
+  }
+  const to = v => Math.round(v*255).toString(16).padStart(2,'0');
+  return '#' + to(rgb[0]) + to(rgb[1]) + to(rgb[2]);
+}
 function hexA(hex, a){
   if (!hex) return null;
   const h = hex.replace('#','');

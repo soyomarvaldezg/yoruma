@@ -1,4 +1,12 @@
 /* ---------- hud ---------- */
+const PANEL_KEY = 'yoruma.panel.v1';
+function togglePanel(force){
+  S.panel = force == null ? !S.panel : !!force;
+  document.body.classList.toggle('panel-off', !S.panel);
+  try { localStorage.setItem(PANEL_KEY, S.panel ? '1' : '0'); } catch (e){}
+}
+document.getElementById('btn-panel').addEventListener('click', () => togglePanel());
+document.getElementById('btn-image').addEventListener('click', () => fileInput.click());
 document.getElementById('z-in').addEventListener('click', () => zoomCenter(1.2));
 document.getElementById('z-out').addEventListener('click', () => zoomCenter(1/1.2));
 document.getElementById('z-fit').addEventListener('click', () => { fit(); save(); });
@@ -9,22 +17,6 @@ document.getElementById('btn-help').addEventListener('click', ev => {
 });
 helpEl.addEventListener('click', ev => ev.stopPropagation());
 document.addEventListener('click', () => helpEl.classList.remove('on'));
-
-const insertMenu = document.getElementById('insert-menu');
-document.getElementById('btn-insert').addEventListener('click', ev => {
-  ev.stopPropagation();
-  closeTopMenus(insertMenu.classList.contains('on') ? null : 'insert-menu');
-  insertMenu.classList.toggle('on');
-});
-insertMenu.addEventListener('click', ev => ev.stopPropagation());
-document.addEventListener('click', () => insertMenu.classList.remove('on'));
-insertMenu.querySelectorAll('button').forEach(b => {
-  b.addEventListener('click', () => {
-    insertMenu.classList.remove('on');
-    if (b.dataset.insert === 'image') fileInput.click();
-    else openLogoPicker(null);
-  });
-});
 
 const presentBtn = document.getElementById('btn-present');
 const presentBadge = document.getElementById('present-badge');
@@ -156,6 +148,7 @@ function renderStepsMenu(){
     down.disabled = i === list.length - 1;
     down.addEventListener('click', () => { moveStep(f.id, 1); renderStepsMenu(); });
     const del = document.createElement('button');
+    del.className = 'del';
     del.textContent = '×';
     del.title = 'Delete step';
     del.addEventListener('click', () => { removeStep(f.id); renderStepsMenu(); });
@@ -252,9 +245,10 @@ stepsMenu.addEventListener('click', ev => ev.stopPropagation());
 document.addEventListener('click', () => stepsMenu.classList.remove('on'));
 
 function clearDoc(){
+  const where = pages.length > 1 ? 'this page' : 'the whole document';
   if ((nodes.length || links.length) &&
-      !confirm('Clear the whole document? Undo restores it until reload.')) return;
-  snapshot(); nodes = []; links = []; clearSel(); render(); fit();
+      !confirm('Clear ' + where + '? Undo restores it until reload.')) return;
+  snapshot(); nodes = []; links = []; clearSel(); render(); fit(); save();
 }
 function loadExample(id){
   const ex = EXAMPLES.find(e => e.id === id);

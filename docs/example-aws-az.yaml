@@ -1,0 +1,28 @@
+# The AWS availability-zone layout, expressed with yoruma zones.
+# FILE ▾ → Open text… (or drop this file on the canvas).
+title: Availability Zones
+subtitle: one region, two AZs and a local zone, one VPC spanning them
+dir: right
+
+zone Region us-east-1:
+  color: "#4DABF7"
+  band: true
+  zone Availability Zone us-east-1a:
+    color: "#657486"
+    zone Public subnet us-east-1a:
+      color: "#099268"
+      fill: "#099268"
+      card Web tier a
+    db Orders
+  zone Availability Zone us-east-1b:
+    color: "#657486"
+    zone Public subnet us-east-1b:
+      color: "#099268"
+      fill: "#099268"
+      card Web tier b
+    db Sessions
+  zone Local Zone us-east-1-bos:
+    color: "#4DABF7"
+    card Private subnet
+
+Orders -> Sessions: async replication

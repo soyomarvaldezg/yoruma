@@ -8,6 +8,7 @@
 </head>
 <body data-tool="select">
 <header>
+  <button id="btn-panel" title="Hide or show the left panel (⌘.)" aria-label="Hide or show the left panel">▤</button>
   <div class="brand">
     <span class="brand-product">yoruma<span>Data Diagrams</span></span>
     <span class="brand-beta" title="Work in progress: expect rough edges">BETA</span>
@@ -17,13 +18,7 @@
     <button id="recover-warn" title="Download a copy of the unreadable saved document">RECOVER</button>
     <button id="tab-warn" title="Another tab saved. Autosave is paused; export JSON or reload.">OTHER TAB</button>
     <span id="save-warn" role="status" aria-live="polite" title="Autosave failed: storage full or blocked">NOT SAVED</span>
-    <div class="menu-wrap">
-      <button id="btn-insert" title="Add an image or a logo">+ INSERT ▾</button>
-      <div id="insert-menu">
-        <button data-insert="image">Image…</button>
-        <button data-insert="logo">Logo…</button>
-      </div>
-    </div>
+    <button id="btn-image" title="Insert an image (or drop one on the canvas)">IMAGE</button>
     <button id="btn-motion" title="Animated flow: off, dots, dashes, both">FLOW · OFF</button>
     <div class="menu-wrap">
       <button id="btn-steps" title="Present steps (frames)">STEPS ▾</button>
@@ -42,6 +37,8 @@
         <div class="menu-sep"></div>
         <button data-x="svg">Download SVG</button>
         <button data-x="png">Download PNG</button>
+        <button data-x="svg-sel">Download SVG · selection</button>
+        <button data-x="png-sel">Download PNG · selection</button>
         <button data-x="webp">Download WebP</button>
         <button data-x="png-copy">Copy image to clipboard</button>
         <button data-x="json">Download JSON</button>
@@ -49,6 +46,9 @@
         <button data-x="d2">Copy D2 source</button>
         <button data-x="kroki-mermaid">Copy Kroki link · Mermaid</button>
         <button data-x="kroki-d2">Copy Kroki link · D2</button>
+        <div class="menu-sep"></div>
+        <button data-x="icons-import">Import icon pack…</button>
+        <button data-x="icons-clear">Remove imported icons</button>
         <div class="menu-sep"></div>
         <button data-x="clear">Clear the document…</button>
       </div>
@@ -67,12 +67,19 @@
   <aside>
     <h4>Draw</h4>
     <div class="grid" id="tools"></div>
+    <h4>Icons</h4>
+    <div class="icon-head">
+      <input id="icon-filter" type="search" placeholder="Filter icons — kafka, s3, database…"
+        autocomplete="off" spellcheck="false">
+    </div>
+    <div id="icon-grid"></div>
     <h4>Blocks</h4>
     <input id="catalog-filter" type="search" placeholder="Filter blocks" autocomplete="off" spellcheck="false">
     <div id="catalog"></div>
     <div id="catalog-empty" class="catalog-empty" hidden>No matches</div>
   </aside>
   <main>
+    <div class="pagebar" id="pages"></div>
     <svg id="stage" xmlns="http://www.w3.org/2000/svg"><g id="viewport"></g></svg>
     <div class="zoombar">
       <button id="z-out">−</button>
@@ -91,18 +98,53 @@
 <div id="stylebar">
   <div class="swatches" id="swatches"></div>
   <div class="paint" id="paint">
-    <button data-target="line" title="outline">
+    <button data-target="line" title="What the next swatch paints: the stroke">
       <svg viewBox="0 0 24 24"><rect x="5" y="5" width="14" height="14" rx="2" fill="none" stroke="currentColor" stroke-width="2.4"/></svg>
+      <i>stroke</i>
     </button>
-    <button data-target="text" title="title">
-      <svg viewBox="0 0 24 24"><path d="M6 7h12M12 7v11" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>
-    </button>
-    <button data-target="sub" title="subtitle">
-      <svg viewBox="0 0 24 24"><path d="M12 7.5v8.2c0 1.3.9 2 2.3 2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M9 10.4h5.6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-    </button>
-    <button data-target="tint" title="tinted card (outline + 10% fill)">
+    <button data-target="tint" title="Fill the card with a 10% tint of the next swatch">
       <svg viewBox="0 0 24 24"><rect x="5" y="5" width="14" height="14" rx="2" fill="currentColor" opacity=".18"/><rect x="5" y="5" width="14" height="14" rx="2" fill="none" stroke="currentColor" stroke-width="2.4"/></svg>
+      <i>fill</i>
     </button>
+    <button data-target="text" title="Paint the title text">
+      <svg viewBox="0 0 24 24"><path d="M6 7h12M12 7v11" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>
+      <i>title</i>
+    </button>
+    <button data-target="sub" title="Paint the subtitle text">
+      <svg viewBox="0 0 24 24"><path d="M12 7.5v8.2c0 1.3.9 2 2.3 2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M9 10.4h5.6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      <i>note</i>
+    </button>
+  </div>
+  <div class="row">
+    <span class="row-label">Stroke</span>
+    <div class="segs" id="stroke-segs">
+      <button data-stroke="solid" title="Solid line"><svg viewBox="0 0 24 24"><path d="M4 12h16" stroke="currentColor" stroke-width="2.4" fill="none"/></svg></button>
+      <button data-stroke="dashed" title="Dashed line"><svg viewBox="0 0 24 24"><path d="M4 12h4M11 12h4M18 12h2" stroke="currentColor" stroke-width="2.4" fill="none"/></svg></button>
+      <button data-stroke="dotted" title="Dotted line"><svg viewBox="0 0 24 24"><path d="M5 12h1.4M9.5 12h1.4M14 12h1.4M18.5 12h1.4" stroke="currentColor" stroke-width="3" stroke-linecap="round" fill="none"/></svg></button>
+    </div>
+  </div>
+  <div class="row">
+    <span class="row-label">Edges</span>
+    <div class="segs" id="edge-segs">
+      <button data-sharp="0" title="Rounded corners"><svg viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="3.5" stroke="currentColor" stroke-width="2" fill="none"/></svg></button>
+      <button data-sharp="1" title="Sharp corners"><svg viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" stroke="currentColor" stroke-width="2" fill="none"/></svg></button>
+    </div>
+  </div>
+  <div class="row">
+    <span class="row-label">Fill</span>
+    <div class="segs" id="fill-segs">
+      <button data-fill="soft" title="A pale wash of the fill colour">Soft</button>
+      <button data-fill="solid" title="The fill colour at full strength">Solid</button>
+    </div>
+  </div>
+  <div class="row">
+    <span class="row-label">Width</span>
+    <div class="segs" id="width-segs">
+      <button data-size="s" title="Thin">S</button>
+      <button data-size="m" title="Medium">M</button>
+      <button data-size="l" title="Thick">L</button>
+      <button data-size="xl" title="Extra thick">XL</button>
+    </div>
   </div>
 </div>
 <div id="editor">
@@ -113,27 +155,25 @@
   <h3>Keys</h3>
   <div><span><kbd>V</kbd><kbd>H</kbd><kbd>A</kbd><kbd>L</kbd></span><span>select · hand · arrow · line</span></div>
   <div><span><kbd>R</kbd><kbd>O</kbd><kbd>Z</kbd></span><span>rectangle · ellipse · zone</span></div>
-  <div><span><kbd>T</kbd><kbd>G</kbd></span><span>text · heading</span></div>
+  <div><span><kbd>N</kbd><kbd>Y</kbd><kbd>X</kbd></span><span>pen · laser · eraser</span></div>
+  <div><span><kbd>T</kbd><kbd>G</kbd><kbd>⇧G</kbd></span><span>text · heading · governance</span></div>
   <div><span><kbd>⌘Z</kbd><kbd>⇧⌘Z</kbd><kbd>⌫</kbd></span><span>undo · redo · delete</span></div>
   <div><span><kbd>⌘C</kbd><kbd>⌘V</kbd><kbd>⌘D</kbd></span><span>copy · paste · duplicate</span></div>
+  <div><span>shape bar</span><span>bring to front · send to back</span></div>
   <div><span><kbd>[</kbd><kbd>]</kbd><kbd>,</kbd><kbd>.</kbd><kbd>M</kbd></span><span>text size · dot size · motion</span></div>
-  <div><span><kbd>F</kbd><kbd>Esc</kbd><kbd>?</kbd></span><span>fit · deselect · close</span></div>
+  <div><span><kbd>F</kbd><kbd>W</kbd><kbd>Esc</kbd><kbd>?</kbd></span><span>fit · focus one shape · deselect · close</span></div>
+  <div><span><kbd>⌘.</kbd></span><span>hide or show the left panel</span></div>
+  <div><span><kbd>⌥←</kbd><kbd>⌥→</kbd></span><span>previous · next page</span></div>
   <div><span><kbd>1</kbd>…<kbd>9</kbd><kbd>0</kbd></span><span>present · jump to a step, 0 = overview</span></div>
   <h3 style="margin-top:12px">Mouse</h3>
   <div><span>drag a shape border</span><span>draw an arrow</span></div>
-  <div><span>double-click</span><span>rename, or note on an arrow</span></div>
+  <div><span>double-click · Enter</span><span>rename, or note on an arrow</span></div>
   <div><span>drag a swatch</span><span>colour that object</span></div>
   <div><span>right-drag · ⌘ wheel</span><span>pan · zoom</span></div>
-  <div class="foot">Data shapes keep their letters: hover a palette button to see it. ⌘ = Ctrl on Windows and Linux; the whole list lives in README.md.</div>
-</div>
-<div id="logo-picker">
-  <div class="logo-box">
-    <div class="logo-head">
-      <input id="logo-filter" type="search" placeholder="Filter brands — snowflake, dbt, kafka…" autocomplete="off" spellcheck="false">
-      <button id="logo-close" title="Close">×</button>
-    </div>
-    <div class="logo-grid" id="logo-grid"></div>
-  </div>
+  <div><span>⌥ drag</span><span>laser on macOS; on Windows/Linux use Y</span></div>
+  <div class="foot">Data shapes keep their letters: hover a palette button to see it. ⌘ = Ctrl, ⌥ = Alt, ⇧ = Shift on Windows and Linux — and because some window managers keep
+    Alt+drag for themselves, the laser and pencil are also tools (`Y`, `N`). The whole list lives in
+    README.md.</div>
 </div>
 <div id="toast"></div>
 
@@ -169,6 +209,8 @@ function tick(now){
 <script src="js/70-pointer.js"></script>
 <script src="js/80-editor.js"></script>
 <script src="js/82-shaper.js"></script>
+<script src="js/84-icons.js"></script>
+<script src="js/85-icons-ui.js"></script>
 <script src="js/86-sidebar.js"></script>
 <script src="js/88-colour-motion.js"></script>
 <script src="js/89-lint.js"></script>

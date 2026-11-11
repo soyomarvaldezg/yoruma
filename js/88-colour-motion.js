@@ -120,6 +120,7 @@ function syncSwatchState(){
   swEl.querySelectorAll('.sw').forEach(sw => {
     sw.classList.toggle('on', (sw.dataset.hex || '') === hex);
   });
+  if (typeof syncStyleRows === 'function') syncStyleRows();
 }
 function applyColor(hex){
   if (S.paint === 'tint'){
@@ -145,6 +146,66 @@ function applyColor(hex){
   }
   render();
 }
+
+/* ---------- stroke style, edges, width ---------- */
+const SW = { s:0.6, m:1.2, l:2.2, xl:3.4 };
+const LW = { s:0.8, m:1.5, l:2.6, xl:4.2 };
+const strokeSegs = document.getElementById('stroke-segs');
+const edgeSegs = document.getElementById('edge-segs');
+const widthSegs = document.getElementById('width-segs');
+const fillSegs = document.getElementById('fill-segs');
+function styleNodes(){ return nodes.filter(n => S.selNodes.includes(n.id)); }
+function styleLinks(){ return links.filter(l => S.selLinks.includes(l.id)); }
+function setStrokeStyle(v){
+  const ns = styleNodes();
+  if (ns.length){ snapshot(); ns.forEach(n => n.stroke = v); }
+  S.stroke = v;
+  render();
+}
+function setSharp(v){
+  const ns = styleNodes();
+  if (ns.length){ snapshot(); ns.forEach(n => n.sharp = v); }
+  S.sharp = v;
+  render();
+}
+function setStrokeSize(key){
+  const ns = styleNodes(), ls = styleLinks();
+  if (ns.length || ls.length) snapshot();
+  ns.forEach(n => n.sw = SW[key]);
+  ls.forEach(l => l.lw = LW[key]);
+  S.sw = SW[key];
+  render();
+}
+function setFillMode(mode){
+  const ns = styleNodes();
+  if (ns.length){ snapshot(); ns.forEach(n => { n.fillmode = mode; n.tint = true; }); }
+  S.fillmode = mode;
+  render();
+}
+function syncStyleRows(){
+  const n = S.selNodes.length ? byId(S.selNodes[0]) : null;
+  const stroke = n ? (n.stroke || (n.dash ? 'dashed' : 'solid')) : S.stroke;
+  const sharp = n ? n.sharp === true : S.sharp;
+  const sw = n ? (n.sw || 1.2) : S.sw;
+  const sizeKey = Object.keys(SW).find(k => Math.abs(SW[k] - sw) < 0.01) || 'm';
+  strokeSegs.querySelectorAll('button').forEach(b =>
+    b.classList.toggle('on', b.dataset.stroke === stroke));
+  edgeSegs.querySelectorAll('button').forEach(b =>
+    b.classList.toggle('on', (b.dataset.sharp === '1') === sharp));
+  widthSegs.querySelectorAll('button').forEach(b =>
+    b.classList.toggle('on', b.dataset.size === sizeKey));
+  const mode = n ? (n.fillmode === 'solid' ? 'solid' : 'soft') : S.fillmode;
+  fillSegs.querySelectorAll('button').forEach(b =>
+    b.classList.toggle('on', b.dataset.fill === mode));
+}
+strokeSegs.querySelectorAll('button').forEach(b =>
+  b.addEventListener('click', () => setStrokeStyle(b.dataset.stroke)));
+edgeSegs.querySelectorAll('button').forEach(b =>
+  b.addEventListener('click', () => setSharp(b.dataset.sharp === '1')));
+widthSegs.querySelectorAll('button').forEach(b =>
+  b.addEventListener('click', () => setStrokeSize(b.dataset.size)));
+fillSegs.querySelectorAll('button').forEach(b =>
+  b.addEventListener('click', () => setFillMode(b.dataset.fill)));
 
 /* ---------- motion / font size ---------- */
 const MODES = ['off','dots','dashes','both','live'];

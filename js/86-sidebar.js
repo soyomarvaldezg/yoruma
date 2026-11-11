@@ -83,10 +83,18 @@ function pickSvg(list, name){
   return loose.length ? loose[0].it : null;
 }
 function normaliseSvg(svg){
-  let out = String(svg || '').replace(/^<\?xml[^>]*\?>\s*/i, '').trim();
+  let out = String(svg || '').replace(/^\uFEFF/, '')
+    .replace(/^\s*<\?xml[^>]*\?>/i, '')
+    .replace(/^\s*<!DOCTYPE[^>]*>/i, '')
+    .trim();
   if (!/^<svg[^>]*\sxmlns\s*=/i.test(out))
     out = out.replace(/<svg/i, '<svg xmlns="http://www.w3.org/2000/svg"');
+  if (typeof safeSvgMarkup === 'function') out = safeSvgMarkup(out);
   return out;
+}
+function svgFromText(text){
+  const svg = normaliseSvg(text);
+  return /^<svg[\s>]/i.test(svg) ? svg : null;
 }
 function svgDataUri(svg){
   const bytes = new TextEncoder().encode(normaliseSvg(svg));
@@ -111,13 +119,13 @@ async function tryLogoSvg(url){
   try {
     const r = await fetch(url);
     if (!r.ok) return null;
-    const t = await r.text();
-    return t.trim().startsWith('<svg') ? t : null;
+    return svgFromText(await r.text());
   } catch (e){ return null; }
 }
-async function fetchLogoByName(name, n){
+async function fetchLogoByName(name, n, label){
+  const shown = label || name;
   try {
-    toast('looking up ' + name + '…');
+    toast('looking up ' + shown + '…');
     const slug = logoSlug(name);
     let svg = null, from = '';
     if (!svglIndex){
@@ -157,14 +165,14 @@ async function fetchLogoByName(name, n){
         if (svg){ from = 'simple-icons · ' + c; break; }
       }
     }
-    if (!svg){ toast('no logo found for “' + name + '”', 4000); return; }
+    if (!svg){ toast('no logo found for “' + shown + '”', 4000); return; }
     if (svg.length > 200000){ toast('logo is large', 4000); return; }
     snapshot();
     const target = (n && byId(n.id) === n) ? n : newLogoNode();
     target.logo = svgDataUri(svg);
+    delete target.mono;
     render();
-    closeLogoPicker();
-    toast('logo added (' + from + ')');
+    toast(shown + ' logo added (' + from + ')');
   } catch (e){
     toast('logo fetch failed: ' + e.message, 5000);
   }
@@ -180,8 +188,8 @@ function attachLogo(file, n){
       const src = shrinkImage(img, fr.result, file.type, 96);
       snapshot();
       n.logo = src;
+      delete n.mono;
       render();
-      closeLogoPicker();
     };
     img.onerror = () => toast('logo could not be read');
     img.src = fr.result;
@@ -197,6 +205,25 @@ fileInput.addEventListener('change', () => {
   if (fileInput.files[0]) insertFile(fileInput.files[0], centrePoint());
   fileInput.value = '';
 });
+function inkPayload(){
+  return JSON.stringify(inked.map(s => ({ d:s.d, stroke:s.stroke, sw:s.sw })));
+}
+function saveInk(){
+  const raw = inkPayload();
+  if (raw.length > INK_MAX){ toast('too much ink to remember; clear it with Esc', 4600); return; }
+  try { localStorage.setItem(INK_KEY, raw); } catch (e){}
+}
+function loadInk(){
+  try {
+    const raw = localStorage.getItem(INK_KEY);
+    if (!raw) return;
+    const list = JSON.parse(raw);
+    if (!Array.isArray(list)) return;
+    inked = list.filter(s => s && typeof s.d === 'string').slice(0, 400)
+      .map(s => ({ d:s.d.slice(0, 4000), stroke: s.stroke || INK, sw: +s.sw || 2.2 }));
+  } catch (e){ inked = []; }
+}
+
 let clipboard = null, pasteCount = 0;
 const editableTarget = t => t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable);
 
@@ -328,7 +355,19 @@ function buildGrid(el, list, group){
     b.setAttribute('aria-pressed', 'false');
     b.dataset.tool = t.id;
     b.dataset.group = group;
-    b.addEventListener('click', () => { if (t.pick) fileInput.click(); else setTool(t.id, group); });
+    b.addEventListener('click', () => {
+      if (t.pick){ fileInput.click(); return; }
+      if (S.tool === t.id && !t.pick){
+        S.sticky = !S.sticky;
+        document.body.dataset.sticky = S.sticky ? '1' : '0';
+        toast(S.sticky ? t.label + ' stays armed — click again for one shape'
+                       : t.label + ' arms for one shape');
+        return;
+      }
+      S.sticky = false;
+      document.body.dataset.sticky = '0';
+      setTool(t.id, group);
+    });
     el.appendChild(b);
   });
 }
@@ -344,6 +383,7 @@ function setTool(id, group){
     b.setAttribute('aria-pressed', on ? 'true' : 'false');
   });
   document.body.dataset.tool = id;
+  if (id === 'select'){ S.sticky = false; document.body.dataset.sticky = '0'; }
   syncHud();
   if (typeof placeStylebar === 'function') placeStylebar();
 }

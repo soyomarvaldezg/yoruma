@@ -63,6 +63,10 @@ if (/[?&]test/.test(location.search)){
   ok('logo name match', pickSvg([{ title:'Snowflake', route:'x' }], 'snow flake').title === 'Snowflake' &&
      !pickSvg([{ title:'Snowflake', route:'x' }], 'oracle'));
   ok('logo slug', logoSlug('Power BI') === 'power-bi' && logoSlug('  Apache Kafka ') === 'apache-kafka');
+  ok('an SVG with an XML prolog still counts as a logo',
+     !!svgFromText('<?xml version="1.0" encoding="UTF-8"?>\n<!DOCTYPE svg>\n<svg width="10"><path/></svg>') &&
+     !svgFromText('not an svg at all') &&
+     svgFromText('<svg viewBox="0 0 24 24"><path/></svg>').startsWith('<svg xmlns='));
   ok('brand tile url', brandThumb('dbt').endsWith('/dbt.svg') &&
      brandThumb('power-bi').includes('microsoft-power-bi'));
   ok('logo aspect', Math.abs(svgAspect('<svg viewBox="0 0 512 196"></svg>') - 2.612) < 0.01 &&
@@ -75,6 +79,488 @@ if (/[?&]test/.test(location.search)){
   nodes.pop(); render();
   delete box.logo;
   render();
+
+  nodes.push(lgNode);
+  lgNode.title = 'S3';
+  lgNode.sub = 'bucket';
+  render();
+  const lgText = stage.querySelector(`g.node[data-id="lgx"] [data-role="title"]`);
+  const lgSub = stage.querySelector(`g.node[data-id="lgx"] [data-role="sub"]`);
+  ok('an icon takes a title and subtitle',
+     !!lgText && lgText.textContent === 'S3' && !!lgSub && lgSub.textContent === 'bucket');
+  editNode(lgNode);
+  edTitle.value = 'Object storage';
+  commitEdit();
+  ok('double-clicking an icon opens its text',
+     lgNode.title === 'Object storage' &&
+     !!stage.querySelector('g.node[data-id="lgx"] [data-role="title"]'));
+  ok('icon captions are not linted as overflow',
+     !lintIssues().some(x => x.id === 'lgx'));
+  nodes.pop(); render();
+
+  ok('icon pack ships monochrome glyphs',
+     ICON_PACK.length >= 100 && ICON_PACK.every(ic => ic.d.includes('<path')));
+  ok('concept glyphs cover the vendor-free gaps',
+     LOCAL_ICONS.length === ICON_PACK.length + CONCEPTS.length &&
+     CONCEPTS.every(c => c.d.includes('stroke="currentColor"')) &&
+     iconSearch('vpc').some(c => c.n === 'Network') &&
+     iconSearch('feature store').some(c => c.n === 'Feature store') &&
+     !!iconByName('load balancer'));
+  ok('icon search matches names and tags',
+     iconSearch('kafka').some(ic => ic.n === 'Apache Kafka') &&
+     iconSearch('events').some(ic => ic.n === 'Apache Kafka') &&
+     iconSearch('s3').some(ic => ic.n === 'MinIO') &&
+     iconSearch('zzzzz').length === 0);
+  ok('icon lookup by name or alias',
+     iconByName('Apache Kafka') === iconByName('kafka') &&
+     iconByName('s3') === iconByName('MinIO') && iconByName('nothing here') === null);
+  const kafka = iconByName('kafka');
+  const kafkaInner = monoInner(iconDataUri(kafka), '#4263EB');
+  ok('mono icon swaps its ink',
+     kafkaInner && kafkaInner.includes('#4263EB') && !kafkaInner.includes('currentColor'));
+
+  box.color = '#099268';
+  S.selNodes = [box.id]; S.selLinks = [];
+  placeIcon(kafka);
+  render();
+  const monoPath = stage.querySelector(`g.node[data-id="${box.id}"] [data-role="logo"] path`);
+  ok('clicking an icon paints the selected card',
+     box.mono === true && box.logo.startsWith('data:image/svg+xml') &&
+     !!monoPath && monoPath.getAttribute('fill') === '#099268');
+  ok('icon tint follows the outline colour',
+     (() => {
+       box.color = '#4263EB'; render();
+       const p = stage.querySelector(`g.node[data-id="${box.id}"] [data-role="logo"] path`);
+       return !!p && p.getAttribute('fill') === '#4263EB';
+     })());
+  delete box.mono;
+
+  const monoDoc = parseDoc(JSON.stringify({ format:'yoruma', version:1, links:[],
+    nodes:[{ id:'mono1', kind:'logo', x:0, y:0, w:40, h:40, mono:true,
+      logo:iconDataUri(kafka) },
+      { id:'mono2', kind:'logo', x:0, y:0, w:40, h:40, mono:true }] }));
+  ok('document keeps the mono flag',
+     monoDoc.nodes[0].mono === true && !('mono' in monoDoc.nodes[1]));
+
+  const iconModel = parseText('card Kafka:\n  icon: kafka');
+  ok('text format takes an icon name', iconModel.shapes[0].props.icon === 'kafka');
+  let badIcon = false;
+  try { parseText('card A:\n  icon:'); } catch (e){ badIcon = /icon needs a value/.test(e.message); }
+  ok('text format rejects an empty icon', badIcon);
+
+  const iconGrid = document.getElementById('icon-grid');
+  const iconFilterEl = document.getElementById('icon-filter');
+  iconFilterEl.value = 'kafka';
+  iconFilterEl.dispatchEvent(new Event('input'));
+  ok('sidebar icon search narrows the grid',
+     iconGrid.querySelectorAll('.icon-tile').length >= 1 &&
+     /Kafka/.test(iconGrid.textContent));
+  iconFilterEl.value = '';
+  iconFilterEl.dispatchEvent(new Event('input'));
+  ok('sidebar icon grid returns to the whole pack',
+     iconGrid.querySelectorAll('.icon-tile').length === LOCAL_ICONS.length &&
+     ICON_PACK.length >= 100 && LOCAL_ICONS.length === ICON_PACK.length + CONCEPTS.length);
+  iconFilterEl.value = 'tableau';
+  iconFilterEl.dispatchEvent(new Event('input'));
+  ok('brand marks join the same search box',
+     !!iconFilterEl && Array.from(iconGrid.querySelectorAll('.icon-tile.brand img'))
+       .some(img => /tableau\.svg/.test(img.src)));
+  iconFilterEl.value = '';
+  iconFilterEl.dispatchEvent(new Event('input'));
+  const nLogo = nodes.length;
+  S.selNodes = [];
+  placeIcon(iconByName('docker'));
+  const made = nodes[nodes.length-1];
+  ok('an icon with no selection lands as its own shape',
+     nodes.length === nLogo+1 && made.kind === 'logo' && made.mono === true);
+  nodes.pop(); S.selNodes = []; render();
+
+  ok('image insert lives in the top bar, not the draw grid',
+     !!document.getElementById('btn-image') &&
+     !document.querySelector('#tools button[data-tool="image"]') &&
+     !document.getElementById('btn-insert'));
+  const packResult = applyIconPack([
+    { name:'Azure Data Factory', tags:'data factory,adf,azure,integration',
+      svg:'<svg viewBox="0 0 24 24"><path fill="#0f6cbd" d="M3 3h18v18H3z"/></svg>' },
+    { name:'Broken entry', svg:'not an svg' },
+    { name:'', svg:'<svg></svg>' }
+  ]);
+  ok('an imported pack joins the same search',
+     packResult === 1 &&
+     iconSearch('data factory').some(e => e.n === 'Azure Data Factory') &&
+     !!localStorage.getItem(PACK_KEY));
+  const adf = iconByName('Azure Data Factory');
+  ok('imported icons keep their own colours',
+     !!adf && !!adf.src && iconTinted(adf) === false &&
+     iconByName('Broken entry') === null);
+  S.selNodes = [box.id];
+  placeIcon(adf);
+  render();
+  ok('an imported icon lands as a colour logo',
+     box.logo === adf.src && box.mono !== true &&
+     !!stage.querySelector(`g.node[data-id="${box.id}"] image[data-role="logo"]`));
+  delete box.logo;
+  IMPORTED = [];
+  loadIconPack();
+  ok('a stored pack comes back on the next load',
+     !!iconByName('Azure Data Factory'));
+  applyIconPack([
+    { name:'Mine', tags:'mine', svg:'<svg viewBox="0 0 24 24"><path fill="currentColor" d="M4 4h16v16H4z"/></svg>' }
+  ]);
+  ok('an imported glyph that says currentColor still tints',
+     iconTinted(iconByName('Mine')) === true);
+  ok('the file menu offers the import and its removal',
+     !!document.querySelector('[data-x="icons-import"]') &&
+     !!document.querySelector('[data-x="icons-clear"]'));
+  clearImportedIcons();
+  ok('the imported pack can be removed again',
+     !iconSearch('data factory').some(e => e.n === 'Azure Data Factory') &&
+     !iconByName('Mine') && !localStorage.getItem(PACK_KEY));
+  render();
+
+  ok('redrawn role glyphs answer vendor service names',
+     iconSearch('s3').some(e => e.n === 'Object storage') &&
+     iconSearch('blob storage').some(e => e.n === 'Object storage') &&
+     iconSearch('redshift').some(e => e.n === 'Data warehouse') &&
+     iconSearch('oracle autonomous database').some(e => e.n === 'Data warehouse') &&
+     iconSearch('azure data factory').some(e => e.n === 'ETL service') &&
+     iconSearch('azure event hubs').some(e => e.n === 'Event bus') &&
+     iconSearch('azure key vault').some(e => e.n === 'Key vault') &&
+     iconSearch('azure synapse analytics').some(e => e.n === 'Data warehouse') &&
+     CONCEPTS.length >= 30 &&
+     CONCEPTS.every(c => c.d.includes('stroke="currentColor"')));
+  const zoneText = textDoc('zone R us-east-1:\n  band: true\n  card A');
+  const zoneSel = textDoc('zone R:\n  solid: true\n  fill: "#099268"\n  card A');
+  ok('zones take band, solid and fill from the text format',
+     zoneText.nodes[0].band === true && zoneSel.nodes[0].solid === true &&
+     zoneSel.nodes[0].fill === '#099268');
+  let zoneBad = 0;
+  try { parseText('zone R:\n  tilt: true\n  card A'); }
+  catch (e){ zoneBad = /zones take/.test(e.message) ? 1 : 0; }
+  ok('unknown zone props still fail loudly', zoneBad === 1);
+
+  ok('an SVG filename becomes an icon name',
+     fileIconName('10128-icon-service-Azure-Synapse-Analytics.svg') ===
+       'Azure Synapse Analytics' &&
+     fileIconName('azure-data-factory.svg') === 'Azure Data Factory' &&
+     fileIconName('.svg') === '');
+  const azEntry = entryFromFile('10128-icon-service-Azure-Synapse-Analytics.svg',
+    '<svg viewBox="0 0 24 24"><path fill="#0078d4" d="M3 3h18v18H3z"/></svg>');
+  ok('a plain SVG file imports with its name and tags',
+     !!azEntry && azEntry.n === 'Azure Synapse Analytics' &&
+     azEntry.t.includes('synapse') && azEntry.src.startsWith('data:image/svg+xml') &&
+     applyIconPack([azEntry]) === 1 &&
+     iconSearch('synapse').some(e => e.n === 'Azure Synapse Analytics'));
+  clearImportedIcons();
+  render();
+
+  ok('brand catalog finds AWS services by short name',
+     brandSearch('s3').some(e => e.f === 'aws-s3') &&
+     brandSearch('data factory').length === 0 &&
+     brandSearch('lambda').some(e => e.f === 'aws-lambda'));
+
+  const sendAlt = (type, w) => {
+    const q = toScreen(w);
+    stage.dispatchEvent(new PointerEvent(type, { bubbles:true, cancelable:true,
+      clientX:q.x, clientY:q.y, button:0, buttons: type === 'pointerup' ? 0 : 1,
+      pointerId:1, isPrimary:true, pointerType:'mouse', altKey:true }));
+  };
+
+  S.selNodes = [box.id]; S.selLinks = []; spotId = null;
+  window.dispatchEvent(new KeyboardEvent('keydown', { key:'w' }));
+  const spotOn = spotId === box.id &&
+    document.querySelectorAll('g.node[data-id="dash"]').length > 0 &&
+    stage.querySelector('g.node[data-id="dash"]').classList.contains('dimmed');
+  window.dispatchEvent(new KeyboardEvent('keydown', { key:'w' }));
+  ok('W focuses one shape and dims the rest', spotOn && spotId === null);
+
+  window.dispatchEvent(new KeyboardEvent('keydown', { key:'w' }));
+  const dimFirst = stage.querySelector('g.node[data-id="dash"]').classList.contains('dimmed');
+  render();
+  const dimAgain = stage.querySelector('g.node[data-id="dash"]').classList.contains('dimmed');
+  ok('the dim eases in once and does not re-flash on redraw', dimFirst && !dimAgain);
+  spotId = null; render();
+
+  sendAlt('pointerdown', { x:300, y:900 });
+  for (let i = 1; i <= 6; i++) sendAlt('pointermove', { x:300 + i*24, y:900 + (i%2 ? 10 : -6) });
+  const laserPath = stage.querySelector('path.laser');
+  const laserDrawn = !!laserPath && (laserPath.getAttribute('d') || '').split('L').length > 3;
+  ok('option-drag draws a laser stroke', laserDrawn);
+  sendAlt('pointerup', { x:444, y:894 });
+  const laserGone = !stage.querySelector('path.laser') ||
+    stage.querySelector('path.laser').getAttribute('opacity') === '0';
+  ok('the laser fades out on release', laserGone && spotId === null);
+
+  const selBefore = S.selNodes.slice();
+  send('pointerdown', { x:box.x + box.w/2, y:box.y + box.h/2 });
+  send('pointerup', { x:box.x + box.w/2, y:box.y + box.h/2 });
+  ok('a plain drag still selects, not lasers',
+     !stage.querySelector('path.laser') && S.selNodes.length === 1);
+  S.selNodes = selBefore; render();
+
+  S.selNodes = []; S.selLinks = []; render();
+  setTool('box', 'draw'); S.sticky = false;
+  const stickBefore = new Set(nodes.map(n => n.id));
+  const stickSel = S.selNodes.slice();
+  window.dispatchEvent(new KeyboardEvent('keydown', { key:'r' }));
+  drag({x:1250,y:640},{x:1370,y:700});
+  drag({x:1250,y:760},{x:1370,y:820});
+  const stickMade = nodes.filter(n => !stickBefore.has(n.id)).length;
+  const stickKept = S.sticky === true && stickMade === 2 && S.tool === 'box';
+  window.dispatchEvent(new KeyboardEvent('keydown', { key:'r' }));
+  drag({x:1250,y:880},{x:1370,y:940});
+  const stickMadeAll = nodes.filter(n => !stickBefore.has(n.id)).length;
+  ok('pressing a tool key twice keeps it armed for more shapes',
+     stickKept && S.sticky === false && S.tool === 'select' && stickMadeAll === 3);
+  nodes = nodes.filter(n => stickBefore.has(n.id));
+  S.selNodes = stickSel; S.sticky = false; document.body.dataset.sticky = '0';
+  setTool('select', 'draw'); render();
+
+  const dashNode = { id:'dd1', kind:'box', title:'AZ', sub:'', color:'#657486', tcolor:null,
+    scolor:null, fs:1, dash:true, x:60, y:520, w:200, h:120 };
+  nodes.push(dashNode); render();
+  const dRect = stage.querySelector('g.node[data-id="dd1"] rect');
+  ok('a plain shape can take a dashed outline',
+     !!dRect && dRect.getAttribute('stroke-dasharray') === '6 5');
+  const dashDoc = parseDoc(JSON.stringify({ format:'yoruma', version:1, links:[],
+    nodes:[{ id:'d1', kind:'box', x:0, y:0, w:10, h:10, dash:true }] }));
+  ok('the dashed flag survives the document and the text format',
+     dashDoc.nodes[0].dash === true &&
+     textDoc('card A:\n  dash: true\ncard B\nA -> B').nodes[0].dash === true);
+  nodes.pop();
+
+  S.selNodes = [box.id]; S.selLinks = []; render();
+  setTool('laser');
+  send('pointerdown', { x:200, y:1900 });
+  send('pointermove', { x:280, y:1930 });
+  send('pointerup', { x:280, y:1930 });
+  const laserTool = stage.querySelector('path.laser');
+  ok('the laser tool draws a stroke that fades on release',
+     !!laserTool && laserTool.getAttribute('opacity') === '0');
+
+  setTool('pen');
+  send('pointerdown', { x:200, y:1960 });
+  send('pointermove', { x:300, y:1985 });
+  send('pointerup', { x:300, y:1985 });
+  const inkForErase = stage.querySelector('path.ink');
+  setTool('eraser');
+  send('pointerdown', { x:250, y:1972 });
+  send('pointerup', { x:250, y:1972 });
+  ok('the eraser wipes the ink it passes over',
+     !!inkForErase && !stage.querySelector('path.ink'));
+
+  const erasable = { id:'er1', kind:'box', title:'gone', sub:'', color:null, tcolor:null,
+    scolor:null, fs:1, x:2000, y:2000, w:120, h:80 };
+  nodes.push(erasable); render();
+  setTool('eraser');
+  send('pointerdown', { x:2060, y:2040 });
+  send('pointerup', { x:2060, y:2040 });
+  ok('the eraser deletes a shape under the pointer', !byId('er1'));
+  const redoSafe = undoStack.length;
+  setTool('select', 'draw'); render();
+  ok('the deletion is on the undo stack', redoSafe > 0);
+
+  ok('the draw grid stays a square block of tools',
+     document.querySelectorAll('#tools button').length % 4 === 0);
+
+  S.selNodes = []; S.selLinks = []; render();
+  setTool('box', 'draw');
+  drag({x:1250, y:2140}, {x:1370, y:2200});
+  const fresh = nodes[nodes.length-1];
+  ok('drawing a shape no longer opens the text editor', editing === null);
+  S.selNodes = [fresh.id]; S.selLinks = [];
+  window.dispatchEvent(new KeyboardEvent('keydown', { key:'Enter' }));
+  const enterEdits = editing === fresh.id;
+  commitEdit();
+  S.selNodes = []; render();
+  ok('Enter opens the editor for the selected shape', enterEdits);
+  ok('new shapes take the current stroke defaults',
+     fresh.stroke === S.stroke && fresh.sw === S.sw);
+
+  S.selNodes = [fresh.id]; S.selLinks = [];
+  document.querySelector('#stroke-segs button[data-stroke="dotted"]').click();
+  const widthSegsClick = k =>
+    document.querySelector(`#width-segs button[data-size="${k}"]`).click();
+  const shapeRect = id => {
+    const g = stage.querySelector(`g.node[data-id="${id}"]`);
+    return g && Array.from(g.querySelectorAll('rect'))
+      .find(r => !r.classList.contains('ui'));
+  };
+  const dottedRect = shapeRect(fresh.id);
+  const edgeRound = document.querySelector('#edge-segs button[data-sharp="0"]');
+  ok('the stroke row dots the outline',
+     byId(fresh.id).stroke === 'dotted' &&
+     dottedRect.getAttribute('stroke-dasharray') === '2 3');
+  document.querySelector('#edge-segs button[data-sharp="1"]').click();
+  ok('the edges row sharpens the corners',
+     byId(fresh.id).sharp === true &&
+     shapeRect(fresh.id).getAttribute('rx') === '0');
+  document.querySelector('#width-segs button[data-size="xl"]').click();
+  const solidFill = { id:'sf1', kind:'box', title:'', sub:'', color:'#1D1D1D', tint:true,
+    tcolor:null, scolor:null, fs:1, fillmode:'solid', x:0, y:0, w:120, h:80 };
+  nodes.push(solidFill); render();
+  const sfRect = shapeRect('sf1');
+  ok('a solid fill uses the colour at full strength',
+     sfRect.getAttribute('fill') === '#1D1D1D');
+  nodes.pop();
+
+  ok('a tint keeps its hue instead of washing into the grey paper',
+     pastel('#846358') === '#f5e1db' && pastel('#1D1D1D') === '#e6e6e6' &&
+     pastel('#D6336C') === '#fcdde3' && /^#[0-9a-f]{6}$/.test(pastel('#08829C')));
+
+  ok('the width row thickens the outline',
+     byId(fresh.id).sw === 3.4 &&
+     shapeRect(fresh.id).getAttribute('stroke-width') === '3.4');
+
+  S.selNodes = [fresh.id]; S.selLinks = [];
+  widthSegsClick('s');
+  const thin = byId(fresh.id).sw;
+  widthSegsClick('m');
+  ok('S and M are visually different widths', thin === 0.6 && byId(fresh.id).sw === 1.2);
+  S.selNodes = []; render();
+
+  ok('drawing ink keeps it across a re-render',
+     (() => {
+       setTool('pen');
+       send('pointerdown', { x:200, y:2300 });
+       send('pointermove', { x:280, y:2320 });
+       send('pointerup', { x:280, y:2320 });
+       const before = stage.querySelectorAll('path.ink').length;
+       render();
+       const after = stage.querySelectorAll('path.ink').length;
+       S.selNodes = [fresh.id]; render();
+       const afterSel = stage.querySelectorAll('path.ink').length;
+       inked = []; render();
+       setTool('select', 'draw');
+       return before === 1 && after === 1 && afterSel === 1;
+     })());
+
+  const freeArrow = { id:'ra1', kind:'arrow', title:'', sub:'', color:null, tcolor:null,
+    scolor:null, fs:1, x:100, y:2400, w:200, h:0, flip:false, rev:true };
+  nodes.push(freeArrow); render();
+  const raLine = stage.querySelector('g.node[data-id="ra1"] line');
+  ok('a free arrow dragged right-to-left keeps its head on the left',
+     !!raLine && raLine.getAttribute('marker-end') === 'none' &&
+     /^url\(#ar/.test(raLine.getAttribute('marker-start') || ''));
+  nodes.pop(); render();
+
+  window.dispatchEvent(new KeyboardEvent('keydown', { key:'G', shiftKey:true }));
+  ok('Shift+G picks the governance shape behind the heading',
+     S.tool === 'shield');
+  setTool('select', 'draw'); render();
+
+  ok('ink is remembered across a reload',
+     (() => {
+       setTool('pen');
+       send('pointerdown', { x:200, y:2450 });
+       send('pointermove', { x:260, y:2470 });
+       send('pointerup', { x:260, y:2470 });
+       const raw = localStorage.getItem(INK_KEY);
+       inked = []; render();
+       loadInk(); render();
+       const back = stage.querySelectorAll('path.ink').length;
+       inked = []; localStorage.removeItem(INK_KEY);
+       setTool('select', 'draw'); render();
+       return !!raw && back === 1;
+     })());
+
+  const styledDoc = parseDoc(JSON.stringify({ format:'yoruma', version:1, links:[],
+    nodes:[{ id:'st1', kind:'box', x:0, y:0, w:10, h:10, stroke:'dotted', sharp:true, sw:2 }] }));
+  ok('stroke, edges and width survive the document',
+     styledDoc.nodes[0].stroke === 'dotted' && styledDoc.nodes[0].sharp === true &&
+     styledDoc.nodes[0].sw === 2);
+  ok('and the text format',
+     (() => {
+       const n = textDoc('card A:\n  stroke: dashed\n  sharp: true\n  size: l\ncard B\nA -> B').nodes[0];
+       return n.stroke === 'dashed' && n.sharp === true && n.sw === 2.2;
+     })());
+  nodes = nodes.filter(n => n.id !== fresh.id);
+  S.selNodes = []; S.selLinks = []; setTool('select', 'draw'); render();
+
+  const frontBtn = document.querySelector('#shaper button[data-order="front"]');
+  const backBtn = document.querySelector('#shaper button[data-order="back"]');
+  ok('the shape bar carries bring-to-front and send-to-back', !!frontBtn && !!backBtn);
+  S.selNodes = [box.id]; render();
+  document.querySelector('#shaper button[data-order="front"]').click();
+  const onTop = nodes.indexOf(byId(box.id)) === nodes.length - 1;
+  backBtn.click();
+  const atBack = nodes.indexOf(byId(box.id)) === 0;
+  ok('send to back and bring to front reorder the stack', onTop && atBack);
+  S.selNodes = [box.id]; render();
+  ok('no dashed toggle in the shape bar, no zone morph',
+     !document.querySelector('#shaper button[data-dash="1"]') &&
+     !Array.from(document.querySelectorAll('#shaper button'))
+       .some(b => b.dataset.kind === 'zone'));
+
+  setTool('pen');
+  send('pointerdown', { x:200, y:1800 });
+  send('pointermove', { x:260, y:1830 });
+  send('pointermove', { x:320, y:1800 });
+  send('pointerup', { x:320, y:1800 });
+  const inkStroke = stage.querySelector('path.ink');
+  ok('the pen keeps ink on the canvas', !!inkStroke && S.tool === 'pen' &&
+     (inkStroke.getAttribute('d') || '').split('L').length >= 2);
+  send('pointerdown', { x:200, y:1860 });
+  send('pointermove', { x:280, y:1880 });
+  send('pointerup', { x:280, y:1880 });
+  ok('a second stroke is a second path',
+     stage.querySelectorAll('path.ink').length === 2);
+  window.dispatchEvent(new KeyboardEvent('keydown', { key:'Escape' }));
+  ok('Escape clears the ink', !stage.querySelector('path.ink'));
+  setTool('select', 'draw');
+
+  nodes.push({ id:'sd1', kind:'frame', title:'S1', members:[box.id], step:1,
+    x:0, y:0, w:1, h:1 });
+  renderStepsMenu();
+  const asideEl = document.querySelector('aside');
+  const wasShown = getComputedStyle(asideEl).display !== 'none';
+  window.dispatchEvent(new KeyboardEvent('keydown', { key:'.', metaKey:true }));
+  const hid = getComputedStyle(asideEl).display === 'none' && S.panel === false;
+  window.dispatchEvent(new KeyboardEvent('keydown', { key:'.', metaKey:true }));
+  ok('the left panel hides and comes back',
+     wasShown && hid && S.panel === true &&
+     getComputedStyle(asideEl).display !== 'none' &&
+     !!document.getElementById('btn-panel'));
+
+  const keepPageId = pageId, keepPageObj = pageById(pageId);
+  const mainIds = nodes.map(n => n.id).join();
+  addPage('Invoices');
+  ok('a new page starts empty and takes over',
+     nodes.length === 0 && pages.length === 2 && pageId !== keepPageId &&
+     document.querySelectorAll('#pages .page-tab').length === 2);
+  nodes.push({ id:'ip1', kind:'box', title:'Invoice', sub:'', color:null, tcolor:null,
+    scolor:null, fs:1, x:100, y:100, w:180, h:100 });
+  render(); saveNow(true);
+  switchPage(keepPageId);
+  ok('pages keep their own shapes',
+     nodes.map(n => n.id).join() === mainIds && !nodes.some(n => n.id === 'ip1'));
+  const savedPages = JSON.parse(localStorage.getItem(KEY));
+  ok('pagination is autosaved',
+     Array.isArray(savedPages.pages) && savedPages.pages.length === 2 &&
+     savedPages.pages.some(p => p.nodes.some(n => n.id === 'ip1')));
+  const pageDoc = parseDoc(docJSON());
+  ok('pages survive the document round-trip',
+     pageDoc.pages.length === 2 && pageDoc.page === pageId &&
+     pageDoc.pages.some(p => p.nodes.some(n => n.id === 'ip1')));
+  window.dispatchEvent(new KeyboardEvent('keydown', { key:'ArrowRight', altKey:true }));
+  ok('option-arrow moves between pages', pageId !== keepPageId);
+  addPage('Scratch');
+  const scratchId = pageId;
+  deletePage(scratchId);
+  ok('an empty page can be deleted again', !pages.some(p => p.id === scratchId));
+  switchPage(keepPageId);
+  pages = [keepPageObj];
+  pageId = keepPageId;
+  document.body.dataset.sticky = '0';
+  renderPages(); render();
+  ok('one page is left after cleanup', pages.length === 1);
+
+  const stepRow = document.querySelector('.step-row');
+  const stepDel = stepRow && stepRow.querySelector('button.del');
+  ok('the step delete button is marked destructive',
+     !!stepDel && stepDel.className === 'del' &&
+     getComputedStyle(stepDel).color !== getComputedStyle(stepRow.querySelector('button')).color);
+  nodes.pop(); renderStepsMenu();
 
   const l0 = links.length;
   setTool('arrow', 'draw');
@@ -100,7 +586,7 @@ if (/[?&]test/.test(location.search)){
   lnk.fs = 2;
   render();
   const lb2 = stage.querySelector('[data-role="label"]');
-  ok('arrow label size', !!lb2 && lb2.getAttribute('font-size') === '28');
+  ok('arrow label size', !!lb2 && lb2.getAttribute('font-size') === '32');
   lnk.fs = 1;
   lnk.label = '';
   render();
@@ -294,13 +780,13 @@ if (/[?&]test/.test(location.search)){
   S.selNodes = [];
   render();
   const trect = stage.querySelector(`g.node[data-id="${box.id}"] rect`);
-  ok('tinted card', !!trect && trect.getAttribute('fill') === hexA('#08829C', .1));
+  ok('tinted card', !!trect && trect.getAttribute('fill') === pastel('#08829C'));
   box.color = '#E03131';
   render();
   const combo = stage.querySelector(`g.node[data-id="${box.id}"] rect`);
   ok('outline and tint keep separate colours',
      box.fill === '#08829C' && box.tint === true &&
-     combo.getAttribute('fill') === hexA('#08829C', .1) &&
+     combo.getAttribute('fill') === pastel('#08829C') &&
      combo.getAttribute('stroke') === '#E03131');
   box.tint = false; box.color = null; box.fill = keptFill;
   S.paint = 'line';
@@ -377,7 +863,26 @@ if (/[?&]test/.test(location.search)){
   const zbRect = zbG && zbG.querySelector('rect');
   ok('zone band', !!zbG && !!zbG.querySelector('[data-role="zone-band"]') &&
      !!zbRect && !zbRect.getAttribute('stroke-dasharray'));
+  const bandLabel = zbG && zbG.querySelector('[data-role="zone-band-label"]');
+  ok('zone band keeps the caps of a plain zone',
+     !!bandLabel && bandLabel.textContent === 'VPC');
   nodes.pop(); render();
+
+  const hitText = { id:'ht1', kind:'text', title:'notes', sub:'', color:null, tcolor:null,
+    scolor:null, fs:1, x:100, y:1700, w:160, h:26 };
+  const hitArrow = { id:'ha1', kind:'arrow', title:'', sub:'', color:null, tcolor:null,
+    scolor:null, fs:1, x:0, y:1713, w:400, h:0 };
+  nodes.push(hitText, hitArrow); render();
+  ok('clicking text over an arrow picks the text',
+     nodeAt({ x:170, y:1713 }, 0) === hitText);
+  render();
+  const arrowEl = stage.querySelector(`[data-link="${hitArrow.id}"]`);
+  const at = { x:170, y:1713 };
+  send('pointerdown', at, arrowEl); send('pointerup', at, arrowEl);
+  ok('a click on a note keeps the text, not the arrow behind it',
+     S.selNodes.includes(hitText.id) && !S.selLinks.includes(hitArrow.id));
+  S.selNodes = []; S.selLinks = []; render();
+  nodes.pop(); nodes.pop(); render();
 
   const before = nodes.length;
   snapshot(); nodes.pop(); render(); undo();
@@ -433,10 +938,9 @@ if (/[?&]test/.test(location.search)){
   ok('style bar docks at the top right',
      sbRect.right <= window.innerWidth && sbRect.right > window.innerWidth - 60 &&
      sbRect.top < 140);
-  const openMenus = () => ['insert-menu','steps-menu','demo-menu','menu']
+  const openMenus = () => ['steps-menu','demo-menu','menu']
     .filter(id => document.getElementById(id).classList.contains('on'));
-  const menuFor = { 'btn-insert':'insert-menu', 'btn-steps':'steps-menu',
-    'btn-demo':'demo-menu', 'btn-file':'menu' };
+  const menuFor = { 'btn-steps':'steps-menu', 'btn-demo':'demo-menu', 'btn-file':'menu' };
   let menuOk = true, fileClipped = 0;
   Object.keys(menuFor).forEach(id => {
     document.getElementById(id).click();
@@ -816,6 +1320,47 @@ if (/[?&]test/.test(location.search)){
          !!wb && wb.blob.type === 'image/webp' && got.toasts.includes('webp downloaded') &&
          !!cp && [...cp.types].includes('image/png') &&
          got.toasts.includes('image copied to clipboard'));
+
+      const selKeepN = nodes, selKeepL = links;
+      const selKeepSel = { nodes:S.selNodes.slice(), links:S.selLinks.slice() };
+      nodes = [
+        { id:'sa', kind:'box', title:'A', sub:'', color:null, tcolor:null, scolor:null,
+          fs:1, x:100, y:100, w:180, h:100 },
+        { id:'sb', kind:'box', title:'B', sub:'', color:null, tcolor:null, scolor:null,
+          fs:1, x:400, y:100, w:180, h:100 },
+        { id:'sc', kind:'box', title:'C', sub:'', color:null, tcolor:null, scolor:null,
+          fs:1, x:800, y:400, w:180, h:100 }
+      ];
+      links = [{ id:'sk', from:'sa', to:'sb', label:'', color:null, motion:null, way:null }];
+      S.selNodes = ['sa','sb']; S.selLinks = [];
+      render();
+      const selSvg = await buildSVG({ sel:true });
+      const allSvg = await buildSVG();
+      ok('the selection export carries only what is selected',
+         /data-id="sa"/.test(selSvg) && /data-id="sb"/.test(selSvg) &&
+         !/data-id="sc"/.test(selSvg) && /data-link="sk"/.test(selSvg) &&
+         /data-id="sc"/.test(allSvg) && selSvg.length < allSvg.length);
+      S.selNodes = selKeepSel.nodes; S.selLinks = selKeepSel.links;
+      nodes = selKeepN; links = selKeepL; render();
+
+      const keepN = nodes, keepL = links, keepMotion = S.motion;
+      nodes = [
+        { id:'sa', kind:'box', title:'A', sub:'', color:null, tcolor:null, scolor:null,
+          fs:1, x:100, y:100, w:180, h:110 },
+        { id:'sb', kind:'box', title:'B', sub:'', color:null, tcolor:null, scolor:null,
+          fs:1, x:600, y:100, w:180, h:110 }
+      ];
+      links = [{ id:'sk', from:'sa', to:'sb', label:'', color:null, motion:'dots', way:null }];
+      S.selNodes = []; S.selLinks = []; S.motion = 'off';
+      render();
+      const dotSvg = await buildSVG();
+      links[0].motion = 'off';
+      render();
+      const plainSvg = await buildSVG();
+      ok('dots animate in the exported svg',
+         /<animateMotion/.test(dotSvg) && /<mpath/.test(dotSvg) &&
+         /yoruma-mp0/.test(dotSvg) && !/<animateMotion/.test(plainSvg));
+      nodes = keepN; links = keepL; S.motion = keepMotion; render();
 
       const times = [];
       for (let i = 0; i < 24; i++){

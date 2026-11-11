@@ -16,10 +16,32 @@ window.addEventListener('keydown', e => {
     }
   }
   if (e.key === 'Escape'){
-    if (pickerEl.classList.contains('on')){ closeLogoPicker(); return; }
+    if (S.sticky){ S.sticky = false; document.body.dataset.sticky = '0'; }
+    const ink = viewport.querySelectorAll('.laser, .ink');
+    if (ink.length){
+      ink.forEach(el => el.remove());
+      inked = [];
+      laser = null;
+      saveInk();
+      return;
+    }
+    if (spotId){ spotId = null; render(); return; }
     if (document.body.classList.contains('present')){ setPresent(false); return; }
     clearSel(); setTool('select', 'draw'); render();
     return;
+  }
+  if (!e.metaKey && !e.ctrlKey && e.key.toLowerCase() === 'w'){
+    if (S.sticky){ S.sticky = false; document.body.dataset.sticky = '0'; }
+    const only = S.selNodes.length === 1 ? byId(S.selNodes[0]) : null;
+    if (spotId){ spotId = null; toast('focus off'); }
+    else if (only){ spotId = only.id; toast('focus on ' + (only.title || only.kind)); }
+    else { toast('select one shape to focus on it'); return; }
+    render();
+    return;
+  }
+  if (e.key === 'Enter' && S.selNodes.length === 1 && !S.selLinks.length){
+    const n = byId(S.selNodes[0]);
+    if (n && n.kind !== 'frame'){ e.preventDefault(); editNode(n); return; }
   }
   if (e.key === '?' ){ helpEl.classList.toggle('on'); return; }
   const meta = e.metaKey || e.ctrlKey;
@@ -51,6 +73,14 @@ window.addEventListener('keydown', e => {
   if (meta && e.shiftKey && e.key.toLowerCase() === 'z'){ e.preventDefault(); redo(); return; }
   if (meta && e.key.toLowerCase() === 'y'){ e.preventDefault(); redo(); return; }
   if (meta && e.key.toLowerCase() === 'z'){ e.preventDefault(); undo(); return; }
+  if (e.altKey && (e.key === 'ArrowRight' || e.key === 'ArrowLeft')){
+    e.preventDefault();
+    const i = pages.findIndex(p => p.id === pageId);
+    const dir = e.key === 'ArrowRight' ? 1 : -1;
+    switchPage(pages[(i + dir + pages.length) % pages.length].id);
+    return;
+  }
+  if (meta && e.key === '.'){ e.preventDefault(); togglePanel(); return; }
   if (meta) return;
 
   if (e.key === 'f' || e.key === 'F'){ fit(); save(); return; }
@@ -79,8 +109,23 @@ window.addEventListener('keydown', e => {
   }
   if (e.repeat) return;
   const all = DRAW.concat(DATA);
-  const t = all.find(t => t.key === e.key.toLowerCase());
-  if (t){ if (t.pick) fileInput.click(); else setTool(t.id, DRAW.includes(t) ? 'draw' : 'data'); }
+  const sameKey = all.filter(x => x.key === e.key.toLowerCase());
+  const t = sameKey.length > 1 && e.shiftKey
+    ? sameKey[sameKey.length - 1] : sameKey[0];
+  if (t){
+    if (!t.pick && S.tool === t.id){
+      S.sticky = !S.sticky;
+      document.body.dataset.sticky = S.sticky ? '1' : '0';
+      toast(S.sticky ? t.label + ' stays armed — press ' + t.key.toUpperCase() +
+                        ' again for one shape'
+                     : t.label + ' arms for one shape');
+      return;
+    }
+    S.sticky = false;
+    document.body.dataset.sticky = '0';
+    if (t.pick) fileInput.click();
+    else setTool(t.id, DRAW.includes(t) ? 'draw' : 'data');
+  }
 });
 
 window.__y = {

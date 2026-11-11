@@ -61,9 +61,11 @@ function d2(){
   return out.join('\n');
 }
 function docJSON(){
+  syncPage();
   return JSON.stringify({
     format:'yoruma', version:1, savedAt:new Date().toISOString(),
-    motion:S.motion, view:{ x:view.x, y:view.y, k:view.k }, nodes, links
+    motion:S.motion, view:{ x:view.x, y:view.y, k:view.k }, nodes, links,
+    pages, page: pageId
   }, null, 2);
 }
 

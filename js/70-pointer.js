@@ -1,4 +1,36 @@
 /* ---------- pointer ---------- */
+function arrowReversed(x1, y1, x2, y2){
+  const flip = (x2-x1)*(y2-y1) < 0;
+  const x = Math.min(x1, x2), y = Math.min(y1, y2);
+  const w = Math.abs(x2-x1), h = Math.abs(y2-y1);
+  const p1 = { x, y: y + (flip ? h : 0) };
+  const p2 = { x: x + w, y: y + (flip ? 0 : h) };
+  return Math.hypot(p2.x - x2, p2.y - y2) > Math.hypot(p1.x - x2, p1.y - y2);
+}
+function eraseAt(p){
+  let hit = false;
+  let touched = false;
+  viewport.querySelectorAll('path.laser, path.ink').forEach(el => {
+    const b = el.getBBox();
+    if (p.x >= b.x - 6 && p.x <= b.x + b.width + 6 &&
+        p.y >= b.y - 6 && p.y <= b.y + b.height + 6){
+      el.remove();
+      inked = inked.filter(s => s.el !== el);
+      saveInk();
+      hit = true;
+    }
+  });
+  const n = nodeAt(p, 2);
+  if (n && n.kind !== 'zone' && n.kind !== 'frame'){
+    if (!touched){ snapshot(); touched = true; }
+    nodes = nodes.filter(x => x !== n);
+    links = links.filter(l => l.from !== n.id && l.to !== n.id);
+    S.selNodes = S.selNodes.filter(id => id !== n.id);
+    hit = true;
+  }
+  if (hit) render();
+}
+
 stage.addEventListener('contextmenu', e => e.preventDefault());
 
 stage.addEventListener('pointerdown', ev => {
@@ -40,6 +72,28 @@ stage.addEventListener('pointerdown', ev => {
     }
   }
 
+  if (S.tool === 'eraser'){
+    erase = { moved:false };
+    eraseAt(p);
+    cap(ev);
+    return;
+  }
+  if (ev.altKey || S.tool === 'pen' || S.tool === 'laser'){
+    const fade = S.tool === 'laser' || (S.tool !== 'pen' && ev.altKey);
+    const el = mk('path', { d:'', fill:'none',
+      stroke: fade ? '#E03131' : INK,
+      'stroke-width': fade ? 3.4 : 2.2, 'stroke-linecap':'round',
+      'stroke-linejoin':'round', opacity:'.95', 'pointer-events':'none',
+      class:'ui ' + (fade ? 'laser' : 'ink') });
+    viewport.appendChild(el);
+    const stroke = { el, d:'', fade, stroke: fade ? '#E03131' : INK,
+      sw: fade ? 3.4 : 2.2 };
+    if (!fade) inked.push(stroke);
+    laser = { pts:[p], fade, el, stroke };
+    cap(ev);
+    return;
+  }
+
   const h = handleAt(p);
   if (h){
     if (h.kind === 'newedge'){
@@ -68,20 +122,25 @@ stage.addEventListener('pointerdown', ev => {
     snapshot();
     const n = { id:'n'+(uid++), kind:'box', title:label, sub:'', color:S.color,
       tcolor:S.tcolor, scolor:S.scolor, tint:S.tint === true, fs:1,
+      stroke:S.stroke, sharp:S.sharp, sw:S.sw, fillmode:S.fillmode, fillmode:S.fillmode,
       x:Math.round(p.x-88), y:Math.round(p.y-38), w:176, h:76 };
     nodes.push(n);
     selectNodes([n.id], false);
-    setTool('select', 'draw');
+    if (S.sticky){
+      S.armed = label;
+      document.body.dataset.tool = 'place';
+      document.querySelectorAll('#tools button').forEach(b => b.classList.remove('on'));
+    } else setTool('select', 'draw');
     render();
-    editNode(n, true);
     return;
   }
 
   const linkEl = ev.target.closest ? ev.target.closest('[data-link]') : null;
   const hit = nodeAt(p, 2);
+  const textHit = hit && (hit.kind === 'text' || hit.kind === 'heading');
 
   if (S.tool === 'select'){
-    if (linkEl){
+    if (linkEl && !textHit){
       S.paint = 'line';
       const lid = linkEl.dataset.link;
       const now = Date.now();
@@ -163,6 +222,18 @@ stage.addEventListener('pointermove', ev => {
   }
   const p = toWorld(ev);
 
+  if (erase){
+    eraseAt(p);
+    return;
+  }
+  if (laser){
+    laser.pts.push(p);
+    const d = laser.pts.map((q, i) =>
+      (i ? 'L' : 'M') + q.x.toFixed(1) + ' ' + q.y.toFixed(1)).join(' ');
+    laser.el.setAttribute('d', d);
+    if (laser.stroke) laser.stroke.d = d;
+    return;
+  }
   if (bend){
     if (!bend.moved){ snapshot(); bend.moved = true; }
     bend.l.way = { x:Math.round(p.x), y:Math.round(p.y) };
@@ -227,6 +298,18 @@ stage.addEventListener('pointermove', ev => {
 });
 
 stage.addEventListener('pointerup', ev => {
+  if (erase){ erase = null; render(); return; }
+  if (laser){
+    const { el, fade } = laser;
+    laser = null;
+    if (!fade) saveInk();
+    if (fade){
+      el.style.transition = 'opacity .9s ease .35s';
+      el.setAttribute('opacity', '0');
+      setTimeout(() => el.remove(), 1500);
+    }
+    return;
+  }
   if (pan){ pan = null; stage.classList.remove('panning'); return; }
   if (bend){ bend = null; render(); return; }
   if (resize){ resize = null; render(); return; }
@@ -326,9 +409,10 @@ function commit(job, end){
       tcolor:null, scolor:null, fill:null, fs:1,
       x:Math.round(Math.min(x1,x2)), y:Math.round(Math.min(y1,y2)),
       w:Math.max(1, Math.round(Math.abs(x2-x1))), h:Math.max(1, Math.round(Math.abs(y2-y1))),
-      flip: (x2-x1)*(y2-y1) < 0 });
+      flip: (x2-x1)*(y2-y1) < 0,
+      rev: arrowReversed(x1, y1, x2, y2) });
     selectNodes([nodes[nodes.length-1].id], false);
-    setTool('select', 'draw');
+    if (!S.sticky) setTool('select', 'draw');
     render();
     return;
   }
@@ -344,9 +428,10 @@ function commit(job, end){
         x:Math.round(Math.min(a.x,end.x)), y:Math.round(Math.min(a.y,end.y)),
         w:Math.max(1, Math.round(Math.abs(end.x-a.x))),
         h:Math.max(1, Math.round(Math.abs(end.y-a.y))),
-        flip: (end.x-a.x)*(end.y-a.y) < 0 });
+        flip: (end.x-a.x)*(end.y-a.y) < 0,
+        rev: arrowReversed(a.x, a.y, end.x, end.y) });
       selectNodes([nodes[nodes.length-1].id], false);
-      setTool('select', 'draw');
+      if (!S.sticky) setTool('select', 'draw');
       render();
       return;
     }
@@ -375,12 +460,12 @@ function commit(job, end){
   snapshot();
   const n = { id:'n'+(uid++), kind:job.tool, title:'', sub:'', color:S.color,
     tcolor:S.tcolor, scolor:S.scolor, fs:1,
+    stroke:S.stroke, sharp:S.sharp, sw:S.sw,
     x:Math.round(Math.min(a.x, end.x)), y:Math.round(Math.min(a.y, end.y)),
     w:Math.round(w), h:Math.round(h) };
   nodes.push(n);
   selectNodes([n.id], false);
-  setTool('select', 'draw');
+  if (!S.sticky) setTool('select', 'draw');
   render();
-  editNode(n);
 }
 

@@ -6,10 +6,10 @@ const TEXT_KINDS = {
   shield:'shield', people:'people', agent:'agent', contract:'contract',
   dashboard:'dashboard', cube:'cube', table:'table', text:'text', heading:'heading'
 };
-const SHAPE_PROPS = new Set(['sub','brand','tint','band','solid','color','fill','align','x','y','w','h']);
+const SHAPE_PROPS = new Set(['sub','brand','icon','tint','band','solid','dash','stroke','sharp','size','fillmode','color','fill','align','x','y','w','h']);
 const TEXT_DIRS = new Set(['right','down']);
 const TEXT_GAPX = 76, TEXT_GAPY = 44, TEXT_ZGAP = 36, TEXT_ZPAD = 24, TEXT_ZTOP = 44, TEXT_ZBOT = 26,
-      TEXT_TITLEW = 11, TEXT_ORIGIN = 32;
+      TEXT_TITLEW = 12.5, TEXT_ORIGIN = 32;
 
 const textErr = (no, msg) => new Error('line ' + no + ': ' + msg);
 const textSlug = name => {
@@ -141,8 +141,8 @@ function parseText(src){
         if (!/^#[0-9a-fA-F]{6}$/.test(value)) throw textErr(no, 'color must be #RRGGBB');
       } else if (key === 'dash') value = textBool(value, no, key);
       else {
-        if (!['off','dots','dashes','both','live'].includes(value))
-          throw textErr(no, 'motion is off, dots, dashes, both or live');
+        if (!MODES.includes(value))
+          throw textErr(no, 'motion is ' + MODES.join(', '));
       }
       parent.links.forEach(l => { l[key] = value; });
       return;
@@ -158,12 +158,15 @@ function parseText(src){
         parent.props.theme = value;
         return;
       }
-      if (!['dir','color','fill'].includes(key))
+      if (!['dir','color','fill','band','solid','dash'].includes(key))
         throw textErr(no, parent.scope === 'zone'
-          ? 'unknown property “' + key + '” (zones take dir, color, fill)'
+          ? 'unknown property “' + key + '” (zones take dir, color, fill, band, solid, dash)'
           : 'unknown setting “' + key + '”');
       if (key === 'dir'){
         if (!TEXT_DIRS.has(value)) throw textErr(no, 'dir is right or down');
+      } else if (key === 'band' || key === 'solid' || key === 'dash'){
+        parent.props[key] = textBool(value, no, key);
+        return;
       } else {
         if (!/^#[0-9a-fA-F]{6}$/.test(value)) throw textErr(no, key + ' must be #RRGGBB');
       }
@@ -172,9 +175,26 @@ function parseText(src){
     }
     if (!SHAPE_PROPS.has(key)) throw textErr(no, 'unknown property “' + key + '”');
     if (!value) throw textErr(no, key + ' needs a value');
-    if (key === 'sub' || key === 'brand') parent.props[key] = value.slice(0, 2000);
-    else if (key === 'tint' || key === 'band' || key === 'solid')
+    if (key === 'sub' || key === 'brand' || key === 'icon')
+      parent.props[key] = value.slice(0, 2000);
+    else if (key === 'tint' || key === 'band' || key === 'solid' || key === 'dash' ||
+             key === 'sharp')
       parent.props[key] = textBool(value, no, key);
+    else if (key === 'fillmode'){
+      if (!['soft','solid'].includes(value))
+        throw textErr(no, 'fillmode is soft or solid');
+      parent.props.fillmode = value;
+    }
+    else if (key === 'stroke'){
+      if (!['solid','dashed','dotted'].includes(value))
+        throw textErr(no, 'stroke is solid, dashed or dotted');
+      parent.props.stroke = value;
+    }
+    else if (key === 'size'){
+      if (!['s','m','l','xl'].includes(value))
+        throw textErr(no, 'size is s, m, l or xl');
+      parent.props.size = value;
+    }
     else if (key === 'color' || key === 'fill'){
       if (!/^#[0-9a-fA-F]{6}$/.test(value)) throw textErr(no, key + ' must be #RRGGBB');
       parent.props[key] = value;
@@ -373,6 +393,11 @@ function buildTextDoc(model){
     if (p.tint) n.tint = true;
     if (p.band) n.band = true;
     if (p.solid) n.solid = true;
+    if (p.dash) n.dash = true;
+    if (p.sharp) n.sharp = true;
+    if (p.stroke) n.stroke = p.stroke;
+    if (p.fillmode === 'solid') n.fillmode = 'solid';
+    if (p.size) n.sw = { s:0.6, m:1.2, l:2.2, xl:3.4 }[p.size];
     if (p.fill) n.fill = p.fill;
     if (p.align) n.align = p.align;
     if (p.brand) brands.push({ id: s.id, brand: p.brand });
@@ -454,4 +479,16 @@ async function openTextDoc(text, name, quiet){
     const n = byId(s.id);
     if (n) await fetchLogoByName(s.props.brand, n);
   }
+  for (const s of model.shapes.filter(x => x.props.icon)){
+    const n = byId(s.id);
+    if (!n) continue;
+    const local = iconByName(s.props.icon);
+    if (local){
+      n.logo = iconDataUri(local);
+      n.mono = true;
+    } else {
+      await fetchLogoByName(s.props.icon, n);
+    }
+  }
+  render();
 }

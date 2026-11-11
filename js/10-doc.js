@@ -56,6 +56,106 @@ function redo(){
   render();
 }
 
+/* ---------- pages ---------- */
+let pages = [{ id:'p1', name:'Page 1', nodes:[], links:[], view:null }];
+let pageId = 'p1';
+const pageById = id => pages.find(p => p.id === id) || pages[0];
+const currentPage = () => pageById(pageId);
+function syncPage(){
+  const p = currentPage();
+  p.nodes = nodes;
+  p.links = links;
+  p.view = { x:view.x, y:view.y, k:view.k };
+  pageId = p.id;
+}
+function syncPageInto(id){
+  const p = pageById(id);
+  pageId = p.id;
+  nodes = p.nodes;
+  links = p.links;
+  return p;
+}
+function renderPages(){
+  const el = document.getElementById('pages');
+  if (!el) return;
+  el.innerHTML = '';
+  pages.forEach(p => {
+    const b = document.createElement('button');
+    b.className = 'page-tab' + (p.id === pageId ? ' on' : '');
+    b.textContent = p.name;
+    b.title = 'Open ' + p.name + ' — double-click to rename';
+    b.dataset.page = p.id;
+    b.addEventListener('click', () => switchPage(p.id));
+    b.addEventListener('dblclick', ev => {
+      ev.preventDefault();
+      const name = prompt('Page name', p.name);
+      if (name && name.trim()){ p.name = name.trim().slice(0, 40); renderPages(); save(); }
+    });
+    if (pages.length > 1){
+      const x = document.createElement('span');
+      x.className = 'page-x';
+      x.textContent = '×';
+      x.title = 'Delete this page';
+      x.addEventListener('click', ev => { ev.stopPropagation(); deletePage(p.id); });
+      b.appendChild(x);
+    }
+    el.appendChild(b);
+  });
+  const add = document.createElement('button');
+  add.className = 'page-add';
+  add.textContent = '+';
+  add.title = 'New page (⌥→ from the last one)';
+  add.setAttribute('aria-label', 'New page');
+  add.addEventListener('click', () => addPage());
+  el.appendChild(add);
+  if (pages.length < 2) el.classList.add('single'); else el.classList.remove('single');
+}
+function switchPage(id){
+  if (id === pageId) return;
+  syncPage();
+  const p = pageById(id);
+  pageId = p.id;
+  nodes = p.nodes;
+  links = p.links;
+  S.selNodes = []; S.selLinks = [];
+  hoverId = null; lastHit = { id:null, t:0 };
+  inked = inked; // ink is global, not per page
+  render();
+  if (p.view){ view.x = p.view.x; view.y = p.view.y; view.k = p.view.k; applyView(); }
+  else fit();
+  renderPages();
+  save();
+}
+function addPage(name){
+  syncPage();
+  const p = { id:'p' + (++uid), name: (name || ('Page ' + (pages.length + 1))).slice(0, 40),
+    nodes:[], links:[], view:null };
+  pages.push(p);
+  pageId = p.id;
+  nodes = []; links = [];
+  S.selNodes = []; S.selLinks = [];
+  render(); renderPages(); fit(); save();
+  return p;
+}
+function deletePage(id){
+  syncPage();
+  if (pages.length < 2){ toast('the document needs at least one page'); return; }
+  const p = pageById(id);
+  if ((p.nodes.length || p.links.length) &&
+      !confirm('Delete “' + p.name + '” and everything on it?')) return;
+  pages = pages.filter(x => x.id !== p.id);
+  if (pageId === p.id){
+    pageId = pages[0].id;
+    nodes = pages[0].nodes; links = pages[0].links;
+    S.selNodes = []; S.selLinks = [];
+    render();
+    if (pages[0].view){ view.x = pages[0].view.x; view.y = pages[0].view.y; view.k = pages[0].view.k; applyView(); }
+    else fit();
+  }
+  renderPages(); save();
+  toast('page deleted');
+}
+
 /* ---------- persistence ---------- */
 const KEY = 'yoruma.doc.v1';
 const BROKEN_KEY = 'yoruma.doc.v1.broken';
@@ -65,9 +165,11 @@ function saveNow(quiet){
   const warn = document.getElementById('save-warn');
   if (tabConflict) return false;
   try {
+    syncPage();
     localStorage.setItem(KEY, JSON.stringify({
       nodes, links, motion:S.motion,
-      view:{ x:view.x, y:view.y, k:view.k }
+      view:{ x:view.x, y:view.y, k:view.k },
+      pages, page: pageId
     }));
     if (warn) warn.classList.remove('on');
     if (saveWarned && !quiet) toast('autosave resumed');
@@ -86,7 +188,8 @@ function save(){
   saveTimer = setTimeout(saveNow, 400);
 }
 function contentPayload(){
-  return JSON.stringify({ nodes, links, motion:S.motion });
+  syncPage();
+  return JSON.stringify({ nodes, links, motion:S.motion, pages, page: pageId });
 }
 function restore(){
   let raw = null;
@@ -98,17 +201,20 @@ function restore(){
     const doc = parseDoc(JSON.stringify({
       format:'yoruma', version:1,
       nodes:d.nodes, links:Array.isArray(d.links) ? d.links : [],
-      motion:d.motion, view:d.view
+      motion:d.motion, view:d.view, pages:d.pages, page:d.page
     }));
-    nodes = doc.nodes;
-    links = doc.links;
+    pages = doc.pages;
+    pageId = doc.page;
+    syncPageInto(pageId);
     S.motion = doc.motion;
     if (doc.view){ view.x = doc.view.x; view.y = doc.view.y; view.k = doc.view.k; }
     uid = 1;
-    [...nodes, ...links].forEach(o => {
+    pages.forEach(p => [...p.nodes, ...p.links].forEach(o => {
       const m = /(\d+)$/.exec(String(o.id));
       if (m) uid = Math.max(uid, +m[1] + 1);
-    });
+    }));
+    const pm = /(\d+)$/.exec(String(pageId));
+    if (pm) uid = Math.max(uid, +pm[1] + 1);
     return true;
   } catch (e){
     restoreError = e;
