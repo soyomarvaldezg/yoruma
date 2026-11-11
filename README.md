@@ -315,18 +315,18 @@ PNG and WebP are stills. GitHub and PDF viewers show the SVG without motion.
 
 `render()` rebuilds the whole SVG. The budget is one frame.
 A full render stays under 16 ms: 0.7 ms at 50 shapes, 3 ms at 200, 9.3 ms at 400.
-`?test` checks the budget. `just measure` prints the curve.
+`?test` checks the budget. `task measure` prints the curve.
 
 ## Working on it
 
 ```
-just deps      # once: verifier deps and Chromium
-just check     # the in-page suite in headless Chromium
-just shots     # regenerate the README screenshots
-just measure   # render cost at 50, 100, 200 and 400 shapes
-just blocks    # regenerate docs/example-blocks.yaml
-just icons     # regenerate the bundled icon pack from simple-icons
-just shot-d2   # screenshot docs/pipeline-from-d2.yaml
+task deps      # once: verifier deps and Chromium
+task check     # the in-page suite in headless Chromium
+task shots     # regenerate the README screenshots
+task measure   # render cost at 50, 100, 200 and 400 shapes
+task blocks    # regenerate docs/example-blocks.yaml
+task icons     # regenerate the bundled icon pack from simple-icons
+task shot-d2   # screenshot docs/pipeline-from-d2.yaml
 ```
 
 `ARCHITECTURE.md` explains the load order and what each file owns.

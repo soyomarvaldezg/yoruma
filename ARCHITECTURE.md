@@ -15,7 +15,7 @@ These are deliberate and should not change without a decision recorded in the ba
   network call is the opt-in brand-logo fetch, and its result is inlined into the document.
 - **One document format, version 1.** `parseDoc` is the trust boundary: unknown fields are
   dropped, values are bounded, and step members must reference ids that exist.
-- **The gate is `just check`.** It runs the in-page suite in headless Chromium and exits
+- **The gate is `task check`.** It runs the in-page suite in headless Chromium and exits
   non-zero on any red line.
 
 ## Load order
@@ -89,12 +89,12 @@ everything inside it at any depth (`zoneMembers`).
 `render()` rebuilds the SVG. The budget is one 16 ms frame per render, measured by `?test` at
 the demo size and at 200 shapes. Two rules protect it: the dotted grid is created once and only
 transformed on pan and zoom, and dragging renders in a lite mode that skips the motion
-overlays. The scaling curve lives in the README and can be reproduced with `just measure`.
+overlays. The scaling curve lives in the README and can be reproduced with `task measure`.
 
 ## Verifying work
 
 ```
-just check     # the in-page suite in headless Chromium; non-zero exit on red
+task check     # the in-page suite in headless Chromium; non-zero exit on red
 ```
 
 The suite drives the real page, including synthetic pointer events, so a green run means the
