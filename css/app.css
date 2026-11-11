@@ -224,6 +224,7 @@
     letter-spacing:.05em; padding:7px 12px; border-radius:4px; cursor:pointer;
   }
   #lint-chip:hover{color:#F6B26B}
+  body.present .pagebar{display:none}
   body.present #lint-chip{display:none}
 
   #shaper{position:fixed; display:none; z-index:8; background:var(--ink);
