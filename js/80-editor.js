@@ -25,7 +25,7 @@ function editNode(n, focusSub){
 function editLink(l){
   edNode = null; edLink = l; editing = l.id;
   const a = byId(l.from), b = byId(l.to);
-  const m = a && b ? midPoint(route(a, b, l.way, l)) : { x:0, y:0 };
+  const m = a && b ? midPoint(route(a, b, bendsOf(l), l)) : { x:0, y:0 };
   const s = toScreen(m);
   edEl.style.display = 'block';
   placeStylebar();

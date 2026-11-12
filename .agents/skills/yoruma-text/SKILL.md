@@ -54,7 +54,15 @@ duckdb COPY -> DuckDB:
 - **Indentation is nesting**, two spaces per level. Tabs are rejected.
 - **Kinds** are palette words: `card`, `box`, `ellipse`, `zone`, `db`/`database`/`store`,
   `queue`, `cloud`, `file`, `api`, `shield`, `people`, `agent`, `contract`, `dashboard`,
-  `cube`, `table`, `text`, `heading`.
+  `cube`, `table`, `tile`, `text`, `heading`.
+- **A tile** (`tile Status`) is a filled square in one hue with a white glyph and no
+  outline: the explicit `color:` wins, otherwise the glyph hashes to a stable hue.
+  It suits outcomes: `tile OK`, `tile Failed`, and the state glyphs
+  `success`, `error`, `warning`, `info`, `question`, `blocked`, `retry`, `bug`, `alert`.
+  `tint: true` washes the tile pale and paints the glyph in the outline colour.
+  `anim:` makes the tile loop instead of showing a glyph (`loading`, `progress`,
+  `typing`, `uploading`, `heartbeat`, `stream`, `sync`, `waiting`, `retry`, `poll`) —
+  use it where the diagram should say "still working".
 - **Names must be unique** and cannot contain `:`. Arrows refer to names, not ids.
 - **Arrows live at the top level**: `A -> B: note`, chains `A -> B -> C`, `--` for no
   arrowhead, `<->` for both ends. Only the last segment of a chain takes a label.
@@ -62,7 +70,7 @@ duckdb COPY -> DuckDB:
   `sub:`, `icon:` (bundled glyph, see below), `brand:` (svgl colour logo name), `tint:`,
   `stroke:` (`solid`, `dashed`, `dotted`), `size:` (`s`, `m`, `l`, `xl` — stroke width),
   `sharp:` (square corners), `fillmode:` (`soft` wash or `solid`), `band:`, `solid:`, `color:`
-  and `fill:` (`#RRGGBB`), `align:`,
+  and `fill:` (`#RRGGBB`), `align:`, `anim:` (tiles only),
   `x:`/`y:`/`w:`/`h:` (absolute pinning — avoid it unless asked), and `dir:` on zones.
   Zones take `dir:`, `color:`, `fill:`, `band:`, `solid:` and `dash:`; `fill:` on a zone paints
   it at 10%, which is how subnet/VPC lanes get their tint.
@@ -70,9 +78,12 @@ duckdb COPY -> DuckDB:
   (role tones by kind: stores green, queues orange, files blue, services and dashboards
   indigo, agents purple, people/clouds/shields gray; explicit `color:` still wins).
 - **Arrows take props** too, indented under the arrow line, applied to every arrow on that
-  line: `color:`, `dash: true|false`, `motion: off|dots|dashes|both|live`.
+  line: `color:`, `dash: true|false`, `motion: off|dots|dashes|both|live`,
+  and repeated `bend: x y` lines, one per corner, in order along the arrow
+  (at most 8).
 - **Zones stack children top-to-bottom by default** (stage lanes). Give a zone
   `dir: right` when its children should read left to right (fan-outs beside the source).
+  `dir` is the flow axis: children with no arrows between them form a row under `dir: down`.
 - **Overlapping boxes are a layout problem, not a text one.** Zones nest by containment, so
   express "VPC spans the AZs" by nesting the AZs inside the VPC (or vice versa) rather than by
   stacking two frames on top of each other; `x:`/`y:` pins only exist as an escape hatch.

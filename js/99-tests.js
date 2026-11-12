@@ -101,7 +101,7 @@ if (/[?&]test/.test(location.search)){
   ok('icon pack ships monochrome glyphs',
      ICON_PACK.length >= 100 && ICON_PACK.every(ic => ic.d.includes('<path')));
   ok('concept glyphs cover the vendor-free gaps',
-     LOCAL_ICONS.length === ICON_PACK.length + CONCEPTS.length &&
+     LOCAL_ICONS.length === ICON_PACK.length + CONCEPTS.length + STATES.length + LOOPS.length &&
      CONCEPTS.every(c => c.d.includes('stroke="currentColor"')) &&
      iconSearch('vpc').some(c => c.n === 'Network') &&
      iconSearch('feature store').some(c => c.n === 'Feature store') &&
@@ -159,7 +159,12 @@ if (/[?&]test/.test(location.search)){
   iconFilterEl.dispatchEvent(new Event('input'));
   ok('sidebar icon grid returns to the whole pack',
      iconGrid.querySelectorAll('.icon-tile').length === LOCAL_ICONS.length &&
-     ICON_PACK.length >= 100 && LOCAL_ICONS.length === ICON_PACK.length + CONCEPTS.length);
+     ICON_PACK.length >= 100 &&
+     LOCAL_ICONS.length === ICON_PACK.length + CONCEPTS.length + STATES.length + LOOPS.length);
+  ok('the empty picker groups its icons under headings',
+     Array.from(iconGrid.querySelectorAll('.icon-section')).map(h => h.textContent)
+       .join(',') === 'Plumbing,Status,Loops,Pack' &&
+     ICON_SECTIONS().length === 5);
   iconFilterEl.value = 'tableau';
   iconFilterEl.dispatchEvent(new Event('input'));
   ok('brand marks join the same search box',
@@ -217,6 +222,223 @@ if (/[?&]test/.test(location.search)){
      !iconSearch('data factory').some(e => e.n === 'Azure Data Factory') &&
      !iconByName('Mine') && !localStorage.getItem(PACK_KEY));
   render();
+
+  ok('the nine state glyphs answer plain outcome words',
+     STATES.length === 9 &&
+     ['success','error','warning','info','question','blocked','retry','bug','alert']
+       .every(w => !!iconByName(w)) &&
+     iconSearch('failed').some(e => e.n === 'Error') &&
+     iconSearch('reload').some(e => e.n === 'Retry') &&
+     STATES.every(s => s.d.includes('stroke="currentColor"')));
+
+  S.selNodes = [];
+  const tileCount = nodes.length;
+  placeIcon(iconByName('Success'));
+  const tileNode = nodes[nodes.length-1];
+  ok('a state icon with no selection lands as a tile',
+     nodes.length === tileCount + 1 && tileNode.kind === 'tile' &&
+     tileNode.mono === true && tileNode.logo.startsWith('data:image/svg+xml'));
+  render();
+  const tileRect = stage.querySelector(`g.node[data-id="${tileNode.id}"] rect[data-role="tile"]`);
+  ok('a tile draws one filled square with no outline',
+     !!tileRect && tileRect.getAttribute('stroke') === 'none' &&
+     tileRect.getAttribute('fill') === tileHue(tileNode) &&
+     ACCENTS.includes(tileRect.getAttribute('fill')));
+  ok('the tile glyph paints white on its hue',
+     (() => {
+       const p = stage.querySelector(`g.node[data-id="${tileNode.id}"] ` +
+         '[data-role="logo"] path');
+       return !!p && p.getAttribute('stroke') === '#FFFFFF';
+     })());
+  ok('the same icon keeps the same hue, other icons move',
+     (() => {
+       const a = tileHue({ id:'x1', logo:iconDataUri(iconByName('Success')) });
+       const b = tileHue({ id:'x2', logo:iconDataUri(iconByName('Success')) });
+       const c = tileHue({ id:'x3', logo:iconDataUri(iconByName('Kafka')) });
+       return a === b && a !== c;
+     })());
+  ok('a state tile wears its semantic hue',
+     tileHue(tileNode) === '#099268' &&
+     tileHue({ id:'x4', logo:iconDataUri(iconByName('Error')) }) === '#E03131' &&
+     TILE_HUES.every(c => hexToOklch(c).L < 0.72));
+  const animBtns = Array.from(document.querySelectorAll('#shaper button[data-anim]'));
+  nodes.push({ id:'animT', kind:'tile', title:'Build', sub:'', color:null,
+    tcolor:null, scolor:null, fs:1, x:900, y:620, w:96, h:130, anim:'loading' });
+  S.selNodes = ['animT']; S.selLinks = []; render();
+  ok('an anim tile draws a loop in place of a glyph',
+     (() => {
+       const g = stage.querySelector('g.node[data-id="animT"] [data-role="anim"]');
+       if (!g) return false;
+       const loops = Array.from(g.getElementsByTagName('*'))
+         .some(el => /^animate/i.test(el.tagName));
+       return loops && !g.parentNode.querySelector('[data-role="logo"]');
+     })());
+  ok('the shape bar offers every loop to a tile',
+     animBtns.length === ANIMS.length &&
+     animBtns.every(b => b.style.display !== 'none') &&
+     animBtns.filter(b => b.getAttribute('aria-pressed') === 'true')
+       .map(b => b.dataset.anim).join() === 'loading');
+  animBtns[1].click();
+  ok('pressing another loop moves it', byId('animT').anim === 'progress');
+  animBtns[1].click();
+  ok('pressing the loop again stops it', !byId('animT').anim);
+  animBtns[1].click();
+  S.selNodes = []; S.selLinks = [];
+  nodes = nodes.filter(n => n.id !== 'animT'); render();
+  nodes.push({ id:'noanim', kind:'box', title:'Plain', sub:'', color:null,
+    tcolor:null, scolor:null, fs:1, x:900, y:820, w:180, h:100 });
+  S.selNodes = ['noanim']; render();
+  ok('a selected card hides the loops', animBtns.every(b => b.style.display === 'none'));
+  S.selNodes = [];
+  nodes = nodes.filter(n => n.id !== 'noanim'); render();
+
+  const loopTiles = Array.from(
+    document.getElementById('icon-grid').querySelectorAll('.icon-tile.loop'));
+  ok('the picker offers the loops like any other glyph',
+     loopTiles.length === ANIMS.length &&
+     loopTiles.every(b => b.className.includes('loop')));
+  const loopCount = nodes.length;
+  loopTiles[0].click();
+  const looped = nodes[nodes.length-1];
+  ok('clicking a loop lays down a running tile',
+     nodes.length === loopCount + 1 && looped.kind === 'tile' &&
+     looped.anim === 'loading' && looped.title === 'Loading');
+  loopTiles[4].click();
+  ok('clicking another loop moves it on the same tile',
+     looped.anim === 'heartbeat' && nodes.length === loopCount + 1);
+  loopTiles[4].click();
+  ok('clicking it again stops the loop', !looped.anim);
+  S.selNodes = [looped.id];
+  animBtns[0].click();
+  ok('the picker and the shape bar drive the same field',
+     looped.anim === 'loading');
+  S.selNodes = []; nodes = nodes.filter(n => n.id !== looped.id); render();
+  const iconFilterLoops = document.getElementById('icon-filter');
+  iconFilterLoops.value = 'spinner';
+  iconFilterLoops.dispatchEvent(new Event('input'));
+  ok('a loop answers the words people actually search',
+     iconSearch('spinner').some(e => e.n === 'Loading') &&
+     Array.from(document.getElementById('icon-grid')
+       .querySelectorAll('.icon-tile.loop span')).map(s => s.textContent)
+       .join().includes('Loading'));
+  iconFilterLoops.value = '';
+  iconFilterLoops.dispatchEvent(new Event('input'));
+  ok('a loop is not a glyph, so icon: cannot grab it',
+     iconByName('loading') === null && iconByName('Loading') === null);
+  ok('ten loops, and every one of them animates',
+     ANIMS.length === 10 && LOOPS.length === 10 &&
+     ANIMS.every(a => {
+       const d = animGlyph(a, '#FFFFFF');
+       return d.length > 40 && d.includes('repeatCount="indefinite"');
+     }));
+
+  /* ---- multi-bend arrows ---- */
+  const bendA = { id:'ba', kind:'box', title:'A', sub:'', color:null, tcolor:null,
+    scolor:null, fs:1, x:100, y:100, w:160, h:90 };
+  const bendB = { id:'bb', kind:'box', title:'B', sub:'', color:null, tcolor:null,
+    scolor:null, fs:1, x:700, y:420, w:160, h:90 };
+  const cornerPath = route(bendA, bendB,
+    [{ x:400, y:150 }, { x:250, y:320 }, { x:600, y:250 }], null);
+  ok('three bends give one orthogonal path through every corner',
+     cornerPath.length >= 8 &&
+     cornerPath.every((p, i) => i === 0 ||
+       Math.abs(p[0] - cornerPath[i-1][0]) < 0.5 ||
+       Math.abs(p[1] - cornerPath[i-1][1]) < 0.5) &&
+     [[400,150],[250,320],[600,250]].every(([x, y]) =>
+       cornerPath.some(p => Math.abs(p[0] - x) < 0.5 && Math.abs(p[1] - y) < 0.5)));
+
+  const bendsDoc = parseDoc(JSON.stringify({ format:'yoruma', version:1, nodes:[bendA, bendB],
+    links:[
+      { id:'kb', from:'ba', to:'bb', bends:[{x:400,y:150},{x:250,y:320}] },
+      { id:'kw', from:'ba', to:'bb', way:{x:320,y:200} },
+      { id:'kj', from:'ba', to:'bb', bends:[{x:1,y:2},{x:'no',y:3},null,
+        {x:3,y:4},{x:5,y:6},{x:7,y:8},{x:9,y:10},{x:11,y:12},{x:13,y:14},{x:15,y:16}] }
+    ] }));
+  ok('a document keeps every bend and reads a legacy way as one',
+     bendsDoc.links[0].bends.length === 2 && !('way' in bendsDoc.links[0]) &&
+     bendsDoc.links[1].bends.length === 1 && bendsDoc.links[1].bends[0].x === 320 &&
+     bendsDoc.links[2].bends.length === MAX_BENDS);
+
+  const keepBendN = nodes, keepBendL = links;
+  nodes = [JSON.parse(JSON.stringify(bendA)), JSON.parse(JSON.stringify(bendB))];
+  links = [{ id:'kd', from:'ba', to:'bb', color:null, motion:null, label:'', bends:[] }];
+  S.selNodes = []; S.selLinks = ['kd']; render();
+  const addH = handles.find(x => x.kind === 'linkadd');
+  ok('a straight run offers a handle to pull a corner out of it', !!addH);
+  if (addH){
+    drag({ x:addH.x, y:addH.y }, { x:addH.x + 36, y:addH.y - 28 });
+    const be = bendsOf(links[0]);
+    ok('dragging a run commits a corner there',
+       be.length === 1 && Math.abs(be[0].x - (addH.x + 36)) < 3 &&
+       Math.abs(be[0].y - (addH.y - 28)) < 3);
+    render();
+    const bendH = handles.find(x => x.kind === 'linkway');
+    ok('a committed corner gets its own handle', !!bendH && bendH.index === 0);
+    if (bendH){
+      drag({ x:bendH.x, y:bendH.y }, { x:bendH.x - 30, y:bendH.y - 22 });
+      ok('dragging a corner moves it',
+         Math.abs(bendsOf(links[0])[0].x - (bendH.x - 30)) < 3);
+      render();
+      const againH = handles.find(x => x.kind === 'linkway');
+      if (againH){
+        send('pointerdown', { x:againH.x, y:againH.y });
+        send('pointerup', { x:againH.x, y:againH.y });
+        send('pointerdown', { x:againH.x, y:againH.y });
+        send('pointerup', { x:againH.x, y:againH.y });
+        ok('clicking a corner twice removes it', bendsOf(links[0]).length === 0);
+      } else ok('clicking a corner twice removes it', false);
+    }
+  }
+  S.selNodes = []; S.selLinks = [];
+  nodes = keepBendN; links = keepBendL; render();
+
+  const bendText = textDoc('card A\ncard B\nA -> B:\n  bend: 300 120\n  bend: 300 260');
+  ok('the text format bends an arrow',
+     bendText.links[0].bends.length === 2 && bendText.links[0].bends[1].y === 260);
+  let bendBad = '';
+  try { parseText('card A\ncard B\nA -> B:\n  bend: 300'); } catch (e){ bendBad = e.message; }
+  ok('a bend that is not two numbers fails loudly', /two numbers/.test(bendBad));
+
+  tileNode.color = '#E03131';
+  tileNode.tint = true;
+  render();
+  ok('an explicit colour wins, and tint softens it',
+     (() => {
+       const r = stage.querySelector(`g.node[data-id="${tileNode.id}"] rect[data-role="tile"]`);
+       const p = stage.querySelector(`g.node[data-id="${tileNode.id}"] ` +
+         '[data-role="logo"] path');
+       return !!r && r.getAttribute('fill') === pastel('#E03131') &&
+         !!p && p.getAttribute('stroke') === '#E03131';
+     })());
+  delete tileNode.tint;
+  delete tileNode.color;
+  nodes.pop(); S.selNodes = []; render();
+
+  const tileDoc = parseDoc(JSON.stringify({ format:'yoruma', version:1, links:[],
+    nodes:[{ id:'tl1', kind:'tile', x:0, y:0, w:96, h:96, tint:true,
+      logo:iconDataUri(iconByName('Warning')) }] }));
+  ok('a tile survives the document round trip',
+     tileDoc.nodes[0].kind === 'tile' && tileDoc.nodes[0].tint === true &&
+     !!tileDoc.nodes[0].logo && !('mono' in tileDoc.nodes[0]));
+  const tileText = textDoc('card A\ntile S3:\n  icon: s3\nA -> S3');
+  ok('the text format draws a tile',
+     tileText.nodes.some(n => n.kind === 'tile' && n.id === 's3') &&
+     parseText('tile S3').shapes[0].kind === 'tile');
+
+  const animDoc = parseDoc(JSON.stringify({ format:'yoruma', version:1, links:[],
+    nodes:[{ id:'an1', kind:'tile', x:0, y:0, w:96, h:96, anim:'loading' },
+      { id:'an2', kind:'tile', x:0, y:0, w:96, h:96, anim:'spinning' }] }));
+  ok('a document keeps a known anim and drops an unknown one',
+     animDoc.nodes[0].anim === 'loading' && !('anim' in animDoc.nodes[1]));
+  ok('the text format animates a tile',
+     textDoc('tile Build:\n  anim: typing').nodes[0].anim === 'typing');
+  let animCard = '';
+  try { parseText('card A:\n  anim: typing'); } catch (e){ animCard = e.message; }
+  ok('anim on a card fails and names the tile', /anim is for tiles/.test(animCard));
+  let animValue = '';
+  try { parseText('tile A:\n  anim: spin'); } catch (e){ animValue = e.message; }
+  ok('an unknown anim lists the ones that exist',
+     /loading, progress, typing, uploading, heartbeat/.test(animValue));
 
   ok('redrawn role glyphs answer vendor service names',
      iconSearch('s3').some(e => e.n === 'Object storage') &&
@@ -1361,6 +1583,23 @@ if (/[?&]test/.test(location.search)){
          /<animateMotion/.test(dotSvg) && /<mpath/.test(dotSvg) &&
          /yoruma-mp0/.test(dotSvg) && !/<animateMotion/.test(plainSvg));
       nodes = keepN; links = keepL; S.motion = keepMotion; render();
+
+      const keepA = nodes, keepB = links;
+      nodes = [{ id:'an1', kind:'tile', title:'Build', sub:'', color:null, tcolor:null,
+        scolor:null, fill:null, fs:1, x:120, y:120, w:96, h:130, anim:'loading' }];
+      links = []; S.selNodes = []; S.selLinks = [];
+      render();
+      const animSvg = await buildSVG();
+      links = [];
+      nodes = [{ id:'an1', kind:'tile', title:'Build', sub:'', color:null, tcolor:null,
+        scolor:null, fill:null, fs:1, x:120, y:120, w:96, h:130 }];
+      render();
+      const stillSvg = await buildSVG();
+      ok('an animated tile keeps its loop in the exported svg',
+         /data-role="anim"/.test(animSvg) &&
+         /repeatCount="indefinite"/.test(animSvg) &&
+         !/data-role="anim"/.test(stillSvg));
+      nodes = keepA; links = keepB; render();
 
       const times = [];
       for (let i = 0; i < 24; i++){

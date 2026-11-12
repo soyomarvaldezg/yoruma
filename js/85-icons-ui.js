@@ -76,22 +76,59 @@ const CONCEPTS = [
     d:outline('<circle cx="13" cy="12" r="6.5"/><path d="M6.5 12h13M13 5.5c1.9 2.6 1.9 10.4 0 13M13 5.5c-1.9 2.6-1.9 10.4 0 13"/><path d="M2 9h3M2 15h3"/>') }
 ];
 
+/* States carry their meaning in colour too: a green success and a red error
+   read before the glyph does. Tile-only, so the rest of the palette is free. */
+const STATES = [
+  { n:'Success', c:'#099268', t:'success,ok,check,checked,passed,done,complete',
+    d:outline('<path d="M5 12.5l4.6 4.6L19 7.4"/>') },
+  { n:'Error', c:'#E03131', t:'error,fail,failed,failure,cross,wrong,exception',
+    d:outline('<path d="M7.5 7.5l9 9M16.5 7.5l-9 9"/>') },
+  { n:'Warning', c:'#E8590C', t:'warning,warn,caution,degraded,at risk',
+    d:outline('<path d="M12 4.3 21.2 19.7H2.8z"/><path d="M12 10v4.6M12 17.3v.01"/>') },
+  { n:'Info', c:'#1C7ED6', t:'info,information,note,detail',
+    d:outline('<circle cx="12" cy="12" r="8.6"/><path d="M12 11v5.2M12 7.8v.01"/>') },
+  { n:'Question', c:'#7950F2', t:'question,unknown,unsure,maybe,help',
+    d:outline('<circle cx="12" cy="12" r="8.6"/><path d="M9.6 9.6a2.5 2.5 0 1 1 3.4 2.3c-.8.4-1 .9-1 1.9M12 16.6v.01"/>') },
+  { n:'Blocked', c:'#862E2E', t:'blocked,denied,forbidden,no,stop,rejected',
+    d:outline('<circle cx="12" cy="12" r="8.6"/><path d="M6.1 6.1l11.8 11.8"/>') },
+  { n:'Retry', c:'#0C8599', t:'retry,refresh,reload,rerun,again,replay',
+    d:outline('<path d="M4.4 12a7.6 7.6 0 1 0 2.3-5.4"/><path d="M4.2 4.4v4.2h4.2"/>') },
+  { n:'Bug', c:'#846358', t:'bug,defect,issue,incident',
+    d:outline('<rect x="7.5" y="8.5" width="9" height="10" rx="4.5"/>' +
+      '<path d="M9 8.5 7.5 6M15 8.5 16.5 6M7.5 12H4.5M19.5 12h-3M8 15.5H5.5M18.5 15.5H16M9.5 5.5h5"/>') },
+  { n:'Alert', c:'#A61E4D', t:'alert,bell,notify,notification,pager,oncall,alarm',
+    d:outline('<path d="M18 16.5V11a6 6 0 0 0-12 0v5.5l-1.5 2h15z"/><path d="M10 20.5a2.2 2.2 0 0 0 4 0"/>') }
+];
+
+/* The loops belong in the same box as the glyphs: a spinner is something you
+   reach for by looking for it, not by remembering the word "anim". */
+const LOOPS = ANIMS.map(a => ({
+  n: a.charAt(0).toUpperCase() + a.slice(1),
+  t: LOOP_TAGS[a], anim: a, loop: true,
+  d: outline(LOOP_D[a])
+}));
+
 const PACK_KEY = 'yoruma.icons.v1';
+/* A state tile ignited by its glyph, so the same outcome keeps its colour
+   whichever way it arrives: the picker, a text file or a pasted document. */
+const STATE_HUES = new Map(STATES.map(s => [svgUri(iconSvgText(s)), s.c]));
 const PACK_MAX_CHARS = 1.4e6;
 const PACK_MAX_ICONS = 400;
 let IMPORTED = [];
-let LOCAL_ICONS = ICON_PACK.concat(CONCEPTS);
+let LOCAL_ICONS = STATES.concat(LOOPS, ICON_PACK, CONCEPTS);
 let ICON_TAGS = new Map();
 function rebuildIconIndex(){
-  LOCAL_ICONS = ICON_PACK.concat(CONCEPTS, IMPORTED);
+  LOCAL_ICONS = STATES.concat(LOOPS, ICON_PACK, CONCEPTS, IMPORTED);
+  /* Keyed by the entry, not by its name: a loop and a state can share a name
+     (Retry, Retry) and each keeps its own words. */
   ICON_TAGS = new Map();
   LOCAL_ICONS.forEach(e => {
-    ICON_TAGS.set(e.n, e.t.split(',').map(t => icNorm(t)));
+    ICON_TAGS.set(e, e.t.split(',').map(t => icNorm(t)));
   });
 }
 const VENDOR_WORDS = new Set(['aws','azure','gcp','google','oracle','microsoft','amazon',
   'managed','service','services','platform','the']);
-function iconTagsOf(e){ return ICON_TAGS.get(e.n) || []; }
+function iconTagsOf(e){ return ICON_TAGS.get(e) || []; }
 function iconWordMatch(e, word){
   return icNorm(e.n).includes(word) || iconTagsOf(e).some(tag => tag.includes(word));
 }
@@ -109,8 +146,9 @@ function iconSearch(query){
 function iconByName(name){
   const q = icNorm(name);
   if (!q) return null;
-  return LOCAL_ICONS.find(e => icNorm(e.n) === q) ||
-    LOCAL_ICONS.find(e => (ICON_TAGS.get(e.n) || []).includes(q)) || null;
+  const hit = n => !n.loop;
+  return LOCAL_ICONS.find(e => hit(e) && icNorm(e.n) === q) ||
+    LOCAL_ICONS.find(e => hit(e) && (ICON_TAGS.get(e) || []).includes(q)) || null;
 }
 
 function safeSvgMarkup(text){
@@ -171,12 +209,38 @@ function newLogoNode(){
   selectNodes([n.id], false);
   return n;
 }
+function newTileNode(){
+  const c = centrePoint();
+  const n = { id:'n'+(uid++), kind:'tile', title:'', sub:'', color:null,
+    tcolor:null, scolor:null, fs:1, x:0, y:0, w:SIZE.tile[0], h:SIZE.tile[1] };
+  n.x = Math.round(c.x - n.w/2);
+  n.y = Math.round(c.y - n.h/2);
+  nodes.push(n);
+  selectNodes([n.id], false);
+  return n;
+}
+const isStateIcon = e => STATES.includes(e);
+/* A loop is a property of the tile, so clicking one either starts a loop on the
+   tile you have selected or lays down a fresh tile that is already running. */
+function placeLoop(e){
+  snapshot();
+  const sel = byId(S.selNodes[0]);
+  const fresh = !(sel && sel.kind === 'tile');
+  const target = fresh ? newTileNode() : sel;
+  if (fresh) target.title = e.n;
+  if (target.anim === e.anim) delete target.anim;
+  else target.anim = e.anim;
+  render();
+  toast(target.anim ? e.anim + ' loop on ' + (target.title || 'tile')
+                    : e.anim + ' loop stopped');
+}
 function placeIcon(e){
+  if (e.loop) return placeLoop(e);
   snapshot();
   const card = cardTarget();
   const uri = iconDataUri(e);
   const mono = iconTinted(e);
-  const target = card || newLogoNode();
+  const target = card || (isStateIcon(e) ? newTileNode() : newLogoNode());
   target.logo = uri;
   if (mono) target.mono = true;
   else delete target.mono;
@@ -333,6 +397,11 @@ function iconTile(e){
     const sp = document.createElement('span');
     sp.textContent = e.n;
     b.appendChild(sp);
+  } else if (e.loop){
+    b.className = 'icon-tile loop';
+    b.title = e.n + ' (tile loop)';
+    b.setAttribute('aria-label', 'start the ' + e.n + ' loop on a tile');
+    b.innerHTML = `<svg viewBox="0 0 24 24" aria-hidden="true">${e.d}</svg><span>${e.n}</span>`;
   } else {
     b.innerHTML = `<svg viewBox="0 0 24 24" aria-hidden="true">${e.d}</svg><span>${e.n}</span>`;
   }
@@ -390,12 +459,33 @@ function brandFetchTile(query){
   b.addEventListener('click', () => fetchLogoByName(query, cardTarget(), query));
   return b;
 }
+const ICON_SECTIONS = () => [
+  ['Plumbing', CONCEPTS],
+  ['Status', STATES],
+  ['Loops', LOOPS],
+  ['Pack', ICON_PACK],
+  ['Imported', IMPORTED]
+];
+function iconSection(label){
+  const h = document.createElement('div');
+  h.className = 'icon-section';
+  h.textContent = label;
+  return h;
+}
 function paintIconGrid(){
   const raw = iconFilter.value.trim();
   const q = icNorm(raw);
   iconGridEl.innerHTML = '';
-  const local = iconSearch(raw);
-  local.forEach(e => iconGridEl.appendChild(iconTile(e)));
+  const local = q ? iconSearch(raw) : [];
+  if (!q){
+    ICON_SECTIONS().forEach(([label, list]) => {
+      if (!list.length) return;
+      iconGridEl.appendChild(iconSection(label));
+      list.forEach(e => iconGridEl.appendChild(iconTile(e)));
+    });
+  } else {
+    local.forEach(e => iconGridEl.appendChild(iconTile(e)));
+  }
 
   const brands = [];
   const shown = new Set();

@@ -100,11 +100,13 @@
     color:var(--ink); font-family:'VD Sans',sans-serif; font-size:8.5px; line-height:1.1;
     text-align:center}
   .icon-tile{position:relative}
-  .icon-tile.brand::after, .icon-tile.pack::after{position:absolute; top:2px; right:4px;
+  .icon-tile.brand::after, .icon-tile.pack::after, .icon-tile.loop::after{
+    position:absolute; top:2px; right:4px;
     font-family:'VD Code',monospace; font-size:6.5px; letter-spacing:.08em;
     text-transform:uppercase; color:var(--muted)}
   .icon-tile.brand::after{content:'logo'}
   .icon-tile.pack::after{content:'pack'}
+  .icon-tile.loop::after{content:'loop'}
   .icon-tile svg{width:24px; height:24px; fill:currentColor}
   .icon-tile img{width:24px; height:24px; object-fit:contain}
   .icon-tile span{max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
@@ -112,6 +114,10 @@
   .icon-tile:hover{border-color:var(--accent); background:#fff}
   .icon-note{grid-column:1/-1; font-family:'VD Code',monospace; font-size:10px;
     color:var(--muted); padding:2px 0}
+  .icon-section{grid-column:1/-1; font-family:'VD Code',monospace; font-size:9px;
+    letter-spacing:.14em; text-transform:uppercase; color:var(--muted);
+    padding:7px 2px 1px; border-bottom:1px solid var(--line)}
+  .icon-section:first-child{padding-top:1px}
 
   body.present header, body.present aside, body.present .status{display:none}
   body.present #shaper, body.present #linkbar, body.present #stylebar,
@@ -229,7 +235,8 @@
   body.present #lint-chip{display:none}
 
   #shaper{position:fixed; display:none; z-index:8; background:var(--ink);
-    padding:3px; border-radius:4px; gap:2px}
+    padding:3px; border-radius:4px; gap:2px;
+    flex-wrap:wrap; max-width:min(600px, calc(100vw - 24px))}
   #shaper button{width:30px; height:28px; padding:0; border:0; display:grid;
     place-items:center; color:var(--on-dark)}
   #shaper button.on{background:var(--on-dark); color:var(--ink)}

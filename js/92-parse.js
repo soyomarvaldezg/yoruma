@@ -49,6 +49,7 @@ function parseNode(raw){
   if (logo) n.logo = logo;
   if (n.logo && raw.mono === true) n.mono = true;
   if (['solid','dashed','dotted'].includes(raw.stroke)) n.stroke = raw.stroke;
+  if (ANIMS.includes(raw.anim)) n.anim = raw.anim;
   if (raw.fillmode === 'solid') n.fillmode = 'solid';
   if (isNum(raw.sw) && raw.sw > 0 && raw.sw <= 8) n.sw = raw.sw;
   if (isNum(raw.step) && raw.step > 0 && raw.step < 1e6) n.step = Math.round(raw.step);
@@ -59,6 +60,16 @@ function parseNode(raw){
   return n;
 }
 
+const isBend = p => p && isNum(p.x) && isNum(p.y) &&
+  Math.abs(p.x) <= 1e7 && Math.abs(p.y) <= 1e7;
+/* Bends are a list now. A version 1 file that carried the old single `way`
+   keeps working: it reads as a list of one. */
+function parseBends(raw){
+  const list = Array.isArray(raw.bends) ? raw.bends : (isBend(raw.way) ? [raw.way] : []);
+  return list.filter(isBend).slice(0, MAX_BENDS)
+    .map(b => ({ x: b.x, y: b.y }));
+}
+
 function parseLink(raw, ids){
   if (!raw || typeof raw !== 'object') throw new Error('arrow is not an object');
   const id = idOf(raw.id);
@@ -66,10 +77,8 @@ function parseLink(raw, ids){
   const from = idOf(raw.from), to = idOf(raw.to);
   if (!from || !to || !ids.has(from) || !ids.has(to))
     throw new Error('arrow ' + id + ' points to a missing shape');
-  const way = raw.way && isNum(raw.way.x) && isNum(raw.way.y) &&
-              Math.abs(raw.way.x) <= 1e7 && Math.abs(raw.way.y) <= 1e7
-    ? { x: raw.way.x, y: raw.way.y } : null;
-  return {
+  const bends = parseBends(raw);
+  const out = {
     ...raw,
     id, from, to,
     label: raw.label == null ? '' : String(raw.label),
@@ -80,12 +89,15 @@ function parseLink(raw, ids){
     lw: isNum(raw.lw) && raw.lw > 0 && raw.lw <= 8 ? raw.lw : undefined,
     fs: isNum(raw.fs) && raw.fs > 0 ? Math.min(4, Math.max(0.4, raw.fs)) : 1,
     dash: raw.dash === true,
-    way,
+    bends,
     fromSide: DOC_SIDES.has(raw.fromSide) ? raw.fromSide : null,
     toSide: DOC_SIDES.has(raw.toSide) ? raw.toSide : null,
     fromT: isNum(raw.fromT) ? Math.max(0, Math.min(1, raw.fromT)) : null,
     toT: isNum(raw.toT) ? Math.max(0, Math.min(1, raw.toT)) : null
   };
+  /* `way` was the single-bend spelling; the list is the only shape now. */
+  delete out.way;
+  return out;
 }
 
 const DOC_MAX_CHARS = 8e6;
@@ -307,7 +319,7 @@ async function buildSVG(opts){
     if (!a || !b) return;
     const g = clone.querySelector(`g[data-link="${l.id}"]`);
     if (!g) return;
-    const d = rounded(route(a, b, l.way, l), 7);
+    const d = rounded(route(a, b, bendsOf(l), l), 7);
     const ghost = mk('path', { id:'yoruma-mp' + i, d, fill:'none', stroke:'none' });
     g.appendChild(ghost);
     const len = ghost.getTotalLength() || 1;

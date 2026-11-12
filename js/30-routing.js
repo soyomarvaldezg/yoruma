@@ -23,15 +23,29 @@ function hCross(y, x1, x2, a, b){
   return obst().some(n => n !== a && n !== b &&
     y > n.y-5 && y < n.y+n.h+5 && hi > n.x-5 && lo < n.x+n.w+5);
 }
-function route(a, b, way, l){
-  const { dir, p1, p2 } = anchors(a, b, l);
+const MAX_BENDS = 8;
+/* One list of corners per arrow. Version 1 documents wrote a single `way`,
+   so a legacy bend is read as a list of one. */
+const bendsOf = l => l && Array.isArray(l.bends) ? l.bends : [];
+const dedupePoints = pts => pts.filter((p, i) => i === 0 ||
+  Math.abs(p[0] - pts[i-1][0]) > 0.5 || Math.abs(p[1] - pts[i-1][1]) > 0.5);
 
-  if (way){
-    const pts = dir === 'h'
-      ? [[p1.x,p1.y],[way.x,p1.y],[way.x,way.y],[p2.x,way.y],[p2.x,p2.y]]
-      : [[p1.x,p1.y],[p1.x,way.y],[way.x,way.y],[way.x,p2.y],[p2.x,p2.y]];
-    return pts.filter((p, i) => i === 0 ||
-      Math.abs(p[0] - pts[i-1][0]) > 0.5 || Math.abs(p[1] - pts[i-1][1]) > 0.5);
+function route(a, b, bends, l){
+  const { dir, p1, p2 } = anchors(a, b, l);
+  const list = Array.isArray(bends) ? bends : [];
+
+  if (list.length){
+    /* Every leg turns the same way first, which is what made one bend read as
+       one elbow. Holding that rule across corners keeps a long detour coherent. */
+    const pts = [[p1.x, p1.y]];
+    let cur = { x:p1.x, y:p1.y };
+    list.forEach(bend => {
+      pts.push(dir === 'h' ? [bend.x, cur.y] : [cur.x, bend.y]);
+      pts.push([bend.x, bend.y]);
+      cur = bend;
+    });
+    pts.push(dir === 'h' ? [p2.x, cur.y] : [cur.x, p2.y], [p2.x, p2.y]);
+    return dedupePoints(pts);
   }
 
   if (l && (l.fromSide || l.toSide)){

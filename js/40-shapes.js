@@ -2,7 +2,7 @@
 const CLOUD_D = 'M20 45 C7 45 0 37 0 27 C0 18 7 10 16 9 C20 2 28 -2 36 -2 '
               + 'C46 -2 54 5 56 14 C64 15 70 21 70 29 C70 38 63 45 54 45 Z';
 const GLYPHS = ['people','api','dashboard','cube','shield','agent','contract','video','media'];
-const LOGO_KINDS = new Set(['box','ellipse']);
+const LOGO_KINDS = new Set(['box','ellipse','tile']);
 
 
 function shape(n){
@@ -152,6 +152,9 @@ function shape(n){
           'pointer-events':'none', class:'ui' }));
       }
       break;
+    case 'tile':
+      drawTile(g, n, stroke);
+      break;
     case 'logo':
       if (n.logo){
         const captioned = !!(n.title || n.sub);
@@ -178,6 +181,122 @@ function shape(n){
     default: rect();
   }
   return g;
+}
+
+/* A tile carries a white glyph, so it can only wear accents dark enough to
+   read on. Lightness is perceptual, which is why pale pink is out and a mid
+   slate is in. */
+const TILE_HUES = ACCENTS.filter(c => hexToOklch(c).L < 0.72);
+
+/* A tile keeps one hue per icon: an explicit colour wins, a state wears its
+   semantic hue, and everything else hashes to a stable accent so the same
+   glyph always looks the same. */
+function tileHue(n){
+  const own = colorAt(n.color);
+  if (own) return own;
+  const state = n.logo ? STATE_HUES.get(n.logo) : null;
+  if (state) return state;
+  return TILE_HUES[hash(n.logo || n.id || 'tile') % TILE_HUES.length];
+}
+
+/* Loops that say "still working". SMIL, not a JS tick: the clone that becomes
+   the exported SVG carries the animation with no extra export code. */
+function tileAnim(n){
+  return n.anim && ANIMS.includes(n.anim) ? n.anim : null;
+}
+function animGlyph(mode, ink){
+  if (mode === 'loading')
+    return '<g><circle cx="12" cy="12" r="7" fill="none" stroke-dasharray="12 32"/>' +
+      '<animateTransform attributeName="transform" type="rotate" ' +
+      'values="0 12 12;360 12 12" dur="1.1s" repeatCount="indefinite"/></g>';
+  if (mode === 'progress')
+    return '<rect x="3.5" y="9.8" width="17" height="4.4" rx="2.2" fill="none" ' +
+      'opacity="0.4"/>' +
+      `<rect x="5" y="11.2" width="0" height="1.6" rx="0.8" fill="${ink}" ` +
+      'stroke="none"><animate attributeName="width" values="0;14;14" ' +
+      'keyTimes="0;0.72;1" dur="1.9s" repeatCount="indefinite"/></rect>';
+  if (mode === 'typing'){
+    const dot = (cx, begin) => `<circle cx="${cx}" cy="12" r="1.7" fill="${ink}" ` +
+      `stroke="none" opacity="0.25"><animate attributeName="opacity" ` +
+      `values="0.25;1;0.25" dur="1.2s" begin="${begin}" ` +
+      'repeatCount="indefinite"/></circle>';
+    return dot(6, '0s') + dot(12, '0.2s') + dot(18, '0.4s');
+  }
+  if (mode === 'uploading')
+    return '<g><path d="M12 16.5V7.5M8.5 11 12 7.5 15.5 11"/>' +
+      '<animateTransform attributeName="transform" type="translate" ' +
+      'values="0 2.2;0 -2.2;0 2.2" dur="1.5s" repeatCount="indefinite"/></g>' +
+      '<path d="M5.5 19.5h13" opacity="0.55"/>';
+  if (mode === 'heartbeat')
+    return '<path d="M3 12h3.6l2-5.4 3.2 10.8 2-5.4H21" stroke-dasharray="34 34">' +
+      '<animate attributeName="stroke-dashoffset" values="34;0;-34" ' +
+      'dur="1.6s" repeatCount="indefinite"/></path>';
+  if (mode === 'stream'){
+    const chev = (x, begin) => '<path d="M' + x + ' 7l4.5 5L' + x + ' 17" opacity="0.3">' +
+      '<animate attributeName="opacity" values="0.3;1;0.3" dur="1.3s" begin="' + begin +
+      '" repeatCount="indefinite"/></path>';
+    return chev(4, '0s') + chev(10.5, '0.22s') + chev(17, '0.44s');
+  }
+  if (mode === 'sync')
+    return '<g><path d="M20 12a8 8 0 0 1-13.7 5.6"/><path d="M4 12a8 8 0 0 1 13.7-5.6"/>' +
+      '<path d="M6 14.6v3.2h3.2M18 9.4V6.2h-3.2"/>' +
+      '<animateTransform attributeName="transform" type="rotate" ' +
+      'values="0 12 12;360 12 12" dur="2.6s" repeatCount="indefinite"/></g>';
+  if (mode === 'waiting')
+    return '<circle cx="12" cy="12" r="7.5"/>' +
+      '<path d="M12 4.5v1.4M19.5 12h-1.4M12 19.5v-1.4M4.5 12h1.4"/>' +
+      '<g><path d="M12 12V8M12 12h2.8"/>' +
+      '<animateTransform attributeName="transform" type="rotate" ' +
+      'values="0 12 12;360 12 12" dur="8s" repeatCount="indefinite"/></g>';
+  if (mode === 'retry')
+    return '<g><path d="M19.5 12a7.5 7.5 0 1 1-2.2-5.3"/><path d="M19.7 3.6v4.4h-4.4"/>' +
+      '<animateTransform attributeName="transform" type="rotate" ' +
+      'values="0 12 12;360 12 12" dur="2s" repeatCount="indefinite"/></g>';
+  if (mode === 'poll')
+    return '<circle cx="12" cy="12" r="7.5" opacity="0.4"/>' +
+      '<g><path d="M12 12l6-3.4"/>' +
+      '<animateTransform attributeName="transform" type="rotate" ' +
+      'values="0 12 12;360 12 12" dur="3s" repeatCount="indefinite"/></g>' +
+      '<circle cx="12" cy="12" r="1.1" fill="' + ink + '" stroke="none"/>';
+  return '';
+}
+
+/* The tile is the host: a filled square, then a glyph, a logo or a loop. */
+function drawTile(g, n, stroke){
+  const { x, y, w, h } = n;
+  const captioned = !!(n.title || n.sub);
+  const gh = captioned ? Math.max(24, h * 0.62) : h;
+  const side = Math.min(w, gh);
+  const tx = x + (w - side)/2, ty = y + (gh - side)/2;
+  const hue = tileHue(n);
+  const tr = n.sharp ? 0 : side * 0.22;
+  const anim = tileAnim(n);
+  const ink = n.tint ? (accentOf(n) || INK) : '#FFFFFF';
+  if (!anim && !n.logo){
+    g.appendChild(mk('rect', { x:tx, y:ty, width:side, height:side, rx:tr,
+      fill:'none', stroke, 'stroke-width':1.2, 'stroke-dasharray':'4 3',
+      'data-role':'tile' }));
+    return;
+  }
+  g.appendChild(mk('rect', { x:tx, y:ty, width:side, height:side, rx:tr,
+    fill: n.tint ? pastel(hue) : hue, stroke:'none', 'data-role':'tile' }));
+  const pad = side * 0.22;
+  const box = (inner, role) => {
+    const g2 = mk('g', {
+      transform:`translate(${(tx + pad).toFixed(1)},${(ty + pad).toFixed(1)}) ` +
+                `scale(${((side - 2*pad)/24).toFixed(3)})`,
+      fill:'none', stroke:ink, 'stroke-width':1.9,
+      'stroke-linecap':'round', 'stroke-linejoin':'round', 'data-role':role
+    });
+    g2.innerHTML = inner;
+    g.appendChild(g2);
+  };
+  if (anim){ box(animGlyph(anim, ink), 'anim'); return; }
+  const inner = n.mono ? monoInner(n.logo, ink) : null;
+  if (inner) box(inner, 'logo');
+  else g.appendChild(mk('image', { x:tx + pad, y:ty + pad,
+    width:side - 2*pad, height:side - 2*pad, href:n.logo,
+    preserveAspectRatio:'xMidYMid meet', 'data-role':'logo' }));
 }
 
 function wrapLines(text, maxW, size, mono, maxLines){
@@ -236,14 +355,16 @@ function drawText(g, n){
   const cx = n.x + n.w/2, cy = n.y + n.h/2;
 
   if (n.kind === 'line' || n.kind === 'arrow' || n.kind === 'image' || n.kind === 'frame') return;
-  if (n.kind === 'logo'){
+  if (n.kind === 'logo' || n.kind === 'tile'){
     if (!title && !sub) return;
-    const tl = wrapLines(title, n.w - 6, 16*k, true, 2);
+    const tile = n.kind === 'tile';
+    const tw = (tile ? 15 : 16)*k;
+    const tl = wrapLines(title, n.w - (tile ? 4 : 6), tw, true, 2);
     const sl = sub ? wrapLines(sub, n.w - 6, 14*k, false, 1) : [];
     const lh = 19*k, lh2 = 16*k;
     const subY = n.y + n.h - 5*k;
     const titleBottom = sl.length ? subY - lh2 : n.y + n.h - 6*k;
-    addLines(g, cx, titleBottom - (tl.length - 1)*lh, 'middle', ink, CODE, 16*k, W1,
+    addLines(g, cx, titleBottom - (tl.length - 1)*lh, 'middle', ink, CODE, tw, W1,
       '.02em', tl, lh, ST, 'title');
     if (sl.length)
       addLines(g, cx, subY, 'middle', subInk, SANS, 14*k, W2, '0', sl, lh2, ST, 'sub');

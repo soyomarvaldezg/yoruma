@@ -50,8 +50,17 @@ The style bar appears when you select a shape. It stays top-right.
 - **Cards** are boxes with a title and an optional subtitle.
   A card takes its own stroke colour and its own fill.
   It can carry an icon or a brand logo.
+- **Icon tiles** are filled squares in one hue with a white glyph and no outline.
+  The hue is the explicit colour, or a stable colour the icon hashes to.
+  `tint: true` washes the tile pale and paints the glyph in the outline colour.
+  A tile can loop instead of showing a glyph: loading, progress, typing,
+  uploading or heartbeat. Select a tile and press a loop in the style bar;
+  press it again to stop.
+  Select a card and pick the tile in the style bar to morph it.
 - **Arrows** attach anywhere on a border. They enter the border at a right angle.
-  Bend an arrow, style it, animate it, or give it a note.
+  Bend an arrow by dragging the small circle on any straight run — it pulls out
+  a corner. Drag a filled dot to move a corner; click a corner twice to remove
+  it. Style it, animate it, or give it a note.
 - **Pages** hold separate diagrams in one document.
   The page strip sits at the top-left of the canvas.
   Click a page to open it. Double-click to rename it. Click `×` to delete it.
@@ -82,9 +91,19 @@ for the next shape you draw.
 
 ## Icons
 
-The **Icons** box searches 144 monochrome glyphs. Click one to place it.
+The **Icons** box searches 158 monochrome glyphs. Click one to place it.
 The glyph takes the outline colour of the card that carries it.
 
+With an empty filter the box groups itself: **PLUMBING**, **STATUS**, **LOOPS**,
+**PACK**, then anything you imported.
+
+- 10 loops make a tile run instead of carry a glyph: loading, progress, typing,
+  uploading, heartbeat, stream, sync, waiting, retry, poll.
+  Click one and it lands as a running tile; click one while a tile is selected
+  and it drives that tile. Press the same loop again to stop it.
+- 9 glyphs name an outcome, not a vendor: success, error, warning, info,
+  question, blocked, retry, bug, alert. A state placed with nothing selected
+  lands as its own tile.
 - 112 glyphs come from simple-icons, which is CC0.
 - 32 glyphs are drawn for yoruma. They name a role, not a vendor:
   object storage, data lake, warehouse, managed database, NoSQL store,
@@ -254,23 +273,34 @@ A shape takes these props:
 | `sharp` | `true` for square corners |
 | `fillmode` | `soft` or `solid` |
 | `tint` `band` `solid` `dash` | `true` or `false` |
+| `anim` | Tiles only: `loading`, `progress`, `typing`, `uploading`, `heartbeat` |
 | `color` `fill` | `#RRGGBB` |
 | `align` | `left`, `center` or `right` |
 | `x` `y` `w` `h` | A fixed position or size. Avoid it unless you need it |
 
 A zone takes `dir`, `color`, `fill`, `band`, `solid` and `dash`.
 A `fill` tints the whole zone as one wash.
+`dir` is the flow axis, not the row axis: children that point at each other
+read left to right with `dir: right`. Children with no arrows between them
+line up in a row with `dir: down`.
 
-An arrow takes three props, indented under the arrow line:
+`tile Name` draws an icon tile. It takes an `icon:` like any other shape.
+A `color:` wins; otherwise the icon keeps a hue of its own, and a state glyph
+keeps the hue its meaning asks for.
+
+An arrow takes these props, indented under the arrow line:
 
 ```yaml
 API -> Postgres:
   color: "#4263EB"
   dash: true
   motion: dashes
+  bend: 480 340
 ```
 
 `motion` takes `off`, `dots`, `dashes`, `both` or `live`.
+A `bend` line adds one corner; repeat the line for more, in the order they
+appear along the arrow.
 `A -> B` draws an arrow. `A -- B` draws a line. `A <-> B` draws both arrowheads.
 Chain arrows with `->`. Only the last arrow in a chain takes a note.
 
@@ -308,6 +338,7 @@ Live sends a travelling comet down each arrow.
 
 **Only the SVG keeps motion.** Dashes become a CSS keyframe.
 Live becomes a SMIL animation. Dots become a circle that walks the arrow path.
+Tile loops are SMIL inside the tile, so they travel with the clone.
 A shared `.svg` therefore animates in any browser.
 PNG and WebP are stills. GitHub and PDF viewers show the SVG without motion.
 

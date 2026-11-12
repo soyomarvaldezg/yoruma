@@ -88,7 +88,7 @@ function render(){
   links.forEach(l => {
     const a = byId(l.from), b = byId(l.to);
     if (!a || !b) return;
-    const pts = route(a, b, l.way, l);
+    const pts = route(a, b, bendsOf(l), l);
     const d = rounded(pts, 7);
     const col = colorAt(l.color) || LINE;
     const selected = isSelLink(l.id);
@@ -289,10 +289,22 @@ function render(){
             stroke:FIBER, 'stroke-width':1.5/view.k, 'pointer-events':'none', class:'ui' }));
           handles.push({ kind:'linkend', id:l.id, end, x:p.x, y:p.y, r:hs * 1.7 });
         });
-        const wp = midPoint(route(a, b, l.way, l));
-        viewport.appendChild(mk('circle', { cx:wp.x, cy:wp.y, r:hs*0.72, fill:FIBER,
-          stroke:'#fff', 'stroke-width':1.6/view.k, 'pointer-events':'none', class:'ui' }));
-        handles.push({ kind:'linkway', id:l.id, x:wp.x, y:wp.y, r:hs });
+        const pts = route(a, b, bendsOf(l), l);
+        /* A circle sits on each straight run: dragging it commits a corner
+           there. Filled dots are the corners already committed. */
+        for (let i = 1; i < pts.length; i++){
+          const [x0, y0] = pts[i-1], [x1, y1] = pts[i];
+          if (Math.hypot(x1 - x0, y1 - y0) < 30) continue;
+          const sx = (x0 + x1)/2, sy = (y0 + y1)/2;
+          viewport.appendChild(mk('circle', { cx:sx, cy:sy, r:hs*0.44, fill:'#fff',
+            stroke:FIBER, 'stroke-width':1.3/view.k, 'pointer-events':'none', class:'ui' }));
+          handles.push({ kind:'linkadd', id:l.id, seg:i, x:sx, y:sy, r:hs*0.9 });
+        }
+        bendsOf(l).forEach((bd, index) => {
+          viewport.appendChild(mk('circle', { cx:bd.x, cy:bd.y, r:hs*0.7, fill:FIBER,
+            stroke:'#fff', 'stroke-width':1.6/view.k, 'pointer-events':'none', class:'ui' }));
+          handles.push({ kind:'linkway', id:l.id, index, x:bd.x, y:bd.y, r:hs });
+        });
       }
     }
   }

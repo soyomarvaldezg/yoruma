@@ -270,7 +270,7 @@ function pasteData(data, dx, dy){
     const l = JSON.parse(JSON.stringify(src));
     l.id = 'k' + (uid++);
     l.from = from; l.to = to;
-    if (l.way) l.way = { x: l.way.x + dx, y: l.way.y + dy };
+    if (l.bends) l.bends = l.bends.map(b => ({ x: b.x + dx, y: b.y + dy }));
     links.push(l);
   });
   selectNodes(added.map(n => n.id), false);

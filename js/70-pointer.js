@@ -105,7 +105,24 @@ stage.addEventListener('pointerdown', ev => {
       return;
     }
     if (h.kind === 'linkway'){
-      bend = { l: links.find(x => x.id === h.id), moved:false };
+      /* A bend is removed with a second click on its own handle. */
+      const key = 'bend:' + h.id + ':' + h.index;
+      const now = Date.now();
+      const l = links.find(x => x.id === h.id);
+      if (lastHit.id === key && now - lastHit.t < 340){
+        lastHit = { id:null, t:0 };
+        if (l && bendsOf(l).length){
+          snapshot();
+          l.bends = bendsOf(l).filter((_, i) => i !== h.index);
+          render();
+        }
+        cap(ev);
+        return;
+      }
+      lastHit = { id:key, t:now };
+      bend = { l, index:h.index, moved:false };
+    } else if (h.kind === 'linkadd'){
+      bend = { l: links.find(x => x.id === h.id), insertAt:h.seg, moved:false };
     } else if (h.kind === 'resize'){
       const n = byId(h.id);
       resize = { n, corner:h.corner, ox:n.x, oy:n.y, ow:n.w, oh:n.h, moved:false };
@@ -153,7 +170,7 @@ stage.addEventListener('pointerdown', ev => {
       lastHit = { id:lid, t:now };
       if (isSelLink(lid)){
         const l = links.find(x => x.id === lid);
-        if (l){ bend = { l, moved:false }; cap(ev); return; }
+        if (l){ bend = { l, insertAt:1, moved:false }; cap(ev); return; }
       }
       selectLink(lid); render(); return;
     }
@@ -236,7 +253,18 @@ stage.addEventListener('pointermove', ev => {
   }
   if (bend){
     if (!bend.moved){ snapshot(); bend.moved = true; }
-    bend.l.way = { x:Math.round(p.x), y:Math.round(p.y) };
+    const list = bendsOf(bend.l).slice();
+    if (bend.insertAt != null){
+      /* The handle sits on a segment; the first move commits it as a corner
+         there, so a stray click on the line never leaves a bend behind. */
+      if (list.length >= MAX_BENDS){ toast('that arrow has ' + MAX_BENDS + ' bends already'); bend = null; return; }
+      bend.index = Math.min(list.length, Math.max(0, Math.floor((bend.insertAt - 1) / 2)));
+      list.splice(bend.index, 0, { x:Math.round(p.x), y:Math.round(p.y) });
+      delete bend.insertAt;
+    } else if (list[bend.index]){
+      list[bend.index] = { x:Math.round(p.x), y:Math.round(p.y) };
+    }
+    bend.l.bends = list;
     renderSoon();
     return;
   }
@@ -324,7 +352,7 @@ stage.addEventListener('pointerup', ev => {
       } else {
         lend.l.to = target.id; lend.l.toSide = anc.side; lend.l.toT = anc.t;
       }
-      lend.l.way = null;
+      lend.l.bends = [];
     }
     lend = null; clearPreview(); render();
     return;
@@ -443,7 +471,7 @@ function commit(job, end){
     if (dup){ selectLink(dup.id); render(); return; }
     snapshot();
     links.push({ id:'k'+(uid++), from:from.id, to:to.id, color:null, motion:null,
-      label:'', way:null, head:true,
+      label:'', head:true,
       fromSide: job.side || na1.side,
       fromT: job.side ? (job.sideT == null ? 0.5 : job.sideT) : na1.t,
       toSide: na2.side,

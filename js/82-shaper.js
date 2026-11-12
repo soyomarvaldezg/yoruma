@@ -19,6 +19,24 @@ MORPHS.forEach(kind => {
   });
   shaper.appendChild(b);
 });
+ANIMS.forEach(a => {
+  const b = document.createElement('button');
+  b.innerHTML = `<svg viewBox="0 0 24 24">${LOOP_D[a]}</svg>`;
+  b.title = a.charAt(0).toUpperCase() + a.slice(1) + ' (press again to stop)';
+  b.setAttribute('aria-label', 'animate the tile: ' + a);
+  b.setAttribute('aria-pressed', 'false');
+  b.dataset.anim = a;
+  b.addEventListener('mousedown', ev => ev.preventDefault());
+  b.addEventListener('click', () => {
+    const n = byId(S.selNodes[0]);
+    if (!n || n.kind !== 'tile') return;
+    snapshot();
+    if (n.anim === a) delete n.anim;
+    else n.anim = a;
+    render();
+  });
+  shaper.appendChild(b);
+});
 const ALIGN_ICON = {
   left:'<path d="M4 6h16M4 12h9M4 18h13"/>',
   center:'<path d="M4 6h16M7.5 12h9M5.5 18h13"/>',
@@ -204,7 +222,11 @@ function placeShaper(){
   shaper.style.top = (above < 8 ? s.y + n.h*view.k + 46 : above) + 'px';
   shaper.querySelectorAll('button').forEach(b => {
     let on = false;
-    if (b.dataset.zone){
+    if (b.dataset.anim){
+      b.style.display = n.kind === 'tile' ? '' : 'none';
+      on = n.anim === b.dataset.anim;
+    }
+    else if (b.dataset.zone){
       b.style.display = n.kind === 'zone' ? '' : 'none';
       on = n.kind === 'zone' && n[b.dataset.zone] === true;
     } else if (b.dataset.align) on = (n.align || 'center') === b.dataset.align;
@@ -219,7 +241,7 @@ function placeLinkbar(){
   if (!l || S.selNodes.length || editing){ linkbar.style.display = 'none'; return; }
   const a = byId(l.from), b = byId(l.to);
   if (!a || !b){ linkbar.style.display = 'none'; return; }
-  const m = midPoint(route(a, b, l.way, l));
+  const m = midPoint(route(a, b, bendsOf(l), l));
   const s = toScreen(m);
   linkbar.style.display = 'flex';
   const w = linkbar.offsetWidth || 200;

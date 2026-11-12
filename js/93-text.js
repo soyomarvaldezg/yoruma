@@ -4,9 +4,10 @@ const TEXT_KINDS = {
   db:'store', database:'store', store:'store',
   queue:'queue', cloud:'cloud', file:'file', api:'api',
   shield:'shield', people:'people', agent:'agent', contract:'contract',
-  dashboard:'dashboard', cube:'cube', table:'table', text:'text', heading:'heading'
+  dashboard:'dashboard', cube:'cube', table:'table', text:'text', heading:'heading',
+  tile:'tile'
 };
-const SHAPE_PROPS = new Set(['sub','brand','icon','tint','band','solid','dash','stroke','sharp','size','fillmode','color','fill','align','x','y','w','h']);
+const SHAPE_PROPS = new Set(['sub','brand','icon','anim','tint','band','solid','dash','stroke','sharp','size','fillmode','color','fill','align','x','y','w','h']);
 const TEXT_DIRS = new Set(['right','down']);
 const TEXT_GAPX = 76, TEXT_GAPY = 44, TEXT_ZGAP = 36, TEXT_ZPAD = 24, TEXT_ZTOP = 44, TEXT_ZBOT = 26,
       TEXT_TITLEW = 12.5, TEXT_ORIGIN = 32;
@@ -134,9 +135,21 @@ function parseText(src){
 
   function applyProp(parent, key, value, no){
     if (parent.scope === 'arrow'){
-      if (!['color','dash','motion'].includes(key))
+      if (!['color','dash','motion','bend'].includes(key))
         throw textErr(no, 'unknown arrow property “' + key +
-          '” (arrows take color, dash, motion)');
+          '” (arrows take color, dash, motion, bend)');
+      if (key === 'bend'){
+        const nums = String(value).trim().split(/\s+/).map(Number);
+        if (nums.length !== 2 || nums.some(v => !Number.isFinite(v)))
+          throw textErr(no, 'bend needs two numbers: x y');
+        parent.links.forEach(l => {
+          const list = l.bends || (l.bends = []);
+          if (list.length >= MAX_BENDS)
+            throw textErr(no, 'an arrow takes at most ' + MAX_BENDS + ' bends');
+          list.push({ x:nums[0], y:nums[1] });
+        });
+        return;
+      }
       if (key === 'color'){
         if (!/^#[0-9a-fA-F]{6}$/.test(value)) throw textErr(no, 'color must be #RRGGBB');
       } else if (key === 'dash') value = textBool(value, no, key);
@@ -177,6 +190,13 @@ function parseText(src){
     if (!value) throw textErr(no, key + ' needs a value');
     if (key === 'sub' || key === 'brand' || key === 'icon')
       parent.props[key] = value.slice(0, 2000);
+    else if (key === 'anim'){
+      if (parent.kind !== 'tile')
+        throw textErr(no, 'anim is for tiles — write “tile Name” and put anim under it');
+      if (!ANIMS.includes(value))
+        throw textErr(no, 'anim is ' + ANIMS.join(', '));
+      parent.props.anim = value;
+    }
     else if (key === 'tint' || key === 'band' || key === 'solid' || key === 'dash' ||
              key === 'sharp')
       parent.props[key] = textBool(value, no, key);
@@ -391,6 +411,7 @@ function buildTextDoc(model){
       x: Math.round(s._x), y: Math.round(s._y), w: Math.round(s._w), h: Math.round(s._h)
     };
     if (p.tint) n.tint = true;
+    if (p.anim) n.anim = p.anim;
     if (p.band) n.band = true;
     if (p.solid) n.solid = true;
     if (p.dash) n.dash = true;
@@ -408,7 +429,7 @@ function buildTextDoc(model){
 
   const links = model.links.map((l, i) => {
     const out = { id: 'e' + (i + 1), from: l.fromId, to: l.toId, label: l.label,
-      color: l.color || null, motion: l.motion || null, way: null };
+      color: l.color || null, motion: l.motion || null, bends: l.bends || [] };
     if (!l.head) out.head = false;
     if (l.dash) out.dash = true;
     return out;

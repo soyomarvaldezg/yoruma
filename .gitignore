@@ -1,4 +1,5 @@
 .crush/
 .DS_Store
+demo-stuff/
 tools/node_modules/
 NOTES.md

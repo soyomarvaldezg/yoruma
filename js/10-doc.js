@@ -25,7 +25,7 @@ function loadDemo(){
     x, y, w:SIZE[kind][0], h:SIZE[kind][1]
   }));
   links = DEMO_LINKS.map(([a,b]) => ({
-    id:'k'+(uid++), from:a, to:b, color:null, motion:null, label:'', way:null
+    id:'k'+(uid++), from:a, to:b, color:null, motion:null, label:'', bends:[]
   }));
   S.selNodes = []; S.selLinks = [];
   undoStack.length = 0; redoStack.length = 0;

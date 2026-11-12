@@ -51,7 +51,7 @@ function crossIssues(){
   links.forEach(l => {
     const a = byId(l.from), b = byId(l.to);
     if (!a || !b) return;
-    const pts = route(a, b, l.way, l);
+    const pts = route(a, b, bendsOf(l), l);
     let blocker = null;
     for (const n of nodes){
       if (n === a || n === b || LINT_SKIP.has(n.kind)) continue;
