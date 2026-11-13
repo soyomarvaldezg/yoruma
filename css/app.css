@@ -175,6 +175,12 @@
   summary::before{content:'+'; font-size:12px; line-height:1; color:var(--line)}
   details[open] summary::before{content:'–'}
   .chips{display:flex; flex-wrap:wrap; gap:4px; padding:2px 0 8px}
+  .catalog-section:not(:last-child) .chips{padding-bottom:4px}
+  .catalog-sub{
+    font-family:'VD Code',monospace; font-size:9.5px; letter-spacing:.14em;
+    text-transform:uppercase; color:var(--muted); opacity:.8;
+    margin:5px 0 1px; font-weight:600;
+  }
   .chip{
     font-family:'VD Code',monospace; font-size:10.5px; letter-spacing:.02em;
     padding:4px 6px; border-radius:2px; border:1px solid var(--line);

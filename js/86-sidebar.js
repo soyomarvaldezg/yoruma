@@ -389,29 +389,41 @@ function setTool(id, group){
 }
 
 const catalogEl = document.getElementById('catalog');
-CATALOG.forEach(([name, items]) => {
+function catalogChip(label, box){
+  const c = document.createElement('button');
+  c.className = 'chip';
+  c.textContent = label;
+  c.dataset.label = label;
+  c.setAttribute('aria-label', 'place ' + label);
+  c.addEventListener('click', () => {
+    S.armed = label;
+    remarkChips(c);
+    S.tool = 'place';
+    document.body.dataset.tool = 'place';
+    document.querySelectorAll('#tools button').forEach(b => b.classList.remove('on'));
+  });
+  box.appendChild(c);
+}
+CATALOG.forEach(([name, sections]) => {
   const d = document.createElement('details');
   const s = document.createElement('summary');
   s.textContent = name;
   d.appendChild(s);
-  const box = document.createElement('div');
-  box.className = 'chips';
-  items.forEach(label => {
-    const c = document.createElement('button');
-    c.className = 'chip';
-    c.textContent = label;
-    c.dataset.label = label;
-    c.setAttribute('aria-label', 'place ' + label);
-    c.addEventListener('click', () => {
-      S.armed = label;
-      remarkChips(c);
-      S.tool = 'place';
-      document.body.dataset.tool = 'place';
-      document.querySelectorAll('#tools button').forEach(b => b.classList.remove('on'));
-    });
-    box.appendChild(c);
+  sections.forEach(([sub, items]) => {
+    const sec = document.createElement('div');
+    sec.className = 'catalog-section';
+    if (sub){
+      const h = document.createElement('div');
+      h.className = 'catalog-sub';
+      h.textContent = sub;
+      sec.appendChild(h);
+    }
+    const box = document.createElement('div');
+    box.className = 'chips';
+    items.forEach(label => catalogChip(label, box));
+    sec.appendChild(box);
+    d.appendChild(sec);
   });
-  d.appendChild(box);
   catalogEl.appendChild(d);
 });
 const catalogFilter = document.getElementById('catalog-filter');
@@ -424,15 +436,20 @@ function filterCatalog(){
     catalogWasOpen = Array.from(groups, d => d.open);
   let shown = 0;
   groups.forEach(d => {
-    let hits = 0;
-    d.querySelectorAll('.chip').forEach(c => {
-      const hit = !q || c.dataset.label.toLowerCase().includes(q);
-      c.hidden = !hit;
-      if (hit) hits++;
+    let total = 0;
+    d.querySelectorAll('.catalog-section').forEach(sec => {
+      let hits = 0;
+      sec.querySelectorAll('.chip').forEach(c => {
+        const hit = !q || c.dataset.label.toLowerCase().includes(q);
+        c.hidden = !hit;
+        if (hit) hits++;
+      });
+      sec.hidden = !!q && hits === 0;
+      total += hits;
     });
-    d.hidden = !!q && hits === 0;
-    if (q) d.open = hits > 0;
-    shown += hits;
+    d.hidden = !!q && total === 0;
+    if (q) d.open = total > 0;
+    shown += total;
   });
   if (!q && catalogWasOpen){
     groups.forEach((d, i) => { d.open = catalogWasOpen[i]; });

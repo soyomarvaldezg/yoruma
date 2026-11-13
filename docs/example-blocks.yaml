@@ -1,36 +1,50 @@
-# The Blocks palette itself, written as yoruma text — one zone per plane, one card per
-# chip. Every palette entry is a named card, so the text format can express all of it.
+# The Blocks palette itself, written as yoruma text: one zone per plane, one card per
+# distinct chip. A comment names the subtitle each chip sits under in the sidebar.
+# A chip that repeats under two subtitles is listed once, because the text format
+# keys shapes by name.
 dir: right
 theme: data
 title: The Blocks palette
-subtitle: every catalog chip as a card — 10 planes, 89 blocks
+subtitle: every distinct catalog chip as a card, 10 planes, 123 chips
 
-zone Sources:
+zone Data Sources:
+  # Internal Sources
   card Databases
   card Applications
   card Files & Documents
   card Unstructured Data
   card Messages & Events
   card IoT Devices
+  # External / Cloud Sources
   card SaaS Applications
   card APIs
   card External Databases
   card External Files
   card Streaming Data
+  # IoT Devices repeats under External / Cloud Sources in the palette
   card Third-Party Data
 
-zone Integration:
+zone Integration Plane:
+  # Ingestion Patterns
   card Batch
   card Streaming
   card Micro-batch
-  card CDC
+  card CDC (Change Data Capture):
+    w: 261
+  card Request/Response
+  card Event-Driven
+  # Integration Methods
   card Publish & Subscribe
   card Event Streaming
   card Log-Based Replication:
     w: 223
-  card Database Connectivity:
-    w: 223
-  card File Transfer
+  card Database Connectivity (JDBC/ODBC):
+    w: 336
+  card File Transfer (FTP/SFTP):
+    w: 252
+  card Data Transfer Services:
+    w: 233
+  # Connectivity
   card VPN
   card Private Service Connectivity:
     w: 289
@@ -39,11 +53,13 @@ zone Integration:
     w: 308
   card Secure Connectors
 
-zone Platform:
+zone Storage & Processing:
+  # Logical Zones
   card Raw
   card Standardized
   card Curated
   card Serving Views
+  # Processing
   card Data Transformation
   card Batch Processing
   card Stream Processing
@@ -51,19 +67,29 @@ zone Platform:
   card Data Enrichment
   card Schema Evolution
   card Data Validation
+  # Data Provisioning & Serving
   card Published Datasets
   card Materialized Views
   card Data Marts
   card Search Indexes
 
 zone Serving & Data Products:
+  # Business Semantics
   card Business Metrics & KPIs:
     w: 242
   card Business Definitions:
     w: 214
+  card Dimensions & Hierarchies:
+    w: 252
+  card Business Rules
+  # Context & Semantic Services
   card Semantic Models
+  card Business Ontology
   card Metric Models
   card Semantic Query APIs
+  card Metric Calculation & Resolution:
+    w: 317
+  # Access Services
   card SQL Access
   card REST APIs
   card GraphQL APIs
@@ -74,60 +100,110 @@ zone Serving & Data Products:
     w: 223
   card Data Products
 
-zone Consumption:
+zone Data Consumption:
+  # Consumers
   card Business Users
   card Analysts
   card Data Scientists
   card ML Engineers
   card Application Teams
+  # Applications
   card Operational Applications:
     w: 252
   card Downstream Systems
-  card Embedded Analytics
+  card Embedded Analytics (in-app):
+    w: 280
   card Partner Applications:
     w: 214
+  card Third-Party Applications:
+    w: 252
+  # Channels
+  # APIs repeats under Channels in the palette
   card Partners
+  card Public Data
   card External Consumers
+  # Consumption Patterns
   card Analytics & Reporting:
     w: 223
   card Advanced Analytics & Data Science:
     w: 336
+  card Embedded Analytics (delivery mode):
+    w: 346
   card Self-Service Analytics:
     w: 233
 
 zone Metadata & Knowledge:
   card Enterprise Catalog
   card Data Lineage
-  card Data Classification
+  card Data Discovery
   card Business Glossary
+  card Data Classification
+  card Active Metadata
+  card Knowledge Graph & Semantic Relationships:
+    w: 402
+  card Schema & Interface Registry:
+    w: 280
 
 zone Governance & Trust:
+  card Data Governance
   card Data Quality
   card Data Observability
   card Contract Policies
   card Data Product Governance:
     w: 242
-  card Policy as Code
+  card Data Privacy
+  card Identity & Authentication:
+    w: 261
+  card Encryption & Key Management:
+    w: 280
+  card Data Masking & Tokenization:
+    w: 280
   card Lifecycle, Retention & Deletion:
     w: 317
+  card Policy as Code
   card Audit & Compliance Reporting:
     w: 289
 
 zone Control Plane:
   card Access Management
+  card Policy Management & Enforcement:
+    w: 317
+  card Cost Management & FinOps Governance:
+    w: 355
+  card Usage Metering & Quotas:
+    w: 242
   card Data Contracts Enforcement:
     w: 270
+  card Quality Policies Enforcement:
+    w: 289
+  card Platform APIs & Interfaces (control):
+    w: 364
   card Workflow & Orchestration:
     w: 252
 
 zone Platform Engineering:
+  card Developer Experience:
+    w: 214
+  card Infrastructure as Code & GitOps:
+    w: 317
   card CI/CD & DevOps
+  card Platform APIs & Self-Service Portal:
+    w: 355
   card Observability & Monitoring:
     w: 270
+  card Reliability Engineering:
+    w: 242
+  card Security Engineering:
+    w: 214
+  card FinOps & Cost Optimization:
+    w: 270
+  card Multi-cloud & Hybrid Management:
+    w: 317
 
-zone ML & AI:
+zone ML & AI Tool Chain:
   card Feature Store
   card Experiment Tracking
   card Model Registry
   card Model Serving
+  card Vector Index
   card Evaluation & Drift

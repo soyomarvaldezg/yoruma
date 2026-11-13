@@ -1255,6 +1255,13 @@ if (/[?&]test/.test(location.search)){
   cf.dispatchEvent(new Event('input', { bubbles:true }));
   const vis = Array.from(document.querySelectorAll('#catalog .chip')).filter(c => !c.hidden);
   ok('blocks filter', vis.length > 0 && vis.every(c => /lineage/i.test(c.dataset.label)));
+  ok('blocks filter leaves only the matching subtitle',
+     Array.from(document.querySelectorAll('#catalog .catalog-section'))
+       .filter(s => !s.hidden).length === 1);
+  ok('blocks catalog carries the full inventory',
+     document.querySelectorAll('#catalog .chip').length === 123);
+  ok('blocks catalog groups chips under subtitles',
+     document.querySelectorAll('#catalog .catalog-sub').length === 15);
   cf.value = '';
   cf.dispatchEvent(new Event('input', { bubbles:true }));
 

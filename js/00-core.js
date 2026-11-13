@@ -114,35 +114,66 @@ const SIZE = {
 };
 
 const CATALOG = [
-  ['Sources', ['Databases','Applications','Files & Documents','Unstructured Data',
-    'Messages & Events','IoT Devices','SaaS Applications','APIs','External Databases',
-    'External Files','Streaming Data','Third-Party Data']],
-  ['Integration', ['Batch','Streaming','Micro-batch','CDC','Publish & Subscribe',
-    'Event Streaming','Log-Based Replication','Database Connectivity','File Transfer',
-    'VPN','Private Service Connectivity','Network Peering',
-    'Dedicated Private Connectivity','Secure Connectors']],
-  ['Platform', ['Raw','Standardized','Curated','Serving Views','Data Transformation',
-    'Batch Processing','Stream Processing','Event Processing','Data Enrichment',
-    'Schema Evolution','Data Validation','Published Datasets','Materialized Views',
-    'Data Marts','Search Indexes']],
-  ['Serving & Data Products', ['Business Metrics & KPIs','Business Definitions',
-    'Semantic Models','Metric Models','Semantic Query APIs','SQL Access','REST APIs',
-    'GraphQL APIs','Data Virtualization','Secure Data Sharing','Data Exchange',
-    'Federated Data Access','Data Products']],
-  ['Consumption', ['Business Users','Analysts','Data Scientists','ML Engineers',
-    'Application Teams','Operational Applications','Downstream Systems',
-    'Embedded Analytics','Partner Applications','Partners','External Consumers',
-    'Analytics & Reporting','Advanced Analytics & Data Science','Self-Service Analytics']],
-  ['Metadata & Knowledge', ['Enterprise Catalog','Data Lineage','Data Classification',
-    'Business Glossary']],
-  ['Governance & Trust', ['Data Quality','Data Observability','Contract Policies',
-    'Data Product Governance','Policy as Code','Lifecycle, Retention & Deletion',
-    'Audit & Compliance Reporting']],
-  ['Control Plane', ['Access Management','Data Contracts Enforcement',
-    'Workflow & Orchestration']],
-  ['Platform Engineering', ['CI/CD & DevOps','Observability & Monitoring']],
-  ['ML & AI', ['Feature Store','Experiment Tracking','Model Registry','Model Serving',
-    'Evaluation & Drift']]
+  ['Data Sources', [
+    ['Internal Sources', ['Databases','Applications','Files & Documents',
+      'Unstructured Data','Messages & Events','IoT Devices']],
+    ['External / Cloud Sources', ['SaaS Applications','APIs','External Databases',
+      'External Files','Streaming Data','IoT Devices','Third-Party Data']]
+  ]],
+  ['Integration Plane', [
+    ['Ingestion Patterns', ['Batch','Streaming','Micro-batch',
+      'CDC (Change Data Capture)','Request/Response','Event-Driven']],
+    ['Integration Methods', ['Publish & Subscribe','Event Streaming',
+      'Log-Based Replication','Database Connectivity (JDBC/ODBC)',
+      'File Transfer (FTP/SFTP)','Data Transfer Services']],
+    ['Connectivity', ['VPN','Private Service Connectivity','Network Peering',
+      'Dedicated Private Connectivity','Secure Connectors']]
+  ]],
+  ['Storage & Processing', [
+    ['Logical Zones', ['Raw','Standardized','Curated','Serving Views']],
+    ['Processing', ['Data Transformation','Batch Processing','Stream Processing',
+      'Event Processing','Data Enrichment','Schema Evolution','Data Validation']],
+    ['Data Provisioning & Serving', ['Published Datasets','Materialized Views',
+      'Data Marts','Search Indexes']]
+  ]],
+  ['Serving & Data Products', [
+    ['Business Semantics', ['Business Metrics & KPIs','Business Definitions',
+      'Dimensions & Hierarchies','Business Rules']],
+    ['Context & Semantic Services', ['Semantic Models','Business Ontology',
+      'Metric Models','Semantic Query APIs','Metric Calculation & Resolution']],
+    ['Access Services', ['SQL Access','REST APIs','GraphQL APIs',
+      'Data Virtualization','Secure Data Sharing','Data Exchange',
+      'Federated Data Access','Data Products']]
+  ]],
+  ['Data Consumption', [
+    ['Consumers', ['Business Users','Analysts','Data Scientists','ML Engineers',
+      'Application Teams']],
+    ['Applications', ['Operational Applications','Downstream Systems',
+      'Embedded Analytics (in-app)','Partner Applications','Third-Party Applications']],
+    ['Channels', ['APIs','Partners','Public Data','External Consumers']],
+    ['Consumption Patterns', ['Analytics & Reporting',
+      'Advanced Analytics & Data Science','Embedded Analytics (delivery mode)',
+      'Self-Service Analytics']]
+  ]],
+  ['Metadata & Knowledge', [['', ['Enterprise Catalog','Data Lineage',
+    'Data Discovery','Business Glossary','Data Classification','Active Metadata',
+    'Knowledge Graph & Semantic Relationships','Schema & Interface Registry']]]],
+  ['Governance & Trust', [['', ['Data Governance','Data Quality','Data Observability',
+    'Contract Policies','Data Product Governance','Data Privacy',
+    'Identity & Authentication','Encryption & Key Management',
+    'Data Masking & Tokenization','Lifecycle, Retention & Deletion',
+    'Policy as Code','Audit & Compliance Reporting']]]],
+  ['Control Plane', [['', ['Access Management','Policy Management & Enforcement',
+    'Cost Management & FinOps Governance','Usage Metering & Quotas',
+    'Data Contracts Enforcement','Quality Policies Enforcement',
+    'Platform APIs & Interfaces (control)','Workflow & Orchestration']]]],
+  ['Platform Engineering', [['', ['Developer Experience',
+    'Infrastructure as Code & GitOps','CI/CD & DevOps',
+    'Platform APIs & Self-Service Portal','Observability & Monitoring',
+    'Reliability Engineering','Security Engineering','FinOps & Cost Optimization',
+    'Multi-cloud & Hybrid Management']]]],
+  ['ML & AI Tool Chain', [['', ['Feature Store','Experiment Tracking',
+    'Model Registry','Model Serving','Vector Index','Evaluation & Drift']]]]
 ];
 
 const S = {

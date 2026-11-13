@@ -38,6 +38,11 @@ Nothing here is a promise. Download a JSON copy of work you cannot lose.
 ```
 
 The left panel holds the tools, the icons and the Blocks palette.
+The palette opens by stage, then by subtitle: Internal and External Sources,
+Ingestion Patterns, Integration Methods, Connectivity, Logical Zones, Processing,
+Data Provisioning and Serving, Business Semantics, Context and Semantic Services,
+Access Services, Consumers, Applications, Channels, and Consumption Patterns.
+The filter searches every chip.
 Press **⌘.** to hide the panel. Press **⌘.** again to show it.
 
 The style bar appears when you select a shape. It stays top-right.

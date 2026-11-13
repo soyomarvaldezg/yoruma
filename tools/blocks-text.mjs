@@ -10,25 +10,43 @@ const end = core.indexOf('\n];', start);
 if (start < 0 || end < 0) throw new Error('cannot find CATALOG in js/00-core.js');
 const CATALOG = eval(core.slice(start + 'const CATALOG = '.length, end + 2));
 
+let blockCount = 0;
+for (const [, sections] of CATALOG)
+  for (const [, items] of sections) blockCount += items.length;
+
 const lines = [
-  '# The Blocks palette itself, written as yoruma text — one zone per plane, one card per',
-  '# chip. Every palette entry is a named card, so the text format can express all of it.',
+  '# The Blocks palette itself, written as yoruma text: one zone per plane, one card per',
+  '# distinct chip. A comment names the subtitle each chip sits under in the sidebar.',
+  '# A chip that repeats under two subtitles is listed once, because the text format',
+  '# keys shapes by name.',
   'dir: right',
   'theme: data',
   'title: The Blocks palette',
-  'subtitle: every catalog chip as a card — 10 planes, ' +
-    CATALOG.reduce((n, [, items]) => n + items.length, 0) + ' blocks',
+  'subtitle: every distinct catalog chip as a card, ' + CATALOG.length + ' planes, ' +
+    blockCount + ' chips',
   ''
 ];
-for (const [plane, items] of CATALOG){
+const seen = new Set();
+let cards = 0, repeats = 0;
+for (const [plane, sections] of CATALOG){
   lines.push('zone ' + plane + ':');
-  for (const label of items){
-    const w = Math.round(label.length * 9.4) + 26;
-    if (w > 208) lines.push('  card ' + label + ':', '    w: ' + w);
-    else lines.push('  card ' + label);
+  for (const [sub, items] of sections){
+    if (sub) lines.push('  # ' + sub);
+    for (const label of items){
+      if (seen.has(label)){
+        lines.push('  # ' + label + ' repeats under ' + sub + ' in the palette');
+        repeats++;
+        continue;
+      }
+      seen.add(label);
+      cards++;
+      const w = Math.round(label.length * 9.4) + 26;
+      if (w > 208) lines.push('  card ' + label + ':', '    w: ' + w);
+      else lines.push('  card ' + label);
+    }
   }
   lines.push('');
 }
 writeFileSync(path.join(root, 'docs/example-blocks.yaml'), lines.join('\n'));
 console.log('wrote docs/example-blocks.yaml:', CATALOG.length, 'planes,',
-  CATALOG.reduce((n, [, items]) => n + items.length, 0), 'blocks');
+  cards, 'cards,', repeats, 'repeats of', blockCount, 'chips');
