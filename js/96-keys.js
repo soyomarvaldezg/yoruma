@@ -84,6 +84,10 @@ window.addEventListener('keydown', e => {
   if (meta) return;
 
   if (e.key === 'f' || e.key === 'F'){ fit(); save(); return; }
+  if (e.shiftKey && !e.altKey && e.key.toLowerCase() === 'p'){
+    setPresent(!document.body.classList.contains('present'));
+    return;
+  }
   if (e.shiftKey && !e.altKey && !document.body.classList.contains('present') &&
       e.key.toLowerCase() === 's'){ addStep(); return; }
   if (!e.shiftKey && !e.altKey && !document.body.classList.contains('present') &&

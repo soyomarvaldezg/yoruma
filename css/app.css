@@ -324,6 +324,10 @@
   .step-row .name{flex:1; min-width:0; font-size:11px; overflow:hidden;
     text-overflow:ellipsis; white-space:nowrap; color:var(--on-dark); cursor:pointer}
   .step-row .name:hover{text-decoration:underline}
+  .step-row .step-name-edit{flex:1; min-width:0; font-family:inherit; font-size:11px;
+    color:var(--on-dark); background:var(--ink); border:1px solid var(--edge);
+    border-radius:3px; padding:1px 4px; outline:none}
+  .step-row .step-name-edit:focus{border-color:var(--on-dark)}
   .step-row button{width:22px; height:22px; padding:0; text-align:center; border:1px solid var(--edge)}
   /* The picker's `#steps-menu button` rule is more specific and stretches
      these to 100%; keep the row controls compact. */

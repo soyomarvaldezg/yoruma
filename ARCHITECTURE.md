@@ -87,8 +87,9 @@ autosave) works page by page without knowing pages exist. Version-1 files withou
 a single page, which keeps old documents and the JSON export backwards compatible.
 
 Steps are nodes of `kind: "frame"` with a `members` array and a `step` order. They are never
-drawn unless selected, so steps can overlap spatially. Membership of a zone expands to
-everything inside it at any depth (`zoneMembers`).
+drawn unless selected, so steps can overlap spatially. A frame's `title` is its custom name;
+an empty title falls back to its positional number, so reordering never shows a stale name.
+Membership of a zone expands to everything inside it at any depth (`zoneMembers`).
 
 ## Performance
 

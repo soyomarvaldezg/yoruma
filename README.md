@@ -186,6 +186,7 @@ and `⇧` is Shift.
 | `T` `G` `⇧G` | Text · heading · governance shape |
 | `N` `Y` `X` | Pen (ink stays) · laser (fades) · eraser (ink and shapes) |
 | `S` `⇧S` | Open the steps panel · add a step from the selection |
+| `⇧P` | Enter or leave present mode |
 | `1`…`9` `0` | Present mode, jump to a step. `0` shows the overview |
 | `[` `]` | Text size |
 | `,` `.` | Dot size |
@@ -220,9 +221,13 @@ The pen (`N`) keeps its ink. The ink survives a reload. Press `Esc` to clear it.
 **STEPS ▾ → + STEP FROM SELECTION** turns the selected shapes into a step, or
 press **S** to open that panel and **⇧S** to add a step straight from the
 selection. **Clear all steps** at the bottom of the panel removes the steps and
-keeps the shapes. Press **PRESENT**.
+keeps the shapes. Double-click a step's name in the panel to rename it; an
+unnamed step follows its number, so reordering never leaves a stale label.
+Press **PRESENT**.
 Each step wears its number beside its box on the canvas; the numbers disappear
-in present mode, where arrows and clicks move to the next step. `Esc` leaves.
+in present mode, where the arrows and number keys move between steps. A click
+never advances, so it cannot skip a step while you point at the slide.
+`⌥`-drag (or the armed laser tool) draws the laser; `Esc` leaves.
 
 ![Present mode on the overview slide](docs/present.png)
 

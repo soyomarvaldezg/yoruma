@@ -1335,6 +1335,29 @@ if (/[?&]test/.test(location.search)){
   setPresent(false);
   ok('number keys jump to a step in present mode', jumped && backToOverview);
 
+  window.dispatchEvent(new KeyboardEvent('keydown', { key:'P', shiftKey:true }));
+  const keyOn = document.body.classList.contains('present');
+  window.dispatchEvent(new KeyboardEvent('keydown', { key:'P', shiftKey:true }));
+  const keyOff = !document.body.classList.contains('present');
+  ok('Shift+P toggles present mode', keyOn && keyOff);
+  setPresent(true);
+  const advBefore = presentIndex;
+  const lasersBefore = stage.querySelectorAll('path.laser').length;
+  sendAlt('pointerdown', { x:300, y:900 });
+  for (let i = 1; i <= 5; i++) sendAlt('pointermove', { x:300 + i*20, y:900 });
+  const laserInPresent = stage.querySelectorAll('path.laser').length > lasersBefore;
+  sendAlt('pointerup', { x:400, y:900 });
+  send('pointerdown', { x:300, y:900 });
+  send('pointerup', { x:300, y:900 });
+  const stayed = presentIndex === advBefore;
+  setPresent(false);
+  ok('the laser draws in present mode and a click does not advance',
+     laserInPresent && stayed);
+  window.dispatchEvent(new KeyboardEvent('keydown', { key:'p' }));
+  const pTile = S.tool === 'people';
+  setTool('select', 'draw');
+  ok('plain P still picks the Consumers tile', pTile);
+
   setPresent(true);
   const asideHidden = getComputedStyle(document.querySelector('aside')).display === 'none';
   ok('present mode', document.body.classList.contains('present') && asideHidden);
@@ -1377,6 +1400,47 @@ if (/[?&]test/.test(location.search)){
      presentFrames().length === 0 &&
      nodes.filter(n => n.kind !== 'frame').length === shapesBeforeClear);
   document.body.click();
+
+  const rnA = { id:'rnA', kind:'box', title:'RA', sub:'', color:null,
+    tcolor:null, scolor:null, fs:1, x:100, y:1200, w:120, h:60 };
+  const rnB = { id:'rnB', kind:'box', title:'RB', sub:'', color:null,
+    tcolor:null, scolor:null, fs:1, x:340, y:1200, w:120, h:60 };
+  nodes.push(rnA, rnB);
+  selectNodes(['rnA'], false); addStep();
+  const rnF1 = presentFrames().find(f => (f.members || []).includes('rnA'));
+  selectNodes(['rnB'], false); addStep();
+  const rnF2 = presentFrames().find(f => (f.members || []).includes('rnB'));
+  document.getElementById('btn-steps').click();
+  const rnRows = () => Array.from(document.querySelectorAll('#steps-menu .step-row .name'));
+  ok('an unnamed step is labelled by its number',
+     rnRows().length === 2 && rnRows()[0].textContent === 'Step 1' &&
+     rnRows()[1].textContent === 'Step 2');
+  rnRows()[0].dispatchEvent(new MouseEvent('dblclick', { bubbles:true }));
+  const rnInput = document.querySelector('#steps-menu .step-name-edit');
+  ok('double-clicking a name opens a rename field',
+     !!rnInput && rnInput.value === '' && rnInput.placeholder === 'Step 1');
+  rnInput.value = 'Ingest';
+  rnInput.dispatchEvent(new KeyboardEvent('keydown', { key:'Enter', bubbles:true }));
+  ok('renaming a step sticks and saves',
+     rnF1.title === 'Ingest' && rnRows()[0].textContent === 'Ingest' &&
+     JSON.parse(docJSON()).nodes.some(n => n.id === rnF1.id && n.title === 'Ingest'));
+  rnRows()[0].dispatchEvent(new MouseEvent('dblclick', { bubbles:true }));
+  const rnEsc = document.querySelector('#steps-menu .step-name-edit');
+  rnEsc.value = 'Discarded';
+  rnEsc.dispatchEvent(new KeyboardEvent('keydown', { key:'Escape', bubbles:true }));
+  ok('Escape cancels a step rename', rnF1.title === 'Ingest');
+  moveStep(rnF2.id, -1); renderStepsMenu();
+  ok('reordering does not leave a stale default name',
+     presentFrames()[0].id === rnF2.id && rnRows()[0].textContent === 'Step 1' &&
+     rnRows()[1].textContent === 'Ingest');
+  setPresent(true);
+  showStep(presentSteps.indexOf(rnF1));
+  ok('present mode shows a step by its name',
+     presentBadge.textContent.includes('Ingest'));
+  setPresent(false);
+  removeStep(rnF1.id); removeStep(rnF2.id);
+  nodes = nodes.filter(n => n.id !== 'rnA' && n.id !== 'rnB');
+  S.selNodes = []; render(); document.body.click();
 
   const sA = { id:'saStep', kind:'box', title:'SA', sub:'', color:null,
     tcolor:null, scolor:null, fs:1, x:100, y:900, w:120, h:60 };

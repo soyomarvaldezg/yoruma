@@ -78,7 +78,7 @@ function addStep(){
     return;
   }
   snapshot();
-  const f = { id:'n'+(uid++), kind:'frame', title:'Step ' + (frames.length + 1),
+  const f = { id:'n'+(uid++), kind:'frame', title:'',
     sub:'', color:null, tcolor:null, scolor:null, fs:1, x:0, y:0, w:1, h:1,
     members: ids.slice(), step: frames.length + 1 };
   const box = membersBox(f);
@@ -132,6 +132,35 @@ function clearSteps(){
   render();
   toast(list.length === 1 ? 'step cleared' : list.length + ' steps cleared');
 }
+/* A step's number is positional, so a name that only repeats it would go stale
+   the moment steps are reordered. Empty titles fall back to the number. */
+function stepName(f, i){
+  return f.title || 'Step ' + (i + 1);
+}
+function renameStep(f, name){
+  const input = document.createElement('input');
+  input.className = 'step-name-edit';
+  input.value = f.title || '';
+  input.placeholder = stepName(f, presentFrames().indexOf(f));
+  input.maxLength = 80;
+  input.setAttribute('aria-label', 'Step name');
+  name.replaceWith(input);
+  input.focus();
+  input.select();
+  let done = false;
+  const commit = keep => {
+    if (done) return;
+    done = true;
+    const v = keep ? input.value.trim() : (f.title || '');
+    if (keep && v !== (f.title || '')){ snapshot(); f.title = v; render(); }
+    renderStepsMenu();
+  };
+  input.addEventListener('keydown', e => {
+    if (e.key === 'Enter'){ e.preventDefault(); commit(true); }
+    else if (e.key === 'Escape'){ e.preventDefault(); commit(false); }
+  });
+  input.addEventListener('blur', () => commit(true));
+}
 function renderStepsMenu(){
   const el = document.getElementById('steps-menu');
   if (!el) return;
@@ -157,13 +186,18 @@ function renderStepsMenu(){
     num.textContent = String(i + 1).padStart(2, '0');
     const name = document.createElement('span');
     name.className = 'name';
-    name.textContent = f.title || 'step';
-    name.title = 'Show this step';
+    name.textContent = stepName(f, i);
+    name.title = 'Show this step — double-click to rename';
     name.addEventListener('click', () => {
       selectNodes(Array.from(stepMembers(f)).filter(id => byId(id)), false);
       const b = membersBox(f);
       if (b) glideTo(viewFor({ x:b.x, y:b.y, w:b.w, h:b.h }));
       render();
+    });
+    name.addEventListener('dblclick', ev => {
+      ev.stopPropagation();
+      ev.preventDefault();
+      renameStep(f, name);
     });
     const up = document.createElement('button');
     up.textContent = '↑';
@@ -238,7 +272,8 @@ function showStep(i){
   presentZoneId = z ? z.id : null;
   render();
   glideTo(viewFor(presentBox()));
-  const label = z ? (z.title || 'zone') : 'overview';
+  const label = z ? (z.kind === 'frame'
+    ? stepName(z, presentIndex - 1) : (z.title || 'zone')) : 'overview';
   presentBadge.textContent = (presentIndex + 1) + ' / ' + presentSteps.length + ' · ' + label;
 }
 function stepPresent(dir){

@@ -50,7 +50,12 @@ stage.addEventListener('pointerdown', ev => {
     cap(ev);
     return;
   }
-  if (document.body.classList.contains('present')){ stepPresent(1); return; }
+  /* In a presentation the pointer only points: ⌥-drag (or the laser tool)
+     draws, anything else is left alone. Advancing is the keyboard's job, so
+     pointing never skips a step by accident. */
+  if (document.body.classList.contains('present')){
+    if (!ev.altKey && S.tool !== 'laser') return;
+  }
 
   const p = toWorld(ev);
   if (editing) commitEdit();
