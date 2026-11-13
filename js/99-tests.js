@@ -223,12 +223,15 @@ if (/[?&]test/.test(location.search)){
      !iconByName('Mine') && !localStorage.getItem(PACK_KEY));
   render();
 
-  ok('the nine state glyphs answer plain outcome words',
-     STATES.length === 9 &&
-     ['success','error','warning','info','question','blocked','retry','bug','alert']
-       .every(w => !!iconByName(w)) &&
+  ok('the twelve state glyphs answer plain outcome words',
+     STATES.length === 12 &&
+     ['success','error','warning','info','question','blocked','retry','bug','alert',
+      'down','saturated','stale'].every(w => !!iconByName(w)) &&
      iconSearch('failed').some(e => e.n === 'Error') &&
      iconSearch('reload').some(e => e.n === 'Retry') &&
+     iconSearch('overloaded').some(e => e.n === 'Saturated') &&
+     iconSearch('offline').some(e => e.n === 'Down') &&
+     iconSearch('freshness').some(e => e.n === 'Stale') &&
      STATES.every(s => s.d.includes('stroke="currentColor"')));
 
   S.selNodes = [];
@@ -261,7 +264,8 @@ if (/[?&]test/.test(location.search)){
      tileHue(tileNode) === '#099268' &&
      tileHue({ id:'x4', logo:iconDataUri(iconByName('Error')) }) === '#E03131' &&
      TILE_HUES.every(c => hexToOklch(c).L < 0.72));
-  const animBtns = Array.from(document.querySelectorAll('#shaper button[data-anim]'));
+  const loopbar = document.getElementById('loopbar');
+  const animBtns = Array.from(document.querySelectorAll('#loopbar button[data-anim]'));
   nodes.push({ id:'animT', kind:'tile', title:'Build', sub:'', color:null,
     tcolor:null, scolor:null, fs:1, x:900, y:620, w:96, h:130, anim:'loading' });
   S.selNodes = ['animT']; S.selLinks = []; render();
@@ -273,22 +277,59 @@ if (/[?&]test/.test(location.search)){
          .some(el => /^animate/i.test(el.tagName));
        return loops && !g.parentNode.querySelector('[data-role="logo"]');
      })());
-  ok('the shape bar offers every loop to a tile',
+  ok('loops get their own strip beside the tile',
      animBtns.length === ANIMS.length &&
+     loopbar.style.display === 'flex' &&
+     document.querySelectorAll('#shaper button[data-anim]').length === 0 &&
      animBtns.every(b => b.style.display !== 'none') &&
      animBtns.filter(b => b.getAttribute('aria-pressed') === 'true')
        .map(b => b.dataset.anim).join() === 'loading');
+  ok('loops sit compact in their own floating bar',
+     getComputedStyle(loopbar).position === 'fixed' &&
+     animBtns.every(b => getComputedStyle(b).width === '26px') &&
+     !document.querySelector('#shaper button[data-anim]'));
+  ok('a tile shows that strip alone, with no shape bar beside it',
+     loopbar.style.display === 'flex' &&
+     document.getElementById('shaper').style.display === 'none');
   animBtns[1].click();
   ok('pressing another loop moves it', byId('animT').anim === 'progress');
   animBtns[1].click();
   ok('pressing the loop again stops it', !byId('animT').anim);
   animBtns[1].click();
+  const speedBtns = Array.from(
+    document.querySelectorAll('#loopbar button[data-speed]'));
+  const speedBtn = id => speedBtns.find(b => b.dataset.speed === id);
+  ok('the stepper waits for a running tile before it shows',
+     speedBtns.length === 2 &&
+     speedBtns.every(b => b.style.display === ''));
+  speedBtn('faster').click();
+  ok('faster steps the tile up one tempo',
+     byId('animT').speed === 1.5 && speedBtn('faster').classList.contains('tempo'));
+  speedBtn('faster').click();
+  ok('faster again doubles the loop', byId('animT').speed === 2);
+  speedBtn('slower').click();
+  speedBtn('slower').click();
+  ok('slower walks back to the loop’s own tempo and forgets the prop',
+     byId('animT').speed === undefined);
+  speedBtn('slower').click();
+  speedBtn('slower').click();
+  speedBtn('slower').click();
+  ok('the slowest tempo stops the slower button',
+     byId('animT').speed === 0.25 && speedBtn('slower').disabled === true &&
+     speedBtn('faster').disabled === false);
+  window.dispatchEvent(new KeyboardEvent('keydown', { key:'>' }));
+  ok('the > key speeds the selected loop up', byId('animT').speed === 0.5);
+  window.dispatchEvent(new KeyboardEvent('keydown', { key:'<' }));
+  ok('the < key slows it back down', byId('animT').speed === 0.25);
+  delete byId('animT').speed;
   S.selNodes = []; S.selLinks = [];
   nodes = nodes.filter(n => n.id !== 'animT'); render();
   nodes.push({ id:'noanim', kind:'box', title:'Plain', sub:'', color:null,
     tcolor:null, scolor:null, fs:1, x:900, y:820, w:180, h:100 });
   S.selNodes = ['noanim']; render();
-  ok('a selected card hides the loops', animBtns.every(b => b.style.display === 'none'));
+  ok('a selected card hides the strip and brings the shape bar back',
+     loopbar.style.display === 'none' &&
+     document.getElementById('shaper').style.display === 'flex');
   S.selNodes = [];
   nodes = nodes.filter(n => n.id !== 'noanim'); render();
 
@@ -308,11 +349,42 @@ if (/[?&]test/.test(location.search)){
      looped.anim === 'heartbeat' && nodes.length === loopCount + 1);
   loopTiles[4].click();
   ok('clicking it again stops the loop', !looped.anim);
-  S.selNodes = [looped.id];
+  S.selNodes = [looped.id]; render();
   animBtns[0].click();
   ok('the picker and the shape bar drive the same field',
      looped.anim === 'loading');
   S.selNodes = []; nodes = nodes.filter(n => n.id !== looped.id); render();
+  const iconChips = () => Array.from(document.querySelectorAll('#icon-chips .icon-chip'));
+  const iconChip = label => iconChips().find(b => b.textContent === label);
+  ok('the picker offers a chip per icon section',
+     iconChips().map(b => b.textContent).join() ===
+       'All,Plumbing,Status,Loops,Pack');
+  iconChip('Plumbing').click();
+  ok('a chip scopes the grid to its own section',
+     iconGrid.querySelectorAll('.icon-tile').length === CONCEPTS.length &&
+     iconGrid.querySelector('.icon-section').textContent === 'Plumbing' &&
+     !Array.from(iconGrid.querySelectorAll('.icon-tile'))
+       .some(t => /Loading|Success/.test(t.textContent)));
+  iconFilterEl.value = 'kafka';
+  iconFilterEl.dispatchEvent(new Event('input'));
+  ok('search stays inside the chosen chip',
+     iconGrid.querySelectorAll('.icon-tile').length === 0);
+  iconFilterEl.value = '';
+  iconFilterEl.dispatchEvent(new Event('input'));
+  iconChip('Loops').click();
+  ok('the Loops chip shows exactly the loops',
+     iconGrid.querySelectorAll('.icon-tile').length === LOOPS.length);
+  iconChip('All').click();
+  ok('All brings every glyph back',
+     iconGrid.querySelectorAll('.icon-tile').length === LOCAL_ICONS.length);
+  iconFilterEl.value = 'loops';
+  iconFilterEl.dispatchEvent(new Event('input'));
+  ok('typing a section name scopes the grid like its chip',
+     iconGroup === 'Loops' && iconFilterEl.value === '' &&
+     iconChip('Loops').classList.contains('on') &&
+     iconGrid.querySelectorAll('.icon-tile').length === LOOPS.length);
+  iconChip('All').click();
+
   const iconFilterLoops = document.getElementById('icon-filter');
   iconFilterLoops.value = 'spinner';
   iconFilterLoops.dispatchEvent(new Event('input'));
@@ -325,8 +397,9 @@ if (/[?&]test/.test(location.search)){
   iconFilterLoops.dispatchEvent(new Event('input'));
   ok('a loop is not a glyph, so icon: cannot grab it',
      iconByName('loading') === null && iconByName('Loading') === null);
-  ok('ten loops, and every one of them animates',
-     ANIMS.length === 10 && LOOPS.length === 10 &&
+  ok('eleven loops, and every one of them animates',
+     ANIMS.length === 11 && LOOPS.length === 11 &&
+     iconSearch('backpressure').some(e => e.n === 'Throttle') &&
      ANIMS.every(a => {
        const d = animGlyph(a, '#FFFFFF');
        return d.length > 40 && d.includes('repeatCount="indefinite"');
@@ -430,8 +503,27 @@ if (/[?&]test/.test(location.search)){
       { id:'an2', kind:'tile', x:0, y:0, w:96, h:96, anim:'spinning' }] }));
   ok('a document keeps a known anim and drops an unknown one',
      animDoc.nodes[0].anim === 'loading' && !('anim' in animDoc.nodes[1]));
+  const speedDoc = parseDoc(JSON.stringify({ format:'yoruma', version:1, links:[],
+    nodes:[{ id:'sp1', kind:'tile', x:0, y:0, w:96, h:96, anim:'poll', speed:2 },
+      { id:'sp2', kind:'tile', x:0, y:0, w:96, h:96, anim:'poll', speed:99 }] }));
+  ok('a document keeps a sane tempo and drops an absurd one',
+     speedDoc.nodes[0].speed === 2 && !('speed' in speedDoc.nodes[1]));
   ok('the text format animates a tile',
      textDoc('tile Build:\n  anim: typing').nodes[0].anim === 'typing');
+  ok('the text format sets a loop’s tempo',
+     textDoc('tile Backfill:\n  anim: progress\n  speed: 0.5').nodes[0].speed === 0.5 &&
+     textDoc('tile Live:\n  anim: heartbeat\n  speed: 2').nodes[0].speed === 2);
+  ok('the tempo divides the loop’s own duration',
+     animGlyph('poll', '#FFFFFF', 2).includes('dur="1.50s"') &&
+     animGlyph('poll', '#FFFFFF', 0.5).includes('dur="6.00s"') &&
+     animGlyph('poll', '#FFFFFF').includes('dur="3.00s"'));
+  let speedCard = '';
+  try { parseText('card A:\n  speed: 2'); } catch (e){ speedCard = e.message; }
+  ok('speed on a card fails and names the tile', /speed is for tiles/.test(speedCard));
+  let speedValue = '';
+  try { parseText('tile A:\n  anim: poll\n  speed: 9'); } catch (e){ speedValue = e.message; }
+  ok('a speed outside the range says what fits',
+     /0\.25 to 4/.test(speedValue));
   let animCard = '';
   try { parseText('card A:\n  anim: typing'); } catch (e){ animCard = e.message; }
   ok('anim on a card fails and names the tile', /anim is for tiles/.test(animCard));
@@ -808,8 +900,15 @@ if (/[?&]test/.test(location.search)){
   lnk.fs = 2;
   render();
   const lb2 = stage.querySelector('[data-role="label"]');
-  ok('arrow label size', !!lb2 && lb2.getAttribute('font-size') === '32');
+  ok('arrow label size', !!lb2 && lb2.getAttribute('font-size') === '28');
   lnk.fs = 1;
+  lnk.label = 'nightly';
+  render();
+  editLink(lnk);
+  ok('the arrow bar steps out of the label editor',
+     getComputedStyle(linkbar).display === 'none');
+  document.getElementById('editor').style.display = 'none';
+  editing = null; edLink = null; edNode = null;
   lnk.label = '';
   render();
 
@@ -1042,7 +1141,23 @@ if (/[?&]test/.test(location.search)){
   send('pointerup', { x:660, y:640 });
   ok('hand tool pans without selecting',
      view.x === vx0 + 60 && view.y === vy0 + 40 && S.selNodes.length === 0);
-  setTool('select', 'draw'); render();
+  setTool('select', 'draw');
+  S.selNodes = [box.id]; render();
+  const panAt = (type, buttons, button) => {
+    const r = stage.getBoundingClientRect();
+    stage.dispatchEvent(new PointerEvent(type, { bubbles:true, cancelable:true,
+      pointerId:2, pointerType:'mouse', clientX:r.left + 500, clientY:r.top + 400,
+      button, buttons }));
+  };
+  panAt('pointerdown', 2, 2);
+  ok('panning hides the floating bars',
+     document.body.classList.contains('panning') &&
+     getComputedStyle(document.querySelector('#shaper')).display === 'none');
+  panAt('pointerup', 0, 2);
+  ok('the bars return when the pan ends',
+     !document.body.classList.contains('panning') &&
+     getComputedStyle(document.querySelector('#shaper')).display === 'flex');
+  S.selNodes = []; render();
 
   setTool('box', 'draw');
   drag({x:zone.x+40,y:zone.y+40},{x:zone.x+240,y:zone.y+160});
@@ -1175,6 +1290,12 @@ if (/[?&]test/.test(location.search)){
   const fileRight = document.getElementById('menu').getBoundingClientRect().right;
   document.body.click();
   ok('only one top menu opens at a time', menuOk && openMenus().length === 0);
+  document.body.click();
+  window.dispatchEvent(new KeyboardEvent('keydown', { key:'s' }));
+  ok('S opens the steps panel and lands on its first button',
+     document.getElementById('steps-menu').classList.contains('on') &&
+     document.activeElement === document.querySelector('#steps-menu button'));
+  document.body.click();
   ok('file menu fits its labels on screen',
      fileClipped === 0 && fileRight <= window.innerWidth);
   const firstLink = links[0];
@@ -1233,7 +1354,55 @@ if (/[?&]test/.test(location.search)){
   const fr = nodes[nodes.length-1];
   ok('step add', nodes.length === nf+1 && fr.kind === 'frame' &&
      fr.members.length === 2 && presentFrames().some(f => f.id === fr.id));
+  render();
+  const stepBadge = stage.querySelector('[data-step-badge="' + fr.id + '"]');
+  ok('a step shows its number on the canvas',
+     !!stepBadge && stepBadge.textContent.trim() === String(fr.step));
+  document.body.classList.add('present');
+  ok('present mode hides the step numbers',
+     getComputedStyle(stepBadge).display === 'none');
+  document.body.classList.remove('present');
   removeStep(fr.id);
+  S.selNodes = [box.id];
+  const stepsBeforeShift = presentFrames().length;
+  window.dispatchEvent(new KeyboardEvent('keydown', { key:'S', shiftKey:true }));
+  ok('Shift+S adds a step from the selection',
+     presentFrames().length === stepsBeforeShift + 1);
+  document.getElementById('btn-steps').click();
+  const clearStepsBtn = document.querySelector('#steps-menu .clear-steps');
+  const shapesBeforeClear = nodes.filter(n => n.kind !== 'frame').length;
+  ok('the steps panel offers to clear every step', !!clearStepsBtn);
+  clearStepsBtn.click();
+  ok('clear all steps keeps the shapes',
+     presentFrames().length === 0 &&
+     nodes.filter(n => n.kind !== 'frame').length === shapesBeforeClear);
+  document.body.click();
+
+  const sA = { id:'saStep', kind:'box', title:'SA', sub:'', color:null,
+    tcolor:null, scolor:null, fs:1, x:100, y:900, w:120, h:60 };
+  const sB = { id:'sbStep', kind:'box', title:'SB', sub:'', color:null,
+    tcolor:null, scolor:null, fs:1, x:340, y:900, w:120, h:60 };
+  nodes.push(sA, sB);
+  selectNodes(['saStep', 'sbStep'], false);
+  addStep();
+  const sFrame = presentFrames().find(f => (f.members || []).includes('saStep'));
+  S.selNodes = ['saStep']; render();
+  window.dispatchEvent(new KeyboardEvent('keydown', { key:'Delete' }));
+  ok('deleting a member shrinks the step',
+     !!sFrame && presentFrames().some(f => f.id === sFrame.id &&
+       f.members.length === 1 && f.members[0] === 'sbStep'));
+  const badgeX = Number(stage.querySelector(
+    `[data-step-badge="${sFrame.id}"] circle`).getAttribute('cx'));
+  nodes.find(n => n.id === 'sbStep').x += 400; render();
+  const badgeX2 = Number(stage.querySelector(
+    `[data-step-badge="${sFrame.id}"] circle`).getAttribute('cx'));
+  ok('the step number follows its member', badgeX2 > badgeX + 100);
+  S.selNodes = ['sbStep']; render();
+  window.dispatchEvent(new KeyboardEvent('keydown', { key:'Delete' }));
+  ok('deleting the last member removes the step',
+     !presentFrames().some(f => f.id === sFrame.id) &&
+     !stage.querySelector(`[data-step-badge="${sFrame.id}"]`));
+
   S.selNodes = [];
 
   const zT = { id:'zt', kind:'zone', title:'', color:null, tcolor:null, scolor:null,
@@ -1268,6 +1437,11 @@ if (/[?&]test/.test(location.search)){
   ok('document fields', pdA.tint === true && !('junk' in pdA) &&
      pdA.logo === 'data:image/png;base64,AAA' &&
      pdF.step === 2 && pdF.members.length === 1 && pdF.members[0] === 'a1');
+  const deadFrame = parseDoc(JSON.stringify({ format:'yoruma', version:1, links:[],
+    nodes:[{ id:'lone', kind:'box', x:0, y:0, w:10, h:10 },
+      { id:'dead', kind:'frame', x:0, y:0, w:1, h:1, step:1, members:['ghost'] }] }));
+  ok('a step whose members are gone disappears on load',
+     deadFrame.nodes.length === 1 && deadFrame.nodes[0].id === 'lone');
 
   let bigDoc = false, hugeDoc = false;
   try { parseDoc('x'.repeat(DOC_MAX_CHARS + 1)); } catch (e){ bigDoc = /too large/.test(e.message); }
@@ -1579,6 +1753,12 @@ if (/[?&]test/.test(location.search)){
       links[0].motion = 'off';
       render();
       const plainSvg = await buildSVG();
+      const badgeFrame = { id:'badgeF', kind:'frame', title:'S', members:[],
+        step:1, x:100, y:100, w:10, h:10 };
+      nodes.push(badgeFrame); render();
+      const badgeSvg = await buildSVG();
+      nodes.pop(); render();
+      ok('step numbers stay out of the export', !/step-badge/.test(badgeSvg));
       ok('dots animate in the exported svg',
          /<animateMotion/.test(dotSvg) && /<mpath/.test(dotSvg) &&
          /yoruma-mp0/.test(dotSvg) && !/<animateMotion/.test(plainSvg));
@@ -1636,6 +1816,77 @@ if (/[?&]test/.test(location.search)){
       setPresent(false);
       fit();
       render();
+
+      /* ---- minimap ---- */
+      const keepMapN = nodes, keepMapL = links, keepMapMode = mapMode;
+      const keepView = { x: view.x, y: view.y, k: view.k };
+      nodes = [];
+      links = [];
+      for (let i = 0; i < 24; i++){
+        nodes.push({ id:'mm'+i, kind:'box', title:'M'+i, sub:'', color:null,
+          tcolor:null, scolor:null, fs:1, x:(i%4)*900, y:Math.floor(i/4)*500,
+          w:200, h:100 });
+      }
+      setMapMode('auto'); setPresent(false); render();
+      view.k = 1; view.x = -2000; view.y = -1500; applyView();
+      ok('the minimap appears when the page is bigger than the screen',
+         mapVisible() && !mapEl.classList.contains('off') &&
+         mapCounts.nodes === nodes.length && mapCounts.links === links.length);
+      const mapBefore = { x: view.x, y: view.y };
+      const mr = mapCanvas.getBoundingClientRect();
+      const at = { clientX: mr.left + mr.width/2, clientY: mr.top + mr.height/2 };
+      mapEl.dispatchEvent(new PointerEvent('pointerdown', { ...at, bubbles:true,
+        cancelable:true, button:0, buttons:1, pointerId:7, pointerType:'mouse' }));
+      mapEl.dispatchEvent(new PointerEvent('pointerup', { ...at, bubbles:true,
+        cancelable:true, button:0, buttons:0, pointerId:7, pointerType:'mouse' }));
+      ok('dragging inside the minimap moves the view',
+         view.x !== mapBefore.x || view.y !== mapBefore.y);
+      const boxW0 = mapViewRect.w;
+      zoomCenter(2);
+      ok('the viewport box shrinks as the canvas zooms in',
+         mapViewRect.w < boxW0);
+      toggleMinimap();
+      ok('one press hides a visible minimap',
+         mapMode === 'off' && !mapVisible());
+      toggleMinimap();
+      ok('a second press brings it back', mapMode === 'on' && mapVisible());
+      mapBtn.dispatchEvent(new MouseEvent('click', { bubbles:true, altKey:true }));
+      ok('alt-click goes back to auto', mapMode === 'auto');
+      document.body.classList.add('present'); syncMinimap();
+      ok('present mode hides the minimap',
+         mapEl.classList.contains('off') && !mapVisible());
+      document.body.classList.remove('present');
+      nodes = [{ id:'tiny1', kind:'box', title:'Tiny', sub:'', color:null,
+        tcolor:null, scolor:null, fs:1, x:0, y:0, w:120, h:60 }];
+      links = []; fit(); render();
+      ok('a diagram that already fits hides the minimap',
+         !mapVisible() && mapEl.classList.contains('off'));
+
+      const keepPMapN = nodes, keepPMapL = links;
+      nodes = []; links = [];
+      for (let i = 0; i < 200; i++){
+        nodes.push({ id:'pw'+i, kind:'box', title:'P'+i, sub:'', color:null,
+          tcolor:null, scolor:null, fs:1, x:(i%20)*240, y:Math.floor(i/20)*150,
+          w:180, h:90 });
+        if (i) links.push({ id:'pwl'+i, from:'pw'+(i-1), to:'pw'+i, color:null,
+          motion:'off', label:'', way:null });
+      }
+      setMapMode('on');
+      render();
+      const mapTimes = [];
+      for (let i = 0; i < 8; i++){
+        const t = performance.now();
+        render();
+        mapTimes.push(performance.now() - t);
+      }
+      mapTimes.sort((a, b) => a - b);
+      const mapMedian = mapTimes[Math.floor(mapTimes.length/2)];
+      ok('the minimap keeps the render budget ' + mapMedian.toFixed(1) + 'ms',
+         mapMedian < 16 && mapVisible());
+      nodes = keepMapN; links = keepMapL; setMapMode(keepMapMode);
+      view.x = keepView.x; view.y = keepView.y; view.k = keepView.k;
+      applyView(); render();
+
       const fails = R.filter(r => r.startsWith('FAIL')).length;
       const el2 = document.getElementById('help');
       el2.innerHTML = '<h3>Self test</h3>' + R.map(r =>

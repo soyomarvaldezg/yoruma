@@ -99,6 +99,12 @@
     border:1px solid var(--line); border-radius:3px; background:var(--card);
     color:var(--ink); font-family:'VD Sans',sans-serif; font-size:8.5px; line-height:1.1;
     text-align:center}
+  .icon-chips{display:flex; flex-wrap:wrap; gap:3px; margin:0 0 6px}
+  .icon-chip{font-family:'VD Code',monospace; font-size:9px; letter-spacing:.06em;
+    padding:3px 6px; border:1px solid var(--line); border-radius:3px;
+    background:transparent; color:var(--muted)}
+  .icon-chip:hover{background:rgba(45,49,65,.06)}
+  .icon-chip.on{background:var(--ink); color:var(--paper); border-color:var(--ink)}
   .icon-tile{position:relative}
   .icon-tile.brand::after, .icon-tile.pack::after, .icon-tile.loop::after{
     position:absolute; top:2px; right:4px;
@@ -120,7 +126,8 @@
   .icon-section:first-child{padding-top:1px}
 
   body.present header, body.present aside, body.present .status{display:none}
-  body.present #shaper, body.present #linkbar, body.present #stylebar,
+  body.present #shaper, body.present #loopbar, body.present #linkbar,
+  body.present #stylebar,
   body.present #help{display:none !important}
   #present-badge{position:fixed; left:50%; bottom:56px; transform:translateX(-50%);
     display:none; z-index:12; background:var(--ink); color:var(--on-dark);
@@ -216,6 +223,18 @@
   .zoombar button{border:0; width:30px; height:26px; font-size:13px; padding:0}
   .zoombar .pct{color:var(--muted-on-dark); font-family:'VD Code',monospace;
     font-size:10.5px; display:grid; place-items:center; min-width:48px}
+  #z-map{display:grid; place-items:center}
+  #z-map svg{width:15px; height:15px; fill:none; stroke:currentColor;
+    stroke-width:1.6; stroke-linecap:round; stroke-linejoin:round}
+  #z-map.on{background:var(--on-dark); color:var(--ink)}
+
+  #minimap{position:absolute; right:12px; bottom:84px; width:200px; height:132px;
+    overflow:hidden; border-radius:5px; background:var(--paper);
+    box-shadow:inset 0 0 0 1px rgba(45,49,65,.22), 0 6px 18px rgba(8,24,40,.16);
+    cursor:crosshair; touch-action:none; z-index:6}
+  #minimap.off{display:none}
+  #minimap canvas{display:block; width:100%; height:100%}
+  body.present #minimap, body.present #z-map{display:none}
 
   .status{
     position:absolute; right:12px; bottom:12px; background:var(--ink);
@@ -233,6 +252,9 @@
   #lint-chip:hover{color:#F6B26B}
   body.present .pagebar{display:none}
   body.present #lint-chip{display:none}
+  body.present .step-badge{display:none}
+  body.panning #shaper, body.panning #loopbar,
+  body.panning #linkbar{display:none !important}
 
   #shaper{position:fixed; display:none; z-index:8; background:var(--ink);
     padding:3px; border-radius:4px; gap:2px;
@@ -243,8 +265,24 @@
   #shaper button:disabled{opacity:.32; cursor:default}
   #shaper svg{width:17px; height:17px; fill:none; stroke:currentColor;
     stroke-width:1.6; stroke-linecap:round; stroke-linejoin:round}
+  /* Loops get their own strip beside the tile: twelve small glyphs do not
+     belong in the shape bar, and the tempo chevrons only make sense there. */
+  #loopbar{position:fixed; display:none; z-index:8; background:var(--ink);
+    padding:2px; border-radius:4px; gap:1px;
+    flex-wrap:wrap; max-width:min(420px, calc(100vw - 24px))}
+  #loopbar button{width:26px; height:24px; padding:0; border:0; display:grid;
+    place-items:center; color:var(--on-dark)}
+  #loopbar button.on{background:var(--on-dark); color:var(--ink)}
+  #loopbar button:disabled{opacity:.32; cursor:default}
+  #loopbar button[data-speed="slower"]{margin-left:6px;
+    box-shadow:inset 1px 0 0 rgba(255,255,255,.22)}
+  #loopbar button[data-speed].tempo{outline:1px solid rgba(255,255,255,.55);
+    outline-offset:-1px}
+  #loopbar svg{width:15px; height:15px; fill:none; stroke:currentColor;
+    stroke-width:1.6; stroke-linecap:round; stroke-linejoin:round}
   #linkbar{position:fixed; display:none; z-index:8; background:var(--ink);
-    padding:3px; border-radius:4px; gap:2px}
+    padding:3px; border-radius:4px; gap:2px; pointer-events:none}
+  #linkbar button{pointer-events:auto}
   #linkbar button{width:30px; height:28px; padding:0; border:0; display:grid;
     place-items:center; color:var(--on-dark)}
   #linkbar button.on{background:var(--on-dark); color:var(--ink)}
@@ -263,7 +301,12 @@
 
   #menu{position:absolute; right:0; left:auto; top:38px; display:none; z-index:10;
     background:var(--ink); border:1px solid var(--edge); border-radius:4px;
-    padding:4px; min-width:230px; width:max-content; max-width:calc(100vw - 20px)}
+    padding:4px; min-width:230px; width:max-content; max-width:calc(100vw - 20px);
+    max-height:calc(100vh - 60px); overflow:auto}
+  .menu-label{margin:7px 9px 2px; font-family:'VD Code',monospace; font-size:8.5px;
+    letter-spacing:.14em; text-transform:uppercase; color:var(--muted-on-dark);
+    opacity:.75}
+  .menu-label:first-child{margin-top:2px}
   #menu button{display:block; width:100%; text-align:left; border:0; padding:7px 9px;
     white-space:nowrap}
   #menu.on{display:block}
@@ -282,7 +325,12 @@
     text-overflow:ellipsis; white-space:nowrap; color:var(--on-dark); cursor:pointer}
   .step-row .name:hover{text-decoration:underline}
   .step-row button{width:22px; height:22px; padding:0; text-align:center; border:1px solid var(--edge)}
+  /* The picker's `#steps-menu button` rule is more specific and stretches
+     these to 100%; keep the row controls compact. */
+  #steps-menu .step-row button{width:22px; height:22px; padding:0; flex:none;
+    text-align:center; border:1px solid var(--edge)}
   .step-row button.del{color:#FF8787; border-color:#8E3B47; font-size:14px; line-height:1}
+  #steps-menu .clear-steps{color:#FF8787}
   .step-row button.del:hover{background:#E03131; border-color:#E03131; color:#fff}
   .step-empty{padding:6px 8px; font-family:'VD Code',monospace; font-size:10px;
     color:var(--muted-on-dark)}
@@ -290,24 +338,25 @@
   .help{
     position:fixed; right:16px; top:56px; z-index:11; display:none;
     background:var(--ink); color:var(--on-dark); border:1px solid var(--edge);
-    border-radius:4px; padding:14px 18px; width:360px;
+    border-radius:4px; padding:14px 18px; width:420px;
     max-height:calc(100vh - 80px); overflow:auto;
-    font-family:'VD Code',monospace; font-size:11px; line-height:1.9;
+    font-family:'VD Code',monospace; font-size:11px; line-height:1.7;
     box-shadow:0 10px 30px rgba(0,0,0,.3);
   }
   .help.on{display:block}
-  .help h3{margin:0 0 8px; font-size:10px; letter-spacing:.18em; text-transform:uppercase;
+  .help h3{margin:13px 0 5px; font-size:10px; letter-spacing:.18em; text-transform:uppercase;
     color:var(--muted-on-dark)}
+  .help h3:first-child{margin-top:0}
   .help kbd{
     display:inline-block; min-width:20px; text-align:center; padding:0 5px;
     border:1px solid var(--edge); border-radius:3px; color:var(--on-dark);
     font-family:inherit; font-size:10px; margin-right:7px;
   }
-  .help div{display:flex; justify-content:space-between; gap:14px; white-space:nowrap;
-    align-items:baseline}
-  .help div span:first-child{flex:none}
+  .help div{display:grid; grid-template-columns:auto 1fr; gap:2px 16px;
+    align-items:baseline; margin-bottom:2px}
+  .help div span:first-child{white-space:nowrap}
   .help div span:last-child{color:var(--muted-on-dark); text-align:right;
-    overflow:hidden; text-overflow:ellipsis}
+    min-width:0}
   .help .foot{margin-top:10px; color:var(--muted-on-dark); font-size:10px;
     white-space:normal; display:block}
   #toast{position:fixed; left:50%; bottom:20px; transform:translateX(-50%);

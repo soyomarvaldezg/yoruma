@@ -97,7 +97,13 @@ const STATES = [
     d:outline('<rect x="7.5" y="8.5" width="9" height="10" rx="4.5"/>' +
       '<path d="M9 8.5 7.5 6M15 8.5 16.5 6M7.5 12H4.5M19.5 12h-3M8 15.5H5.5M18.5 15.5H16M9.5 5.5h5"/>') },
   { n:'Alert', c:'#A61E4D', t:'alert,bell,notify,notification,pager,oncall,alarm',
-    d:outline('<path d="M18 16.5V11a6 6 0 0 0-12 0v5.5l-1.5 2h15z"/><path d="M10 20.5a2.2 2.2 0 0 0 4 0"/>') }
+    d:outline('<path d="M18 16.5V11a6 6 0 0 0-12 0v5.5l-1.5 2h15z"/><path d="M10 20.5a2.2 2.2 0 0 0 4 0"/>') },
+  { n:'Down', c:'#C92A2A', t:'down,offline,unreachable,outage,disconnected,stopped,dead,service down',
+    d:outline('<path d="M12 3.5v7.2"/><path d="M7.6 6.4a7.2 7.2 0 1 0 8.8 0"/>') },
+  { n:'Saturated', c:'#D9480F', t:'saturated,overloaded,overload,throttled,throttle,capacity,cpu,backlog,hot',
+    d:outline('<path d="M4.7 17.5a8.3 8.3 0 1 1 14.6 0"/><path d="M12 17.2 15.8 10.6"/><circle cx="12" cy="17.5" r="1.3"/>') },
+  { n:'Stale', c:'#B08900', t:'stale,freshness,sla,late,delayed,outdated,lag,aged',
+    d:outline('<path d="M6.8 3.5h10.4M6.8 20.5h10.4"/><path d="M8 3.5v3.2L12 11l4-4.3V3.5M8 20.5v-3.2L12 13l4 4.3v3.2"/>') }
 ];
 
 /* The loops belong in the same box as the glyphs: a spinner is something you
@@ -292,6 +298,7 @@ function applyIconPack(list){
   catch (e){ toast('could not store the icon pack (storage full)', 5000); return 0; }
   rebuildIconIndex();
   iconFilter.value = '';
+  paintIconChips();
   paintIconGrid();
   return entries.length;
 }
@@ -310,6 +317,7 @@ function clearImportedIcons(){
   try { localStorage.removeItem(PACK_KEY); } catch (e){}
   rebuildIconIndex();
   iconFilter.value = '';
+  paintIconChips();
   paintIconGrid();
   toast(n + (n === 1 ? ' imported icon removed' : ' imported icons removed'));
 }
@@ -472,24 +480,59 @@ function iconSection(label){
   h.textContent = label;
   return h;
 }
+let iconGroup = 'All';
+const iconChipsEl = document.getElementById('icon-chips');
+function iconSectionList(label){
+  const found = ICON_SECTIONS().find(([g]) => g === label);
+  return found ? found[1] : LOCAL_ICONS;
+}
+function paintIconChips(){
+  if (!iconChipsEl) return;
+  const groups = ['All'].concat(ICON_SECTIONS()
+    .filter(([, list]) => list.length).map(([g]) => g));
+  if (!groups.includes(iconGroup)) iconGroup = 'All';
+  iconChipsEl.innerHTML = '';
+  groups.forEach(g => {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'icon-chip' + (g === iconGroup ? ' on' : '');
+    b.textContent = g;
+    b.setAttribute('role', 'tab');
+    b.setAttribute('aria-selected', g === iconGroup ? 'true' : 'false');
+    b.addEventListener('mousedown', ev => ev.preventDefault());
+    b.addEventListener('click', () => {
+      iconGroup = g;
+      paintIconChips();
+      paintIconGrid();
+    });
+    iconChipsEl.appendChild(b);
+  });
+}
 function paintIconGrid(){
   const raw = iconFilter.value.trim();
   const q = icNorm(raw);
+  const scoped = iconGroup === 'All' ? LOCAL_ICONS : iconSectionList(iconGroup);
   iconGridEl.innerHTML = '';
-  const local = q ? iconSearch(raw) : [];
+  const local = (q ? iconSearch(raw) : scoped)
+    .filter(e => iconGroup === 'All' || scoped.includes(e));
   if (!q){
-    ICON_SECTIONS().forEach(([label, list]) => {
-      if (!list.length) return;
-      iconGridEl.appendChild(iconSection(label));
-      list.forEach(e => iconGridEl.appendChild(iconTile(e)));
-    });
+    if (iconGroup === 'All'){
+      ICON_SECTIONS().forEach(([label, list]) => {
+        if (!list.length) return;
+        iconGridEl.appendChild(iconSection(label));
+        list.forEach(e => iconGridEl.appendChild(iconTile(e)));
+      });
+    } else {
+      iconGridEl.appendChild(iconSection(iconGroup));
+      local.forEach(e => iconGridEl.appendChild(iconTile(e)));
+    }
   } else {
     local.forEach(e => iconGridEl.appendChild(iconTile(e)));
   }
 
   const brands = [];
   const shown = new Set();
-  if (q.length >= 2){
+  if (iconGroup === 'All' && q.length >= 2){
     const svglHits = [];
     if (brandState === 'ready'){
       for (const it of svglIndex){
@@ -518,13 +561,13 @@ function paintIconGrid(){
   brands.forEach(it => iconGridEl.appendChild(
     it && it.f ? brandEntryTile(it) : brandIconTile(it)));
 
-  if (brandState === 'loading' && q.length >= 2){
+  if (iconGroup === 'All' && brandState === 'loading' && q.length >= 2){
     const note = document.createElement('div');
     note.className = 'icon-note';
     note.textContent = 'loading brand marks…';
     iconGridEl.appendChild(note);
   }
-  if (!local.length && !brands.length && q.length >= 2)
+  if (iconGroup === 'All' && !local.length && !brands.length && q.length >= 2)
     iconGridEl.appendChild(brandFetchTile(raw));
 }
 
@@ -542,6 +585,18 @@ async function loadBrandIndex(){
 }
 
 iconFilter.addEventListener('input', () => {
+  /* Typing a section name is the same as pressing its chip: show that group
+     and clear the box, so the word never doubles as a search term. */
+  const typed = icNorm(iconFilter.value);
+  const section = typed && ['All', ...ICON_SECTIONS().map(([g]) => g)]
+    .find(g => icNorm(g) === typed);
+  if (section){
+    iconGroup = section;
+    iconFilter.value = '';
+    paintIconChips();
+    paintIconGrid();
+    return;
+  }
   paintIconGrid();
   if (icNorm(iconFilter.value).length >= 2) loadBrandIndex();
 });
@@ -560,4 +615,5 @@ iconFilter.addEventListener('keydown', ev => {
   else fetchLogoByName(q, cardTarget());
 });
 loadIconPack();
+paintIconChips();
 paintIconGrid();

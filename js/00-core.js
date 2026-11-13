@@ -71,7 +71,10 @@ const MORPHS = ['box','ellipse','store','queue','cloud','file','tile'];
 
 /* Tile loops: what a running system looks like. The paths are stroked, so the
    picker wraps them in currentColor and the shape bar draws them as buttons. */
-const ANIMS = ['loading','progress','typing','uploading','heartbeat','stream','sync','waiting','retry','poll'];
+const ANIMS = ['loading','progress','typing','uploading','heartbeat','stream','sync','waiting','retry','poll','throttle'];
+/* A loop's tempo is part of the loop, but the same glyph can mean "right now"
+   in one corner and "every few minutes" in another, so `speed:` scales it. */
+const SPEEDS = [0.25, 0.5, 0.75, 1, 1.5, 2, 3, 4];
 const LOOP_D = {
   loading:'<circle cx="12" cy="12" r="7" stroke-dasharray="10 30"/>',
   progress:'<rect x="3.5" y="10" width="17" height="4.5" rx="2.2"/><path d="M6 12.2h6"/>',
@@ -84,7 +87,8 @@ const LOOP_D = {
   waiting:'<circle cx="12" cy="12" r="7.5"/><path d="M12 4.5v1.4M19.5 12h-1.4M12 19.5v-1.4M4.5 12h1.4"/>' +
     '<path d="M12 12V8M12 12h2.8"/>',
   retry:'<path d="M19.5 12a7.5 7.5 0 1 1-2.2-5.3"/><path d="M19.7 3.6v4.4h-4.4"/>',
-  poll:'<circle cx="12" cy="12" r="7.5"/><path d="M12 12l6-3.4"/>'
+  poll:'<circle cx="12" cy="12" r="7.5"/><path d="M12 12l6-3.4"/>',
+  throttle:'<path d="M4.6 17.5a7.6 7.6 0 1 1 14.8 0"/><path d="M12 17.2 15.6 11"/><path d="M18.4 8.2l.9-.9"/>'
 };
 const LOOP_TAGS = {
   loading:'loading,spinner,spin,wait,busy,working,pending',
@@ -96,7 +100,8 @@ const LOOP_TAGS = {
   sync:'sync,replicate,replication,mirror,cdc,reconcile,two way',
   waiting:'waiting,idle,paused,queued,stalled,off hours',
   retry:'retry,again,backoff,rerun,failover,flaky',
-  poll:'poll,check,scheduled,cron,interval,watch'
+  poll:'poll,check,scheduled,cron,interval,watch',
+  throttle:'throttle,throttled,rate limit,rate limiting,backpressure,overloaded,capacity,quota,slow,saturated'
 };
 
 const SIZE = {

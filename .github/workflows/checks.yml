@@ -22,3 +22,4 @@ jobs:
       - run: npx playwright install --with-deps chromium
         working-directory: tools
       - run: node tools/verify.mjs
+      - run: node tools/yoruma.mjs check docs/*.yaml

@@ -1,5 +1,6 @@
 /* ---------- shaper ---------- */
 const shaper = document.getElementById('shaper');
+const loopbar = document.getElementById('loopbar');
 MORPHS.forEach(kind => {
   const b = document.createElement('button');
   b.innerHTML = `<svg viewBox="0 0 24 24">${ICON[kind] || ICON.box}</svg>`;
@@ -35,7 +36,32 @@ ANIMS.forEach(a => {
     else n.anim = a;
     render();
   });
-  shaper.appendChild(b);
+  loopbar.appendChild(b);
+});
+/* The stepper only shows beside a running tile: the tempo belongs to the
+   loop, not to every shape, so it stays out of the strip until it can act. */
+function stepSpeed(n, dir){
+  if (!n || n.kind !== 'tile' || !n.anim) return false;
+  const next = SPEEDS[Math.min(SPEEDS.length - 1,
+    Math.max(0, speedStep(n) + dir))];
+  snapshot();
+  if (next === 1) delete n.speed;
+  else n.speed = next;
+  render();
+  return true;
+}
+[{ id:'slower', icon:'<path d="M14 6l-6 6 6 6"/>', label:'Slower' },
+ { id:'faster', icon:'<path d="M10 6l6 6-6 6"/>', label:'Faster' }]
+.forEach(st => {
+  const b = document.createElement('button');
+  b.innerHTML = `<svg viewBox="0 0 24 24">${st.icon}</svg>`;
+  b.title = st.label;
+  b.setAttribute('aria-label', st.label + ' the tile loop');
+  b.dataset.speed = st.id;
+  b.addEventListener('mousedown', ev => ev.preventDefault());
+  b.addEventListener('click',
+    () => stepSpeed(byId(S.selNodes[0]), st.id === 'faster' ? 1 : -1));
+  loopbar.appendChild(b);
 });
 const ALIGN_ICON = {
   left:'<path d="M4 6h16M4 12h9M4 18h13"/>',
@@ -211,25 +237,69 @@ LINK_STYLE.forEach(opt => {
   linkbar.appendChild(b);
 });
 
+/* The strip hugs its tile, but the style bar is docked top-right and would
+   swallow it: try above and below the tile, then left of that panel, and only
+   then drop it under the panel. */
+function loopSpot(n, s){
+  const w = loopbar.offsetWidth, h = loopbar.offsetHeight;
+  const panel = document.getElementById('stylebar');
+  const sb = panel && panel.offsetWidth ? panel.getBoundingClientRect() : null;
+  const across = x => Math.max(6, Math.min(window.innerWidth - w - 6, x));
+  const spots = [];
+  [s.y - h - 10, s.y + n.h*view.k + 10].forEach(y => {
+    spots.push({ x: across(s.x), y });
+    if (sb) spots.push({ x: across(sb.left - w - 8), y });
+  });
+  if (sb) spots.push({ x: across(s.x), y: sb.bottom + 8 });
+  const clear = p => p.y >= 6 && p.y + h <= window.innerHeight - 6 &&
+    (!sb || p.x + w <= sb.left || p.x >= sb.right ||
+     p.y + h <= sb.top || p.y >= sb.bottom);
+  return spots.find(clear) ||
+    { x: across(s.x),
+      y: Math.max(6, Math.min(s.y - h - 10, window.innerHeight - h - 6)) };
+}
+
 function placeShaper(){
+  loopbar.style.display = 'none';
   if (S.selNodes.length !== 1 || editing){ shaper.style.display = 'none'; return; }
   const n = byId(S.selNodes[0]);
   if (!n){ shaper.style.display = 'none'; return; }
   const s = toScreen({ x:n.x, y:n.y });
-  shaper.style.display = 'flex';
-  shaper.style.left = Math.max(6, s.x) + 'px';
-  const above = s.y - 78;
-  shaper.style.top = (above < 8 ? s.y + n.h*view.k + 46 : above) + 'px';
-  shaper.querySelectorAll('button').forEach(b => {
+  /* A tile is a running thing, not a shape to restyle: it gets the loop strip
+     and nothing else, so one selection never means two floating bars. */
+  if (n.kind === 'tile'){
+    shaper.style.display = 'none';
+    loopbar.style.display = 'flex';
+    const at = loopSpot(n, s);
+    loopbar.style.left = at.x + 'px';
+    loopbar.style.top = at.y + 'px';
+  } else {
+    shaper.style.display = 'flex';
+    shaper.style.left = Math.max(6, s.x) + 'px';
+    const above = s.y - 78;
+    shaper.style.top = (above < 8 ? s.y + n.h*view.k + 46 : above) + 'px';
+  }
+  document.querySelectorAll('#shaper button, #loopbar button').forEach(b => {
     let on = false;
     if (b.dataset.anim){
       b.style.display = n.kind === 'tile' ? '' : 'none';
       on = n.anim === b.dataset.anim;
     }
+    else if (b.dataset.speed){
+      b.style.display = n.kind === 'tile' && n.anim ? '' : 'none';
+      const at = speedStep(n);
+      b.disabled = b.dataset.speed === 'slower' ? at <= 0 : at === SPEEDS.length - 1;
+      b.classList.toggle('tempo', animSpeed(n) !== 1);
+      b.title = (b.dataset.speed === 'slower' ? 'Slower' : 'Faster') +
+        ', now ' + animSpeed(n) + '×';
+    }
     else if (b.dataset.zone){
       b.style.display = n.kind === 'zone' ? '' : 'none';
       on = n.kind === 'zone' && n[b.dataset.zone] === true;
-    } else if (b.dataset.align) on = (n.align || 'center') === b.dataset.align;
+    } else if (b.dataset.align){
+      b.style.display = n.kind === 'tile' ? 'none' : '';
+      on = (n.align || 'center') === b.dataset.align;
+    }
     else on = b.dataset.kind === n.kind;
     b.classList.toggle('on', on);
     b.setAttribute('aria-pressed', on ? 'true' : 'false');
@@ -246,8 +316,10 @@ function placeLinkbar(){
   linkbar.style.display = 'flex';
   const w = linkbar.offsetWidth || 200;
   linkbar.style.left = Math.max(6, Math.min(window.innerWidth - w - 6, s.x - w/2)) + 'px';
-  const above = s.y - 46;
-  linkbar.style.top = (above < 8 ? s.y + 18 : above) + 'px';
+  /* Clear the label: it ends about 23px above the midpoint, the bar is ~36px
+     tall, so 64px leaves a gap instead of clipping the text. */
+  const above = s.y - 64;
+  linkbar.style.top = (above < 8 ? s.y + 26 : above) + 'px';
   const lw = l.lw || 1.5;
   const mode = l.motion || S.motion;
   const animated = mode === 'dashes' || mode === 'both' || mode === 'live';

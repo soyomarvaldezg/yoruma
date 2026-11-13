@@ -1,0 +1,43 @@
+title: Nightly backfill, live reads
+subtitle: one warehouse, two tempos
+dir: right
+
+zone Sources:
+  card Postgres:
+    icon: postgres
+    sub: orders
+  card S3:
+    icon: object storage
+    sub: raw events
+
+zone Pipeline:
+  dir: down
+  card Airflow:
+    icon: airflow
+    sub: nightly DAG
+  card dbt:
+    icon: etl service
+    sub: models
+  tile Backfill:
+    anim: progress
+    speed: 0.5
+    tint: true
+
+zone Serving:
+  dir: down
+  card Warehouse:
+    icon: snowflake
+    sub: analytics
+  card Dashboard:
+    icon: superset
+  tile Live:
+    anim: heartbeat
+    color: "#099268"
+
+Postgres -> Airflow: nightly
+S3 -> Airflow:
+Airflow -> dbt:
+dbt -> Backfill: 6h
+dbt -> Warehouse:
+Warehouse -> Dashboard:
+Warehouse -> Live:

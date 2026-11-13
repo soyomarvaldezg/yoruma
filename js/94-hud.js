@@ -104,6 +104,34 @@ function removeStep(id){
   nodes = nodes.filter(n => n.id !== id);
   render();
 }
+/* A step is its members. When a member disappears, drop it from the step;
+   when the last one goes, the step goes too. Numbering stays contiguous. */
+function pruneSteps(){
+  let changed = false;
+  nodes = nodes.filter(n => {
+    if (n.kind !== 'frame') return true;
+    const before = (n.members || []).length;
+    n.members = (n.members || []).filter(id => byId(id));
+    if (!n.members.length){ changed = true; return false; }
+    if (n.members.length !== before){
+      changed = true;
+      const b = membersBox(n);
+      if (b){ n.x = b.x; n.y = b.y; n.w = b.w; n.h = b.h; }
+    }
+    return true;
+  });
+  if (changed) presentFrames().forEach((f, i) => { f.step = i + 1; });
+  return changed;
+}
+function clearSteps(){
+  const list = presentFrames();
+  if (!list.length){ toast('no steps to clear', 2400); return; }
+  snapshot();
+  const ids = new Set(list.map(f => f.id));
+  nodes = nodes.filter(n => !ids.has(n.id));
+  render();
+  toast(list.length === 1 ? 'step cleared' : list.length + ' steps cleared');
+}
 function renderStepsMenu(){
   const el = document.getElementById('steps-menu');
   if (!el) return;
@@ -159,6 +187,15 @@ function renderStepsMenu(){
     row.appendChild(del);
     el.appendChild(row);
   });
+  const sep = document.createElement('div');
+  sep.className = 'menu-sep';
+  el.appendChild(sep);
+  const clear = document.createElement('button');
+  clear.className = 'clear-steps';
+  clear.textContent = 'Clear all steps';
+  clear.title = 'Remove every step; the shapes stay';
+  clear.addEventListener('click', () => { clearSteps(); renderStepsMenu(); });
+  el.appendChild(clear);
 }
 function presentBox(){
   const z = presentZoneId ? nodes.find(n => n.id === presentZoneId) : null;

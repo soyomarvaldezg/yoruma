@@ -38,6 +38,21 @@ tasks:
     cmds:
       - node {{.TOOLS}}/icons.mjs
 
+  render:
+    desc: Render a text diagram to PNG or SVG (task render -- docs/example-loops.yaml -o loops.png)
+    cmds:
+      - node {{.TOOLS}}/yoruma.mjs render {{.CLI_ARGS}}
+
+  text-check:
+    desc: Validate the text examples with the same parser the page uses
+    cmds:
+      - node {{.TOOLS}}/yoruma.mjs check docs/*.yaml
+
+  icon-name:
+    desc: List or search the icon names the text format accepts (task icon-name -- kafka)
+    cmds:
+      - node {{.TOOLS}}/yoruma.mjs icons {{.CLI_ARGS}}
+
   blocks:
     desc: Regenerate the Blocks palette as text (docs/example-blocks.yaml) from the catalog
     cmds:

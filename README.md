@@ -42,6 +42,12 @@ Press **⌘.** to hide the panel. Press **⌘.** again to show it.
 
 The style bar appears when you select a shape. It stays top-right.
 
+The minimap sits bottom-right when the page is bigger than the window: every shape
+as a silhouette, the current view as a rectangle. Click or drag inside it to jump
+there. It keeps itself out of the way on small diagrams; **⇧M**, or the map button
+in the zoombar, shows or hides it in one press. ⌥-click that button to hand the
+decision back to auto.
+
 ## What you can draw
 
 - **Zones** hold other shapes. A zone carries every shape inside it, at any depth.
@@ -53,9 +59,11 @@ The style bar appears when you select a shape. It stays top-right.
 - **Icon tiles** are filled squares in one hue with a white glyph and no outline.
   The hue is the explicit colour, or a stable colour the icon hashes to.
   `tint: true` washes the tile pale and paints the glyph in the outline colour.
-  A tile can loop instead of showing a glyph: loading, progress, typing,
-  uploading or heartbeat. Select a tile and press a loop in the style bar;
-  press it again to stop.
+  A tile can loop instead of showing a glyph. Select a tile and its own small
+  loop strip appears in place of the shape bar, beside the tile; press a loop,
+  and press it again to stop. The two chevrons at the end of the strip make the
+  same loop run slower or faster (`<` and `>` on the keyboard), so one glyph can
+  mean "right now" in one corner and "every few minutes" in another.
   Select a card and pick the tile in the style bar to morph it.
 - **Arrows** attach anywhere on a border. They enter the border at a right angle.
   Bend an arrow by dragging the small circle on any straight run — it pulls out
@@ -91,19 +99,24 @@ for the next shape you draw.
 
 ## Icons
 
-The **Icons** box searches 158 monochrome glyphs. Click one to place it.
+The **Icons** box searches 167 monochrome glyphs. Click one to place it.
 The glyph takes the outline colour of the card that carries it.
 
-With an empty filter the box groups itself: **PLUMBING**, **STATUS**, **LOOPS**,
-**PACK**, then anything you imported.
+Chips above the grid scope it: **All**, **Plumbing**, **Status**, **Loops**,
+**Pack**, plus **Imported** once a pack is loaded. The text box searches inside
+the chosen chip, so `loops` and `status` never mix; typing a section name
+("plumbing", "loops") switches to that chip and clears the box. With no chip and
+no query the box groups itself by section.
 
-- 10 loops make a tile run instead of carry a glyph: loading, progress, typing,
-  uploading, heartbeat, stream, sync, waiting, retry, poll.
+- 11 loops make a tile run instead of carry a glyph: loading, progress, typing,
+  uploading, heartbeat, stream, sync, waiting, retry, poll, throttle.
   Click one and it lands as a running tile; click one while a tile is selected
   and it drives that tile. Press the same loop again to stop it.
-- 9 glyphs name an outcome, not a vendor: success, error, warning, info,
-  question, blocked, retry, bug, alert. A state placed with nothing selected
-  lands as its own tile.
+  A selected tile grows a loop strip of its own under it; the chevrons at the
+  end set its tempo from 0.25x to 4x, or press `<` and `>`.
+- 12 glyphs name an outcome, not a vendor: success, error, warning, info,
+  question, blocked, retry, bug, alert, and the data-engineering ones: down,
+  saturated, stale. A state placed with nothing selected lands as its own tile.
 - 112 glyphs come from simple-icons, which is CC0.
 - 32 glyphs are drawn for yoruma. They name a role, not a vendor:
   object storage, data lake, warehouse, managed database, NoSQL store,
@@ -130,7 +143,7 @@ You can also drop an image on a card. Or press **IMAGE** in the header.
 Some vendors publish no free artwork: Azure Data Factory, Delta Lake,
 Fivetran, Snowplow. You can import their icons once.
 
-**FILE ▾ → Import icon pack…** accepts one or more `.svg` files.
+**FILE ▾ → Icons → Import pack…** accepts one or more `.svg` files.
 The file name becomes the icon name. The words in the name become tags.
 For example, `10128-icon-service-Azure-Synapse-Analytics.svg` becomes
 **Azure Synapse Analytics**, and `synapse` finds it.
@@ -172,11 +185,14 @@ and `⇧` is Shift.
 | `R` `O` `Z` | Rectangle · ellipse · zone |
 | `T` `G` `⇧G` | Text · heading · governance shape |
 | `N` `Y` `X` | Pen (ink stays) · laser (fades) · eraser (ink and shapes) |
+| `S` `⇧S` | Open the steps panel · add a step from the selection |
 | `1`…`9` `0` | Present mode, jump to a step. `0` shows the overview |
 | `[` `]` | Text size |
 | `,` `.` | Dot size |
 | `M` | Cycle the motion mode |
+| `<` `>` | Slow down or speed up the selected tile's loop |
 | `F` `W` `Esc` `?` | Fit · focus one shape · deselect · quick reference |
+| `⇧M` | Show or hide the minimap (⌥-click its button for auto) |
 | `⌘Z` `⇧⌘Z` `⌫` | Undo · redo · delete |
 | `⌘C` `⌘V` `⌘D` | Copy · paste · duplicate |
 | `⌘⇧]` `⌘⇧[` | Bring to front · send to back. Some browsers take this for tabs |
@@ -201,9 +217,12 @@ The pen (`N`) keeps its ink. The ink survives a reload. Press `Esc` to clear it.
 
 ## Present
 
-**STEPS ▾ → + STEP FROM SELECTION** turns the selected shapes into a step.
-Add more steps. Press **PRESENT**.
-Arrows and clicks move to the next step. `Esc` leaves present mode.
+**STEPS ▾ → + STEP FROM SELECTION** turns the selected shapes into a step, or
+press **S** to open that panel and **⇧S** to add a step straight from the
+selection. **Clear all steps** at the bottom of the panel removes the steps and
+keeps the shapes. Press **PRESENT**.
+Each step wears its number beside its box on the canvas; the numbers disappear
+in present mode, where arrows and clicks move to the next step. `Esc` leaves.
 
 ![Present mode on the overview slide](docs/present.png)
 
@@ -216,9 +235,11 @@ The document saves to `localStorage` on every change. A reload restores it, zoom
 
 **FILE ▾** holds these commands:
 
-- **Open JSON…** and **Open text…** load a document.
-- **Import icon pack…** adds your own icons.
-- The export commands, below.
+- **Open**: JSON… and text…
+- **Export**: SVG, PNG, WebP, PNG to the clipboard and the JSON document.
+- **Selection**: SVG and PNG of just the selected shapes.
+- **Text source**: Mermaid, D2 and their Kroki links.
+- **Icons**: import a pack, or remove the imported ones.
 - **Clear the document…** empties the current page. Undo restores it.
 
 The header shows **NOT SAVED** when storage is full or blocked.
@@ -242,6 +263,7 @@ It needs no positions. Files are in `docs/`:
 - `example-theme.yaml` — `theme: data` and arrow styling.
 - `example-aws-az.yaml` — a region, two availability zones and their subnets.
 - `example-blocks.yaml` — the whole Blocks palette as text.
+- `example-loops.yaml` — icon cards, two loop tiles and a `speed:` change.
 
 ```yaml
 title: Mock data pipeline
@@ -273,7 +295,8 @@ A shape takes these props:
 | `sharp` | `true` for square corners |
 | `fillmode` | `soft` or `solid` |
 | `tint` `band` `solid` `dash` | `true` or `false` |
-| `anim` | Tiles only: `loading`, `progress`, `typing`, `uploading`, `heartbeat` |
+| `anim` | Tiles only: `loading`, `progress`, `typing`, `uploading`, `heartbeat`, `stream`, `sync`, `waiting`, `retry`, `poll`, `throttle` |
+| `speed` | Tiles only: `0.25` to `4`, a multiplier on the loop's own tempo |
 | `color` `fill` | `#RRGGBB` |
 | `align` | `left`, `center` or `right` |
 | `x` `y` `w` `h` | A fixed position or size. Avoid it unless you need it |
@@ -358,6 +381,8 @@ task measure   # render cost at 50, 100, 200 and 400 shapes
 task blocks    # regenerate docs/example-blocks.yaml
 task icons     # regenerate the bundled icon pack from simple-icons
 task shot-d2   # screenshot docs/pipeline-from-d2.yaml
+task text-check             # validate every text example
+task render -- FILE -o OUT   # render a text file to PNG or SVG
 ```
 
 `ARCHITECTURE.md` explains the load order and what each file owns.
@@ -366,10 +391,73 @@ task shot-d2   # screenshot docs/pipeline-from-d2.yaml
 The page uses classic `<script>` tags in numbered order. It has one shared scope.
 There is no framework, no bundler and no runtime dependency.
 
+## Command line
+
+`tools/yoruma.mjs` renders and checks the text format from a terminal. It opens
+the real page in a headless browser, so its output cannot disagree with the
+editor. It needs `task deps` once (Node and a Chromium for Playwright); the page
+itself still needs nothing.
+
+```
+node tools/yoruma.mjs render docs/example-loops.yaml -o loops.png
+node tools/yoruma.mjs render docs/example-loops.yaml -o loops.svg --svg
+node tools/yoruma.mjs render docs/example-loops.yaml -o loops.png --scale 3
+node tools/yoruma.mjs check docs/*.yaml
+node tools/yoruma.mjs icons --search postgres
+```
+
+It serves the page to the local browser on `127.0.0.1` for the length of one
+command, so nothing leaves the machine.
+
+`render` defaults to a 2x PNG beside the input; `-o -` streams to stdout.
+`check` prints `line N: ...` and exits 1 on the first bad file. `icons` lists
+what `icon:` accepts, with the same matching as the editor's icon box.
+
+The render is offline on purpose: bundled icons are used, and a `brand:` or an
+unbundled `icon:` is reported and left blank instead of fetched. Open the file
+in the page when you want the logo. `task render`, `task text-check` and
+`task icon-name` wrap the same three verbs.
+
 ## Limits
 
 yoruma has no snapping and no grid. It has no groups; only zones hold shapes.
 It has no multiplayer. Sharing means a JSON file or a Kroki link.
+
+## Privacy
+
+yoruma is one static page. There is no server, no account and no analytics,
+so a diagram does not leave the browser on its own.
+
+- Work is autosaved to `localStorage`, under `yoruma.*` keys: the document, the
+  panel state, the pen strokes and any icon pack you imported. Clearing site
+  data removes it. Nothing is uploaded.
+- The only outbound requests happen when you ask for a brand or a vendor logo:
+  the search and the SVG come from `api.svgl.app` and jsDelivr, and carry the
+  logo name, never the diagram. The bundled icons and both fonts are local.
+- A Kroki link is encoded on your machine. It reaches `kroki.io` only when
+  someone opens the link, and it carries the diagram inside the URL itself.
+- The published site is served by GitHub Pages, which sees what any web server
+  sees: IP address, requested path and user agent.
+
+If any of that changes, this section changes with it.
+
+## Support
+
+Bugs and feature requests go to [Issues](https://github.com/soyomarvaldezg/yoruma/issues).
+Attach the JSON document that fails and say what you expected: that is the
+fastest route to a fix. Report a vulnerability through GitHub's private
+vulnerability reporting on the repository, not a public issue; if it is not
+enabled, open an issue that says only that you have a security report.
+
+yoruma is a beta maintained in spare time, with no service level agreement.
+Download a JSON copy of anything you cannot afford to lose.
+
+## Credits
+
+The interaction and motion ideas owe a debt to
+[Fluyo](https://github.com/itsnect/fluyo) (MIT), an animated diagram editor by
+Claudio Jiménez Flores. No Fluyo source is copied here; where the two projects
+overlap, the code is independent.
 
 ## Licence
 

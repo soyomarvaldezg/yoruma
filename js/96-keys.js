@@ -84,9 +84,25 @@ window.addEventListener('keydown', e => {
   if (meta) return;
 
   if (e.key === 'f' || e.key === 'F'){ fit(); save(); return; }
+  if (e.shiftKey && !e.altKey && !document.body.classList.contains('present') &&
+      e.key.toLowerCase() === 's'){ addStep(); return; }
+  if (!e.shiftKey && !e.altKey && !document.body.classList.contains('present') &&
+      e.key.toLowerCase() === 's'){
+    document.getElementById('btn-steps').click();
+    const menu = document.getElementById('steps-menu');
+    if (menu.classList.contains('on')){
+      const first = menu.querySelector('button');
+      if (first) first.focus();
+    }
+    return;
+  }
+  if (e.shiftKey && e.key.toLowerCase() === 'm'){ toggleMinimap(); return; }
   if (e.key === 'm' || e.key === 'M'){ setMotion('next'); return; }
   if (e.key === '['){ bumpFont(-0.1); return; }
   if (e.key === ']'){ bumpFont(0.1); return; }
+  if ((e.key === '<' || e.key === '>') && S.selNodes.length === 1){
+    if (stepSpeed(byId(S.selNodes[0]), e.key === '>' ? 1 : -1)) return;
+  }
   if (e.key === ','){ setDotSize(-0.5); return; }
   if (e.key === '.'){ setDotSize(0.5); return; }
 
@@ -98,6 +114,7 @@ window.addEventListener('keydown', e => {
       const kill = new Set(S.selNodes);
       nodes = nodes.filter(n => !kill.has(n.id));
       links = links.filter(l => !kill.has(l.from) && !kill.has(l.to));
+      pruneSteps();
     }
     if (S.selLinks.length){
       const kill = new Set(S.selLinks);

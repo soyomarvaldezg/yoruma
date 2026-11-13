@@ -26,6 +26,7 @@ function eraseAt(p){
     nodes = nodes.filter(x => x !== n);
     links = links.filter(l => l.from !== n.id && l.to !== n.id);
     S.selNodes = S.selNodes.filter(id => id !== n.id);
+    pruneSteps();
     hit = true;
   }
   if (hit) render();
@@ -37,6 +38,7 @@ stage.addEventListener('pointerdown', ev => {
   if (ev.button === 2 || ev.button === 1){
     pan = { sx:ev.clientX, sy:ev.clientY, vx:view.x, vy:view.y };
     stage.classList.add('panning');
+    document.body.classList.add('panning');
     cap(ev);
     return;
   }
@@ -44,6 +46,7 @@ stage.addEventListener('pointerdown', ev => {
   if (S.tool === 'hand'){
     pan = { sx:ev.clientX, sy:ev.clientY, vx:view.x, vy:view.y };
     stage.classList.add('panning');
+    document.body.classList.add('panning');
     cap(ev);
     return;
   }
@@ -338,7 +341,14 @@ stage.addEventListener('pointerup', ev => {
     }
     return;
   }
-  if (pan){ pan = null; stage.classList.remove('panning'); return; }
+  if (pan){
+    pan = null;
+    stage.classList.remove('panning');
+    document.body.classList.remove('panning');
+    placeShaper();
+    placeLinkbar();
+    return;
+  }
   if (bend){ bend = null; render(); return; }
   if (resize){ resize = null; render(); return; }
   if (lend){

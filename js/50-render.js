@@ -144,13 +144,13 @@ function render(){
       const vertical = Math.abs(pts[pts.length-1][0]-pts[0][0]) <
                        Math.abs(pts[pts.length-1][1]-pts[0][1]);
       const k = l.fs || 1;
-      const lines = wrapLines(l.label, (vertical ? 130 : 210)*k, 16*k, false, 4);
+      const lines = wrapLines(l.label, (vertical ? 130 : 210)*k, 14*k, false, 4);
       const x = vertical ? m.x + 12*k : m.x;
-      const lh = 19*k;
-      const y = vertical ? m.y + 5*k - (lines.length - 1)*lh/2
-                         : m.y - 7*k - (lines.length - 1)*lh;
+      const lh = 17*k;
+      const y = vertical ? m.y + 4*k - (lines.length - 1)*lh/2
+                         : m.y - 6*k - (lines.length - 1)*lh;
       const t = mk('text', { x, y, 'text-anchor': vertical ? 'start' : 'middle',
-        'font-family':"'VD Sans',sans-serif", 'font-size':String(16*k),
+        'font-family':"'VD Sans',sans-serif", 'font-size':String(14*k),
         fill: colorAt(l.color) || MUTED, stroke:PAPER, 'stroke-width':'2.6',
         'paint-order':'stroke', 'pointer-events':'all', 'data-role':'label' });
       lines.forEach((ln, i) => {
@@ -238,6 +238,26 @@ function render(){
     });
   });
 
+  /* A step carries its number on the canvas, just outside its box. The badge
+     is a UI element, so exports drop it and present mode hides it. */
+  nodes.forEach(n => {
+    if (n.kind !== 'frame' || n.step == null) return;
+    const label = String(n.step);
+    const r = Math.max(8, Math.min(14, 10/view.k)) * (label.length > 1 ? 1.2 : 1);
+    const box = membersBox(n) || n;
+    const cx = box.x + box.w + r*0.35, cy = box.y - r*0.35;
+    const g = mk('g', { class:'ui step-badge', 'data-step-badge':n.id,
+      'pointer-events':'none' });
+    g.appendChild(mk('circle', { cx, cy, r, fill:'#08829C', stroke:'#FFFFFF',
+      'stroke-width':Math.max(1, 1.4/view.k) }));
+    const t = mk('text', { x:cx, y:cy + r*0.36, 'text-anchor':'middle',
+      fill:'#FFFFFF', 'font-family':"'VD Code', monospace",
+      'font-size':String(r*1.05), 'font-weight':'600' });
+    t.textContent = label;
+    g.appendChild(t);
+    viewport.appendChild(g);
+  });
+
   handles = [];
   const hs = 9/view.k;
   if (S.selNodes.length === 1){
@@ -321,9 +341,11 @@ function render(){
 
   document.body.dataset.tool = S.tool;
   syncHud();
+  /* The style bar is docked first: the loop strip has to see it to stay clear. */
+  placeStylebar();
   placeShaper();
   placeLinkbar();
-  placeStylebar();
+  if (typeof syncMinimap === 'function') syncMinimap();
   save();
   if (!lite) lintSoon();
 }

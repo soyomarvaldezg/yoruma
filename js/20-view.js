@@ -40,8 +40,13 @@ function applyView(){
   const bgEl = document.getElementById('grid-bg');
   if (bgEl) bgEl.setAttribute('transform', tf);
   document.getElementById('z-pct').textContent = Math.round(view.k*100) + '%';
-  if (typeof placeShaper === 'function') placeShaper();
-  if (typeof placeLinkbar === 'function') placeLinkbar();
+  /* While panning the floating bars hide, so they do not chase the canvas
+     and force a style pass on every pointer move. */
+  if (!document.body.classList.contains('panning')){
+    if (typeof placeShaper === 'function') placeShaper();
+    if (typeof placeLinkbar === 'function') placeLinkbar();
+  }
+  if (typeof syncMinimap === 'function') syncMinimap();
 }
 function toWorld(ev){
   const r = stage.getBoundingClientRect();

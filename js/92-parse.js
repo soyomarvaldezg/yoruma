@@ -50,6 +50,8 @@ function parseNode(raw){
   if (n.logo && raw.mono === true) n.mono = true;
   if (['solid','dashed','dotted'].includes(raw.stroke)) n.stroke = raw.stroke;
   if (ANIMS.includes(raw.anim)) n.anim = raw.anim;
+  if (isNum(raw.speed) && raw.speed >= 0.25 && raw.speed <= 4 && raw.speed !== 1)
+    n.speed = raw.speed;
   if (raw.fillmode === 'solid') n.fillmode = 'solid';
   if (isNum(raw.sw) && raw.sw > 0 && raw.sw <= 8) n.sw = raw.sw;
   if (isNum(raw.step) && raw.step > 0 && raw.step < 1e6) n.step = Math.round(raw.step);
@@ -112,16 +114,16 @@ function parsePage(raw, index){
   if (ns.length > DOC_MAX_ITEMS || ls.length > DOC_MAX_ITEMS)
     throw new Error('page ' + name + ' has too many shapes');
   const ids = new Set();
-  const nodes = ns.map(rawN => {
+  let nodes = ns.map(rawN => {
     const n = parseNode(rawN);
     if (ids.has(n.id)) throw new Error('duplicate shape id ' + n.id);
     ids.add(n.id);
     return n;
   });
-  nodes.forEach(n => {
-    if (!n.members) return;
-    n.members = n.members.filter(id => ids.has(id));
-    if (!n.members.length) delete n.members;
+  nodes = nodes.filter(n => {
+    if (n.kind !== 'frame') return true;
+    n.members = (n.members || []).filter(id => ids.has(id));
+    return n.members.length > 0;
   });
   const linkIds = new Set();
   const links = ls.map(rawL => {
@@ -150,16 +152,16 @@ function parseDoc(text){
   if (raw.nodes.length > DOC_MAX_ITEMS || raw.links.length > DOC_MAX_ITEMS)
     throw new Error('document has too many shapes');
   const ids = new Set();
-  const nextNodes = raw.nodes.map(rawN => {
+  let nextNodes = raw.nodes.map(rawN => {
     const n = parseNode(rawN);
     if (ids.has(n.id)) throw new Error('duplicate shape id ' + n.id);
     ids.add(n.id);
     return n;
   });
-  nextNodes.forEach(n => {
-    if (!n.members) return;
-    n.members = n.members.filter(id => ids.has(id));
-    if (!n.members.length) delete n.members;
+  nextNodes = nextNodes.filter(n => {
+    if (n.kind !== 'frame') return true;
+    n.members = (n.members || []).filter(id => ids.has(id));
+    return n.members.length > 0;
   });
   const linkIds = new Set();
   const nextLinks = raw.links.map(rawL => {

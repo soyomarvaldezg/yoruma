@@ -204,59 +204,85 @@ function tileHue(n){
 function tileAnim(n){
   return n.anim && ANIMS.includes(n.anim) ? n.anim : null;
 }
-function animGlyph(mode, ink){
+function animSpeed(n){
+  const s = Number(n && n.speed);
+  if (!Number.isFinite(s) || s <= 0) return 1;
+  return Math.min(4, Math.max(0.25, s));
+}
+/* A hand-written `speed:` need not land on a step; the stepper moves from the
+   closest one so one press always changes the tempo. */
+function speedStep(n){
+  const s = animSpeed(n);
+  let best = 0;
+  SPEEDS.forEach((v, i) => {
+    if (Math.abs(v - s) < Math.abs(SPEEDS[best] - s)) best = i;
+  });
+  return best;
+}
+function animGlyph(mode, ink, speed){
+  /* `speed: 2` runs twice as fast, so every duration is divided by it. */
+  const tempo = animSpeed({ speed });
+  const dur = v => (v / tempo).toFixed(2) + 's';
   if (mode === 'loading')
     return '<g><circle cx="12" cy="12" r="7" fill="none" stroke-dasharray="12 32"/>' +
       '<animateTransform attributeName="transform" type="rotate" ' +
-      'values="0 12 12;360 12 12" dur="1.1s" repeatCount="indefinite"/></g>';
+      `values="0 12 12;360 12 12" dur="${dur(1.1)}" repeatCount="indefinite"/></g>`;
   if (mode === 'progress')
     return '<rect x="3.5" y="9.8" width="17" height="4.4" rx="2.2" fill="none" ' +
       'opacity="0.4"/>' +
       `<rect x="5" y="11.2" width="0" height="1.6" rx="0.8" fill="${ink}" ` +
       'stroke="none"><animate attributeName="width" values="0;14;14" ' +
-      'keyTimes="0;0.72;1" dur="1.9s" repeatCount="indefinite"/></rect>';
+      `keyTimes="0;0.72;1" dur="${dur(1.9)}" repeatCount="indefinite"/></rect>`;
   if (mode === 'typing'){
     const dot = (cx, begin) => `<circle cx="${cx}" cy="12" r="1.7" fill="${ink}" ` +
       `stroke="none" opacity="0.25"><animate attributeName="opacity" ` +
-      `values="0.25;1;0.25" dur="1.2s" begin="${begin}" ` +
+      `values="0.25;1;0.25" dur="${dur(1.2)}" begin="${dur(begin)}" ` +
       'repeatCount="indefinite"/></circle>';
-    return dot(6, '0s') + dot(12, '0.2s') + dot(18, '0.4s');
+    return dot(6, 0) + dot(12, 0.2) + dot(18, 0.4);
   }
   if (mode === 'uploading')
     return '<g><path d="M12 16.5V7.5M8.5 11 12 7.5 15.5 11"/>' +
       '<animateTransform attributeName="transform" type="translate" ' +
-      'values="0 2.2;0 -2.2;0 2.2" dur="1.5s" repeatCount="indefinite"/></g>' +
+      `values="0 2.2;0 -2.2;0 2.2" dur="${dur(1.5)}" repeatCount="indefinite"/></g>` +
       '<path d="M5.5 19.5h13" opacity="0.55"/>';
   if (mode === 'heartbeat')
     return '<path d="M3 12h3.6l2-5.4 3.2 10.8 2-5.4H21" stroke-dasharray="34 34">' +
-      '<animate attributeName="stroke-dashoffset" values="34;0;-34" ' +
-      'dur="1.6s" repeatCount="indefinite"/></path>';
+      `<animate attributeName="stroke-dashoffset" values="34;0;-34" ` +
+      `dur="${dur(1.6)}" repeatCount="indefinite"/></path>`;
   if (mode === 'stream'){
     const chev = (x, begin) => '<path d="M' + x + ' 7l4.5 5L' + x + ' 17" opacity="0.3">' +
-      '<animate attributeName="opacity" values="0.3;1;0.3" dur="1.3s" begin="' + begin +
-      '" repeatCount="indefinite"/></path>';
-    return chev(4, '0s') + chev(10.5, '0.22s') + chev(17, '0.44s');
+      `<animate attributeName="opacity" values="0.3;1;0.3" dur="${dur(1.3)}" ` +
+      `begin="${dur(begin)}" repeatCount="indefinite"/></path>`;
+    return chev(4, 0) + chev(10.5, 0.22) + chev(17, 0.44);
   }
   if (mode === 'sync')
     return '<g><path d="M20 12a8 8 0 0 1-13.7 5.6"/><path d="M4 12a8 8 0 0 1 13.7-5.6"/>' +
       '<path d="M6 14.6v3.2h3.2M18 9.4V6.2h-3.2"/>' +
       '<animateTransform attributeName="transform" type="rotate" ' +
-      'values="0 12 12;360 12 12" dur="2.6s" repeatCount="indefinite"/></g>';
+      `values="0 12 12;360 12 12" dur="${dur(2.6)}" repeatCount="indefinite"/></g>`;
   if (mode === 'waiting')
     return '<circle cx="12" cy="12" r="7.5"/>' +
       '<path d="M12 4.5v1.4M19.5 12h-1.4M12 19.5v-1.4M4.5 12h1.4"/>' +
       '<g><path d="M12 12V8M12 12h2.8"/>' +
       '<animateTransform attributeName="transform" type="rotate" ' +
-      'values="0 12 12;360 12 12" dur="8s" repeatCount="indefinite"/></g>';
+      `values="0 12 12;360 12 12" dur="${dur(8)}" repeatCount="indefinite"/></g>`;
   if (mode === 'retry')
     return '<g><path d="M19.5 12a7.5 7.5 0 1 1-2.2-5.3"/><path d="M19.7 3.6v4.4h-4.4"/>' +
       '<animateTransform attributeName="transform" type="rotate" ' +
-      'values="0 12 12;360 12 12" dur="2s" repeatCount="indefinite"/></g>';
+      `values="0 12 12;360 12 12" dur="${dur(2)}" repeatCount="indefinite"/></g>`;
+  if (mode === 'throttle')
+    return '<g><path d="M4.7 17.5a7.4 7.4 0 1 1 14.6 0" opacity="0.55"/>' +
+      '<path d="M18.4 8.2l.9-.9"/>' +
+      '<g><path d="M12 17.2 15.5 11.1"/>' +
+      '<animateTransform attributeName="transform" type="rotate" ' +
+      `values="0 12 17.5;-15 12 17.5;-15 12 17.5;0 12 17.5" ` +
+      `keyTimes="0;0.4;0.72;1" dur="${dur(2.4)}" repeatCount="indefinite"/></g>` +
+      '<circle cx="12" cy="17.5" r="1.1" fill="' + ink + '" stroke="none"/></g>';
   if (mode === 'poll')
     return '<circle cx="12" cy="12" r="7.5" opacity="0.4"/>' +
       '<g><path d="M12 12l6-3.4"/>' +
       '<animateTransform attributeName="transform" type="rotate" ' +
-      'values="0 12 12;360 12 12" dur="3s" repeatCount="indefinite"/></g>' +
+      `values="0 12 12;360 12 12" dur="${dur(3)}" repeatCount="indefinite"/></g>` +
       '<circle cx="12" cy="12" r="1.1" fill="' + ink + '" stroke="none"/>';
   return '';
 }
@@ -291,7 +317,7 @@ function drawTile(g, n, stroke){
     g2.innerHTML = inner;
     g.appendChild(g2);
   };
-  if (anim){ box(animGlyph(anim, ink), 'anim'); return; }
+  if (anim){ box(animGlyph(anim, ink, n.speed), 'anim'); return; }
   const inner = n.mono ? monoInner(n.logo, ink) : null;
   if (inner) box(inner, 'logo');
   else g.appendChild(mk('image', { x:tx + pad, y:ty + pad,

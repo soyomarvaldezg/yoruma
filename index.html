@@ -35,22 +35,25 @@
     <div class="menu-wrap">
       <button id="btn-file" title="Open, export or clear the document">FILE ▾</button>
       <div id="menu">
+        <div class="menu-label">Open</div>
         <button data-x="open">Open JSON…</button>
         <button data-x="open-text">Open text…</button>
-        <div class="menu-sep"></div>
-        <button data-x="svg">Download SVG</button>
-        <button data-x="png">Download PNG</button>
-        <button data-x="svg-sel">Download SVG · selection</button>
-        <button data-x="png-sel">Download PNG · selection</button>
-        <button data-x="webp">Download WebP</button>
-        <button data-x="png-copy">Copy image to clipboard</button>
-        <button data-x="json">Download JSON</button>
-        <button data-x="mermaid">Copy Mermaid source</button>
-        <button data-x="d2">Copy D2 source</button>
-        <button data-x="kroki-mermaid">Copy Kroki link · Mermaid</button>
-        <button data-x="kroki-d2">Copy Kroki link · D2</button>
-        <div class="menu-sep"></div>
-        <button data-x="icons-import">Import icon pack…</button>
+        <div class="menu-label">Export</div>
+        <button data-x="svg">SVG</button>
+        <button data-x="png">PNG</button>
+        <button data-x="webp">WebP</button>
+        <button data-x="png-copy">PNG to clipboard</button>
+        <button data-x="json">JSON document</button>
+        <div class="menu-label">Selection</div>
+        <button data-x="svg-sel">SVG · selection</button>
+        <button data-x="png-sel">PNG · selection</button>
+        <div class="menu-label">Text source</div>
+        <button data-x="mermaid">Mermaid</button>
+        <button data-x="d2">D2</button>
+        <button data-x="kroki-mermaid">Kroki link · Mermaid</button>
+        <button data-x="kroki-d2">Kroki link · D2</button>
+        <div class="menu-label">Icons</div>
+        <button data-x="icons-import">Import pack…</button>
         <button data-x="icons-clear">Remove imported icons</button>
         <div class="menu-sep"></div>
         <button data-x="clear">Clear the document…</button>
@@ -75,6 +78,7 @@
       <input id="icon-filter" type="search" placeholder="Filter icons — kafka, s3, database…"
         autocomplete="off" spellcheck="false">
     </div>
+    <div class="icon-chips" id="icon-chips" role="tablist" aria-label="Icon groups"></div>
     <div id="icon-grid"></div>
     <h4>Blocks</h4>
     <input id="catalog-filter" type="search" placeholder="Filter blocks" autocomplete="off" spellcheck="false">
@@ -89,7 +93,9 @@
       <div class="pct" id="z-pct">100%</div>
       <button id="z-in">+</button>
       <button id="z-fit">FIT</button>
+      <button id="z-map" title="Minimap" aria-label="Show or hide the minimap" aria-pressed="false"><svg viewBox="0 0 24 24"><path d="M3.5 6.5 9 4.5l6 2 5.5-2v13l-5.5 2-6-2-5.5 2z"/><path d="M9 4.5v13M15 6.5v13"/></svg></button>
     </div>
+    <div id="minimap" class="off" aria-hidden="true"><canvas id="minimap-canvas"></canvas></div>
     <div id="present-badge"></div>
     <div class="status" id="status">nothing selected</div>
     <button id="lint-chip" title="Problems in this diagram: text that overflows or arrows crossing shapes. Click to step through them" hidden></button>
@@ -97,6 +103,7 @@
 </div>
 
 <div id="shaper"></div>
+<div id="loopbar"></div>
 <div id="linkbar"></div>
 <div id="stylebar">
   <div class="swatches" id="swatches"></div>
@@ -155,28 +162,38 @@
   <input type="text" id="e-sub" placeholder="Subtitle (optional)" spellcheck="false">
 </div>
 <div class="help" id="help">
-  <h3>Keys</h3>
-  <div><span><kbd>V</kbd><kbd>H</kbd><kbd>A</kbd><kbd>L</kbd></span><span>select · hand · arrow · line</span></div>
+  <h3>Tools</h3>
+  <div><span><kbd>V</kbd><kbd>H</kbd><kbd>A</kbd><kbd>L</kbd></span><span>select · hand (pan) · arrow · line</span></div>
   <div><span><kbd>R</kbd><kbd>O</kbd><kbd>Z</kbd></span><span>rectangle · ellipse · zone</span></div>
   <div><span><kbd>N</kbd><kbd>Y</kbd><kbd>X</kbd></span><span>pen · laser · eraser</span></div>
   <div><span><kbd>T</kbd><kbd>G</kbd><kbd>⇧G</kbd></span><span>text · heading · governance</span></div>
-  <div><span><kbd>⌘Z</kbd><kbd>⇧⌘Z</kbd><kbd>⌫</kbd></span><span>undo · redo · delete</span></div>
+
+  <h3>Edit</h3>
+  <div><span><kbd>⌘Z</kbd><kbd>⇧⌘Z</kbd></span><span>undo · redo</span></div>
+  <div><span><kbd>⌫</kbd></span><span>delete the selection</span></div>
   <div><span><kbd>⌘C</kbd><kbd>⌘V</kbd><kbd>⌘D</kbd></span><span>copy · paste · duplicate</span></div>
-  <div><span>shape bar</span><span>bring to front · send to back</span></div>
-  <div><span><kbd>[</kbd><kbd>]</kbd><kbd>,</kbd><kbd>.</kbd><kbd>M</kbd></span><span>text size · dot size · motion</span></div>
-  <div><span><kbd>F</kbd><kbd>W</kbd><kbd>Esc</kbd><kbd>?</kbd></span><span>fit · focus one shape · deselect · close</span></div>
-  <div><span><kbd>⌘.</kbd></span><span>hide or show the left panel</span></div>
-  <div><span><kbd>⌥←</kbd><kbd>⌥→</kbd></span><span>previous · next page</span></div>
-  <div><span><kbd>1</kbd>…<kbd>9</kbd><kbd>0</kbd></span><span>present · jump to a step, 0 = overview</span></div>
-  <h3 style="margin-top:12px">Mouse</h3>
+  <div><span><kbd>Enter</kbd></span><span>rename a shape, or note an arrow</span></div>
+
+  <h3>View</h3>
+  <div><span><kbd>F</kbd><kbd>W</kbd><kbd>Esc</kbd></span><span>fit · focus one shape · deselect</span></div>
+  <div><span><kbd>[</kbd><kbd>]</kbd><kbd>,</kbd><kbd>.</kbd></span><span>text size · motion dot size</span></div>
+  <div><span><kbd>M</kbd><kbd>⇧M</kbd></span><span>motion mode · minimap</span></div>
+  <div><span><kbd>&lt;</kbd><kbd>&gt;</kbd></span><span>loop tempo on a selected tile</span></div>
+  <div><span><kbd>⌘.</kbd><kbd>⌥←</kbd><kbd>⌥→</kbd></span><span>left panel · previous page · next page</span></div>
+
+  <h3>Steps and present</h3>
+  <div><span><kbd>S</kbd><kbd>⇧S</kbd></span><span>open the steps panel · add a step from the selection</span></div>
+  <div><span><kbd>1</kbd>…<kbd>9</kbd><kbd>0</kbd></span><span>jump to a step, 0 = overview</span></div>
+  <div><span><kbd>→</kbd><kbd>←</kbd></span><span>next · previous step</span></div>
+
+  <h3>Mouse</h3>
   <div><span>drag a shape border</span><span>draw an arrow</span></div>
-  <div><span>double-click · Enter</span><span>rename, or note on an arrow</span></div>
+  <div><span>double-click</span><span>rename, or note on an arrow</span></div>
   <div><span>drag a swatch</span><span>colour that object</span></div>
   <div><span>right-drag · ⌘ wheel</span><span>pan · zoom</span></div>
-  <div><span>⌥ drag</span><span>laser on macOS; on Windows/Linux use Y</span></div>
-  <div class="foot">Data shapes keep their letters: hover a palette button to see it. ⌘ = Ctrl, ⌥ = Alt, ⇧ = Shift on Windows and Linux — and because some window managers keep
-    Alt+drag for themselves, the laser and pencil are also tools (`Y`, `N`). The whole list lives in
-    README.md.</div>
+  <div><span>⌥ drag</span><span>laser on macOS; use Y on Windows and Linux</span></div>
+
+  <div class="foot">⌘ is Ctrl, ⌥ is Alt, ⇧ is Shift on Windows and Linux. The full list lives in README.md.</div>
 </div>
 <div id="toast"></div>
 
@@ -215,6 +232,7 @@ function tick(now){
 <script src="js/84-icons.js"></script>
 <script src="js/85-icons-ui.js"></script>
 <script src="js/86-sidebar.js"></script>
+<script src="js/87-minimap.js"></script>
 <script src="js/88-colour-motion.js"></script>
 <script src="js/89-lint.js"></script>
 <script src="js/90-export.js"></script>

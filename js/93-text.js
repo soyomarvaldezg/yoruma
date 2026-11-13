@@ -7,7 +7,7 @@ const TEXT_KINDS = {
   dashboard:'dashboard', cube:'cube', table:'table', text:'text', heading:'heading',
   tile:'tile'
 };
-const SHAPE_PROPS = new Set(['sub','brand','icon','anim','tint','band','solid','dash','stroke','sharp','size','fillmode','color','fill','align','x','y','w','h']);
+const SHAPE_PROPS = new Set(['sub','brand','icon','anim','speed','tint','band','solid','dash','stroke','sharp','size','fillmode','color','fill','align','x','y','w','h']);
 const TEXT_DIRS = new Set(['right','down']);
 const TEXT_GAPX = 76, TEXT_GAPY = 44, TEXT_ZGAP = 36, TEXT_ZPAD = 24, TEXT_ZTOP = 44, TEXT_ZBOT = 26,
       TEXT_TITLEW = 12.5, TEXT_ORIGIN = 32;
@@ -196,6 +196,14 @@ function parseText(src){
       if (!ANIMS.includes(value))
         throw textErr(no, 'anim is ' + ANIMS.join(', '));
       parent.props.anim = value;
+    }
+    else if (key === 'speed'){
+      if (parent.kind !== 'tile')
+        throw textErr(no, 'speed is for tiles — write “tile Name” and put speed under it');
+      const s = Number(value);
+      if (!Number.isFinite(s) || s < 0.25 || s > 4)
+        throw textErr(no, 'speed is a number from 0.25 to 4 (1 is the loop’s own tempo)');
+      parent.props.speed = s;
     }
     else if (key === 'tint' || key === 'band' || key === 'solid' || key === 'dash' ||
              key === 'sharp')
@@ -412,6 +420,7 @@ function buildTextDoc(model){
     };
     if (p.tint) n.tint = true;
     if (p.anim) n.anim = p.anim;
+    if (p.speed != null && p.speed !== 1) n.speed = p.speed;
     if (p.band) n.band = true;
     if (p.solid) n.solid = true;
     if (p.dash) n.dash = true;
