@@ -477,6 +477,17 @@ menu.querySelectorAll('button').forEach(b => {
         toast('json downloaded');
         return;
       }
+      if (x === 'drawio'){
+        download('yoruma.drawio', new Blob([drawioXML()], { type:'application/xml' }));
+        toast('editable draw.io file downloaded');
+        return;
+      }
+      if (x === 'drawio-image'){
+        const xml = await drawioImageXML();
+        download('yoruma.drawio', new Blob([xml], { type:'application/xml' }));
+        toast('draw.io picture downloaded');
+        return;
+      }
     } catch (e){ toast('export failed'); }
   });
 });

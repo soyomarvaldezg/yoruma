@@ -72,6 +72,10 @@
     background:transparent; color:var(--on-dark);
   }
   button:hover{background:rgba(207,221,230,.13)}
+  .hbtn{display:inline-flex; align-items:center; gap:6px}
+  .hico{width:14px; height:14px; flex:none; fill:none; stroke:currentColor;
+    stroke-width:1.7; stroke-linecap:round; stroke-linejoin:round}
+  .hcaret{font-size:9px; line-height:1; opacity:.7; margin-left:-2px}
   #gh-link{display:grid; place-items:center; width:28px; height:26px;
     border:1px solid var(--edge); border-radius:3px; color:var(--on-dark)}
   #gh-link:hover{background:rgba(207,221,230,.13)}
@@ -133,7 +137,8 @@
     display:none; z-index:12; background:var(--ink); color:var(--on-dark);
     font-family:'VD Code',monospace; font-size:11px; letter-spacing:.08em;
     padding:7px 14px; border-radius:4px}
-  body.present #present-badge{display:block}
+  body.present #present-badge{display:block; cursor:pointer; user-select:none}
+  body.present #present-badge:hover{background:var(--edge)}
   body.present .zoombar{opacity:.35}
   body.present .zoombar:hover{opacity:1}
 
@@ -149,11 +154,20 @@
     width:242px; flex:none; overflow-y:auto; padding:12px 12px 40px;
     background:var(--input); border-right:1px solid var(--line);
   }
-  aside h4{
-    margin:16px 0 7px; font-family:'VD Code',monospace; font-size:10.5px;
+  .sect{margin:0}
+  .sect>summary{
+    margin:16px 0 0; font-family:'VD Code',monospace; font-size:10.5px;
     letter-spacing:.16em; text-transform:uppercase; color:var(--muted); font-weight:600;
   }
-  aside h4:first-child{margin-top:0}
+  .sect:first-child>summary{margin-top:0}
+  .sect[open]>summary{margin-bottom:7px}
+  .sect>summary:hover{color:var(--ink)}
+  .icon-subhead{
+    font-family:'VD Code',monospace; font-size:9px; letter-spacing:.14em;
+    text-transform:uppercase; color:var(--muted); opacity:.8;
+    margin:2px 0 5px; font-weight:600;
+  }
+  #shape-tools{margin-bottom:10px}
   .grid{display:grid; grid-template-columns:repeat(4,1fr); gap:4px}
   .grid button{
     height:38px; display:grid; place-items:center; padding:0; border:1px solid transparent;
@@ -229,10 +243,10 @@
   .zoombar button{border:0; width:30px; height:26px; font-size:13px; padding:0}
   .zoombar .pct{color:var(--muted-on-dark); font-family:'VD Code',monospace;
     font-size:10.5px; display:grid; place-items:center; min-width:48px}
-  #z-map{display:grid; place-items:center}
-  #z-map svg{width:15px; height:15px; fill:none; stroke:currentColor;
+  #z-map, #z-nums{display:grid; place-items:center}
+  #z-map svg, #z-nums svg{width:15px; height:15px; fill:none; stroke:currentColor;
     stroke-width:1.6; stroke-linecap:round; stroke-linejoin:round}
-  #z-map.on{background:var(--on-dark); color:var(--ink)}
+  #z-map.on, #z-nums.on{background:var(--on-dark); color:var(--ink)}
 
   #minimap{position:absolute; right:12px; bottom:84px; width:200px; height:132px;
     overflow:hidden; border-radius:5px; background:var(--paper);
@@ -259,6 +273,8 @@
   body.present .pagebar{display:none}
   body.present #lint-chip{display:none}
   body.present .step-badge{display:none}
+  body.present.show-step-nums .step-badge{display:block}
+  body.step-nums-off .step-badge{display:none}
   body.panning #shaper, body.panning #loopbar,
   body.panning #linkbar{display:none !important}
 
@@ -307,8 +323,17 @@
 
   #menu{position:absolute; right:0; left:auto; top:38px; display:none; z-index:10;
     background:var(--ink); border:1px solid var(--edge); border-radius:4px;
-    padding:4px; min-width:230px; width:max-content; max-width:calc(100vw - 20px);
+    padding:6px; min-width:340px; width:360px; max-width:calc(100vw - 20px);
     max-height:calc(100vh - 60px); overflow:auto}
+  #menu .menu-grid{display:grid; grid-template-columns:1fr 1fr; gap:2px;
+    padding:0 3px 4px}
+  #menu .menu-grid button{padding:6px 8px; white-space:nowrap; overflow:hidden;
+    text-overflow:ellipsis}
+  #menu .menu-grid button.wide{grid-column:1/-1}
+  @media (max-width:560px){
+    #menu{width:calc(100vw - 20px); min-width:0}
+    #menu .menu-grid{grid-template-columns:1fr}
+  }
   .menu-label{margin:7px 9px 2px; font-family:'VD Code',monospace; font-size:8.5px;
     letter-spacing:.14em; text-transform:uppercase; color:var(--muted-on-dark);
     opacity:.75}
@@ -324,6 +349,12 @@
   #steps-menu button, #demo-menu button, #insert-menu button, #menu button{display:block; width:100%; text-align:left; border:0; padding:7px 9px}
   #steps-menu button:disabled, #demo-menu button:disabled{opacity:.4; cursor:default}
   .menu-sep{height:1px; margin:4px 6px; background:var(--edge)}
+  .menu-source{margin:5px 6px 2px; padding:6px 3px 0; border-top:1px solid var(--edge);
+    font-family:'VD Code',monospace; font-size:8.5px; line-height:1.6;
+    letter-spacing:.04em; color:var(--muted-on-dark)}
+  .menu-source a{color:var(--on-dark); text-decoration:none;
+    border-bottom:1px solid var(--edge)}
+  .menu-source a:hover{border-bottom-color:var(--on-dark)}
   .step-row{display:flex; align-items:center; gap:3px; padding:2px 0}
   .step-row .num{font-family:'VD Code',monospace; font-size:10px;
     color:var(--muted-on-dark); min-width:18px; padding-left:4px}
@@ -344,6 +375,10 @@
   .step-row button.del:hover{background:#E03131; border-color:#E03131; color:#fff}
   .step-empty{padding:6px 8px; font-family:'VD Code',monospace; font-size:10px;
     color:var(--muted-on-dark)}
+  .step-prefs{display:flex; gap:10px; padding:3px 9px 6px}
+  .step-prefs label{display:flex; align-items:center; gap:5px; cursor:pointer;
+    font-family:'VD Code',monospace; font-size:10px; color:var(--muted-on-dark)}
+  .step-prefs input{accent-color:var(--accent); margin:0; cursor:pointer}
 
   .help{
     position:fixed; right:16px; top:56px; z-index:11; display:none;

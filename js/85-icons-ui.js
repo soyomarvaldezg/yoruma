@@ -203,7 +203,7 @@ function iconTinted(e){
 }
 function cardTarget(){
   const sel = byId(S.selNodes[0]);
-  return sel && LOGO_KINDS.has(sel.kind) ? sel : null;
+  return sel && (LOGO_KINDS.has(sel.kind) || sel.kind === 'zone') ? sel : null;
 }
 function newLogoNode(){
   const c = centrePoint();

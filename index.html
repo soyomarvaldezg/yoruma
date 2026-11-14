@@ -21,42 +21,56 @@
     <button id="recover-warn" title="Download a copy of the unreadable saved document">RECOVER</button>
     <button id="tab-warn" title="Another tab saved. Autosave is paused; export JSON or reload.">OTHER TAB</button>
     <span id="save-warn" role="status" aria-live="polite" title="Autosave failed: storage full or blocked">NOT SAVED</span>
-    <button id="btn-image" title="Insert an image (or drop one on the canvas)">IMAGE</button>
-    <button id="btn-motion" title="Animated flow: off, dots, dashes, both">FLOW · OFF</button>
+    <button id="btn-image" class="hbtn" title="Insert an image (or drop one on the canvas)"><svg class="hico" viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="14" rx="1.8"/><circle cx="8.6" cy="10" r="1.6"/><path d="M4.2 17.2l4.8-4.8 4.2 4.2 2.4-2.4 4.2 4.2"/></svg><span class="hlabel">IMAGE</span></button>
+    <button id="btn-motion" class="hbtn" title="Animated flow: off, dots, dashes, both"><svg class="hico" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12h4l2.4-5.2 3.2 10.4 2.4-5.2H21"/></svg><span class="hlabel">FLOW · OFF</span></button>
     <div class="menu-wrap">
-      <button id="btn-steps" title="Present steps (frames)">STEPS ▾</button>
+      <button id="btn-steps" class="hbtn" title="Present steps (frames)"><svg class="hico" viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="7" height="14" rx="1.2"/><rect x="13.5" y="5" width="7" height="6" rx="1.2"/><rect x="13.5" y="13" width="7" height="6" rx="1.2"/></svg><span class="hlabel">STEPS</span><span class="hcaret">▾</span></button>
       <div id="steps-menu"></div>
     </div>
-    <button id="btn-present" title="Hide the chrome and fit the diagram (Esc exits)">PRESENT</button>
+    <button id="btn-present" class="hbtn" title="Hide the chrome and fit the diagram (Esc exits)"><svg class="hico" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4.5" width="18" height="12" rx="1.8"/><path d="M8 20.5h8M12 16.5v4"/><path d="M10 8.2l5 2.7-5 2.7z" fill="currentColor" stroke="none"/></svg><span class="hlabel">PRESENT</span></button>
     <div class="menu-wrap">
-      <button id="btn-demo" title="Load an example">EXAMPLES ▾</button>
+      <button id="btn-demo" class="hbtn" title="Load an example"><svg class="hico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5l2 4.8 4.8 2-4.8 2-2 4.8-2-4.8-4.8-2 4.8-2z"/><path d="M18.5 15.5l.8 2 2 .8-2 .8-.8 2-.8-2-2-.8 2-.8z"/></svg><span class="hlabel">EXAMPLES</span><span class="hcaret">▾</span></button>
       <div id="demo-menu"></div>
     </div>
     <div class="menu-wrap">
-      <button id="btn-file" title="Open, export or clear the document">FILE ▾</button>
+      <button id="btn-file" class="hbtn" title="Open, export or clear the document"><svg class="hico" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3.5h7l5 5v12H6z"/><path d="M13 3.5v5h5"/></svg><span class="hlabel">FILE</span><span class="hcaret">▾</span></button>
       <div id="menu">
         <div class="menu-label">Open</div>
-        <button data-x="open">Open JSON…</button>
-        <button data-x="open-text">Open text…</button>
+        <div class="menu-grid">
+          <button data-x="open">Open JSON…</button>
+          <button data-x="open-text">Open text…</button>
+        </div>
         <div class="menu-label">Export</div>
-        <button data-x="svg">SVG</button>
-        <button data-x="png">PNG</button>
-        <button data-x="webp">WebP</button>
-        <button data-x="png-copy">PNG to clipboard</button>
-        <button data-x="json">JSON document</button>
+        <div class="menu-grid">
+          <button data-x="svg">SVG</button>
+          <button data-x="png">PNG</button>
+          <button data-x="webp">WebP</button>
+          <button data-x="png-copy">Copy PNG</button>
+          <button data-x="json">JSON</button>
+          <button data-x="drawio">draw.io editable</button>
+          <button data-x="drawio-image" class="wide">draw.io picture</button>
+        </div>
         <div class="menu-label">Selection</div>
-        <button data-x="svg-sel">SVG · selection</button>
-        <button data-x="png-sel">PNG · selection</button>
+        <div class="menu-grid">
+          <button data-x="svg-sel">SVG selection</button>
+          <button data-x="png-sel">PNG selection</button>
+        </div>
         <div class="menu-label">Text source</div>
-        <button data-x="mermaid">Mermaid</button>
-        <button data-x="d2">D2</button>
-        <button data-x="kroki-mermaid">Kroki link · Mermaid</button>
-        <button data-x="kroki-d2">Kroki link · D2</button>
+        <div class="menu-grid">
+          <button data-x="mermaid">Mermaid</button>
+          <button data-x="d2">D2</button>
+          <button data-x="kroki-mermaid">Kroki Mermaid</button>
+          <button data-x="kroki-d2">Kroki D2</button>
+        </div>
         <div class="menu-label">Icons</div>
-        <button data-x="icons-import">Import pack…</button>
-        <button data-x="icons-clear">Remove imported icons</button>
+        <div class="menu-grid">
+          <button data-x="icons-import">Import pack…</button>
+          <button data-x="icons-clear">Remove imports</button>
+        </div>
         <div class="menu-sep"></div>
-        <button data-x="clear">Clear the document…</button>
+        <div class="menu-grid">
+          <button data-x="clear" class="wide">Clear the document…</button>
+        </div>
       </div>
     </div>
     <a id="gh-link" href="https://github.com/soyomarvaldezg/yoruma" target="_blank" rel="noopener" title="Source on GitHub" aria-label="Source on GitHub">
@@ -71,19 +85,27 @@
 
 <div class="app">
   <aside>
-    <h4>Draw</h4>
-    <div class="grid" id="tools"></div>
-    <h4>Icons</h4>
-    <div class="icon-head">
-      <input id="icon-filter" type="search" placeholder="Filter icons — kafka, s3, database…"
-        autocomplete="off" spellcheck="false">
-    </div>
-    <div class="icon-chips" id="icon-chips" role="tablist" aria-label="Icon groups"></div>
-    <div id="icon-grid"></div>
-    <h4>Blocks</h4>
-    <input id="catalog-filter" type="search" placeholder="Filter blocks" autocomplete="off" spellcheck="false">
-    <div id="catalog"></div>
-    <div id="catalog-empty" class="catalog-empty" hidden>No matches</div>
+    <details class="sect" id="sect-draw" open>
+      <summary>Draw</summary>
+      <div class="grid" id="tools"></div>
+    </details>
+    <details class="sect" id="sect-icons">
+      <summary>Icons</summary>
+      <div class="icon-subhead">Shapes</div>
+      <div class="grid" id="shape-tools"></div>
+      <div class="icon-head">
+        <input id="icon-filter" type="search" placeholder="Filter icons — kafka, s3, database…"
+          autocomplete="off" spellcheck="false">
+      </div>
+      <div class="icon-chips" id="icon-chips" role="tablist" aria-label="Icon groups"></div>
+      <div id="icon-grid"></div>
+    </details>
+    <details class="sect" id="sect-blocks">
+      <summary>Blocks</summary>
+      <input id="catalog-filter" type="search" placeholder="Filter blocks" autocomplete="off" spellcheck="false">
+      <div id="catalog"></div>
+      <div id="catalog-empty" class="catalog-empty" hidden>No matches</div>
+    </details>
   </aside>
   <main>
     <div class="pagebar" id="pages"></div>
@@ -93,6 +115,7 @@
       <div class="pct" id="z-pct">100%</div>
       <button id="z-in">+</button>
       <button id="z-fit">FIT</button>
+      <button id="z-nums" title="Show or hide step numbers in this view (N while presenting)" aria-label="Show or hide step numbers" aria-pressed="false"><svg viewBox="0 0 24 24"><path d="M4 7h1.4M4 12h1.4M4 17h1.4M8.5 7H20M8.5 12H20M8.5 17H20"/></svg></button>
       <button id="z-map" title="Minimap" aria-label="Show or hide the minimap" aria-pressed="false"><svg viewBox="0 0 24 24"><path d="M3.5 6.5 9 4.5l6 2 5.5-2v13l-5.5 2-6-2-5.5 2z"/><path d="M9 4.5v13M15 6.5v13"/></svg></button>
     </div>
     <div id="minimap" class="off" aria-hidden="true"><canvas id="minimap-canvas"></canvas></div>
@@ -185,6 +208,8 @@
   <div><span><kbd>S</kbd><kbd>⇧S</kbd></span><span>open the steps panel · add a step from the selection</span></div>
   <div><span><kbd>⇧P</kbd></span><span>enter or leave present mode</span></div>
   <div><span><kbd>1</kbd>…<kbd>9</kbd><kbd>0</kbd></span><span>jump to a step, 0 = overview</span></div>
+  <div><span><kbd>Home</kbd><kbd>End</kbd></span><span>overview · last step, or click the step badge</span></div>
+  <div><span><kbd>N</kbd></span><span>show or hide step numbers while presenting</span></div>
   <div><span><kbd>→</kbd><kbd>←</kbd></span><span>next · previous step</span></div>
 
   <h3>Mouse</h3>

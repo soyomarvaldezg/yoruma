@@ -154,7 +154,7 @@ stage.addEventListener('pointerdown', ev => {
     if (S.sticky){
       S.armed = label;
       document.body.dataset.tool = 'place';
-      document.querySelectorAll('#tools button').forEach(b => b.classList.remove('on'));
+      document.querySelectorAll('#tools button, #shape-tools button').forEach(b => b.classList.remove('on'));
     } else setTool('select', 'draw');
     render();
     return;

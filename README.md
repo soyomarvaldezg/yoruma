@@ -10,7 +10,10 @@ Nothing to install. There is no build step.
 **Use it:** <https://soyomarvaldezg.github.io/yoruma/> — or open `index.html` from a clone.
 
 The page starts on a blank canvas. Press **EXAMPLES ▾** to load a sample:
-a BI stack, a streaming pipeline, or an ML platform.
+a BI stack, a streaming pipeline, an ML platform, AWS / GCP / Azure reference
+topologies with regions, zones, VPCs and subnets, a hybrid landing zone, a
+multi-region DR layout, and a migration factory. The menu footer links the
+sources. See `docs/examples-sources.md` for the full list.
 
 ![The editor with the modern BI example open](docs/editor.png)
 
@@ -37,7 +40,10 @@ Nothing here is a promise. Download a JSON copy of work you cannot lose.
 └─────────────────┴───────────────────────────────────────────────┘
 ```
 
-The left panel holds the tools, the icons and the Blocks palette.
+The left panel holds the tools, the icons and the Blocks palette. Each heading
+is a fold: **Draw** holds the drawing tools, **Icons** holds the data shapes and
+the glyph grid, and **Blocks** holds the palette. The panel starts compact, with
+Icons and Blocks folded, and remembers what you leave open.
 The palette opens by stage, then by subtitle: Internal and External Sources,
 Ingestion Patterns, Integration Methods, Connectivity, Logical Zones, Processing,
 Data Provisioning and Serving, Business Semantics, Context and Semantic Services,
@@ -58,6 +64,9 @@ decision back to auto.
 - **Zones** hold other shapes. A zone carries every shape inside it, at any depth.
   Move a zone and its shapes move with it. Resize a zone and the shapes stay in place.
   A zone can show a header band. Set `solid` to remove its dashes.
+  The band can carry a logo: select the zone and click the image button in its bar,
+  drop an image on the band, or select the zone and click an icon. Click the image
+  button again to remove it. This matches the AWS/Azure frame style.
 - **Cards** are boxes with a title and an optional subtitle.
   A card takes its own stroke colour and its own fill.
   It can carry an icon or a brand logo.
@@ -104,7 +113,11 @@ for the next shape you draw.
 
 ## Icons
 
-The **Icons** box searches 167 monochrome glyphs. Click one to place it.
+The **Icons** box starts with the data shapes: Database, Queue, Cloud, File,
+Service, Governance, Consumers, AI agent, Data contract, Video, Image data and
+Table. They keep their keyboard keys even though they live under Icons.
+
+Below them, the search box covers 167 monochrome glyphs. Click one to place it.
 The glyph takes the outline colour of the card that carries it.
 
 Chips above the grid scope it: **All**, **Plumbing**, **Status**, **Loops**,
@@ -192,7 +205,7 @@ and `⇧` is Shift.
 | `N` `Y` `X` | Pen (ink stays) · laser (fades) · eraser (ink and shapes) |
 | `S` `⇧S` | Open the steps panel · add a step from the selection |
 | `⇧P` | Enter or leave present mode |
-| `1`…`9` `0` | Present mode, jump to a step. `0` shows the overview |
+| `1`…`9` `0` `Home` `End` | Present mode, jump to a step. `0` or `Home` shows the overview, `End` the last step |
 | `[` `]` | Text size |
 | `,` `.` | Dot size |
 | `M` | Cycle the motion mode |
@@ -230,8 +243,15 @@ keeps the shapes. Double-click a step's name in the panel to rename it; an
 unnamed step follows its number, so reordering never leaves a stale label.
 Press **PRESENT**.
 Each step wears its number beside its box on the canvas; the numbers disappear
-in present mode, where the arrows and number keys move between steps. A click
-never advances, so it cannot skip a step while you point at the slide.
+in present mode, where the arrows and number keys move between steps.
+The list button in the zoombar, or **STEPS ▾** with its "while editing" and
+"in present mode" checkboxes, shows or hides the numbers. The zoombar button
+follows the view you are in: click it while editing to hide the numbers there,
+or while presenting to show them on the slide. While presenting, **N** does the
+same without leaving the slide. A click
+never advances, so it cannot skip a step while you point at the slide. To get
+back to the full overview at any point, press **0** or **Home**, or click the
+step badge at the bottom. **End** jumps to the last step.
 `⌥`-drag (or the armed laser tool) draws the laser; `Esc` leaves.
 
 ![Present mode on the overview slide](docs/present.png)
@@ -246,7 +266,7 @@ The document saves to `localStorage` on every change. A reload restores it, zoom
 **FILE ▾** holds these commands:
 
 - **Open**: JSON… and text…
-- **Export**: SVG, PNG, WebP, PNG to the clipboard and the JSON document.
+- **Export**: SVG, PNG, WebP, PNG to the clipboard, the JSON document, and draw.io.
 - **Selection**: SVG and PNG of just the selected shapes.
 - **Text source**: Mermaid, D2 and their Kroki links.
 - **Icons**: import a pack, or remove the imported ones.
@@ -360,6 +380,8 @@ The parser also accepts lines without the colon.
 | PNG | 2×, fonts inlined |
 | WebP | 2×, same path as PNG |
 | JSON | The document, for backup and sharing |
+| draw.io · editable | `.drawio` with native shapes, zones as containers, labels and arrows |
+| draw.io · picture | `.drawio` with one embedded SVG: exact look, not editable |
 | Mermaid, D2 | Text source. Skips steps and zones |
 | Kroki link | A link to the Mermaid or D2 source |
 | Clipboard | Copies the PNG |

@@ -677,6 +677,39 @@ if (/[?&]test/.test(location.search)){
   ok('the draw grid stays a square block of tools',
      document.querySelectorAll('#tools button').length % 4 === 0);
 
+  const headerIcons = ['btn-image','btn-motion','btn-steps','btn-present','btn-demo','btn-file']
+    .every(id => !!document.querySelector('#' + id + ' svg.hico'));
+  ok('every top-bar action carries its own glyph', headerIcons);
+
+  const drawOnly = Array.from(document.querySelectorAll('#tools button'))
+    .every(b => DRAW.some(t => t.id === b.dataset.tool));
+  const shapesUnderIcons = document.querySelectorAll('#shape-tools button').length === DATA.length;
+  ok('draw holds the drawing tools and the data shapes live under Icons',
+     drawOnly && shapesUnderIcons);
+
+  const drawOpen = document.getElementById('sect-draw').open;
+  const iconsShut = !document.getElementById('sect-icons').open;
+  const blocksShut = !document.getElementById('sect-blocks').open;
+  ok('the sidebar starts compact: drawing open, icons and blocks tucked away',
+     drawOpen && iconsShut && blocksShut);
+
+  const iconsSect = document.getElementById('sect-icons');
+  iconsSect.open = true;
+  iconsSect.dispatchEvent(new Event('toggle'));
+  const savedShut = JSON.parse(localStorage.getItem('yoruma.sidebar.v1') || '{}');
+  iconsSect.open = false;
+  iconsSect.dispatchEvent(new Event('toggle'));
+  ok('a collapsed section remembers itself for the next visit',
+     savedShut['sect-icons'] === true &&
+     JSON.parse(localStorage.getItem('yoruma.sidebar.v1'))['sect-icons'] === false);
+
+  setTool('select', 'draw');
+  window.dispatchEvent(new KeyboardEvent('keydown', { key:'d' }));
+  const shapeKeyed = S.tool === 'store' &&
+    document.querySelector('#shape-tools button[data-tool="store"]').classList.contains('on');
+  setTool('select', 'draw');
+  ok('a shape shortcut lights its button in the Icons section', shapeKeyed);
+
   S.selNodes = []; S.selLinks = []; render();
   setTool('box', 'draw');
   drag({x:1250, y:2140}, {x:1370, y:2200});
@@ -1190,6 +1223,19 @@ if (/[?&]test/.test(location.search)){
   loadExample('bi');
   ok('example loads', nodes.length >= 10 && links.length >= 6 &&
      !!stage.querySelector('g.node[data-id="b_oltp"]'));
+
+  const badExamples = EXAMPLES.filter(ex => {
+    const ids = new Set(ex.nodes.map(n => n.id));
+    return !ex.source || !ex.sourceName || ids.size !== ex.nodes.length ||
+      ex.nodes.some(n => !Number.isFinite(n.x) || !Number.isFinite(n.y) ||
+        !Number.isFinite(n.w) || !Number.isFinite(n.h)) ||
+      ex.links.some(l => !ids.has(l.from) || !ids.has(l.to));
+  });
+  ok('every example is sourced, self-contained and uses unique ids',
+     badExamples.length === 0);
+  ok('cloud, hybrid and migration examples are in the menu',
+     ['aws','gcp','azure','hybrid','dr','migration']
+       .every(id => EXAMPLES.some(e => e.id === id)));
   nodes = keepN; links = keepL; render();
   nodes.pop(); nodes.pop(); nodes.pop(); render();
 
@@ -1203,6 +1249,15 @@ if (/[?&]test/.test(location.search)){
   const bandLabel = zbG && zbG.querySelector('[data-role="zone-band-label"]');
   ok('zone band keeps the caps of a plain zone',
      !!bandLabel && bandLabel.textContent === 'VPC');
+  zb.logo = iconDataUri(kafka);
+  render();
+  const zoneLogo = stage.querySelector('g.node[data-id="zb1"] [data-role="zone-logo"]');
+  const shifted = stage.querySelector('g.node[data-id="zb1"] [data-role="zone-band-label"]');
+  ok('a zone band can wear a vendor logo',
+     !!zoneLogo && !!shifted && Number(shifted.getAttribute('x')) > zb.x + 20);
+  ok('the draw.io export carries the zone logo',
+     drawioXML().includes('zb1_logo'));
+  zb.logo = null;
   nodes.pop(); render();
 
   const hitText = { id:'ht1', kind:'text', title:'notes', sub:'', color:null, tcolor:null,
@@ -1342,6 +1397,17 @@ if (/[?&]test/.test(location.search)){
   setPresent(false);
   ok('number keys jump to a step in present mode', jumped && backToOverview);
 
+  setPresent(true);
+  window.dispatchEvent(new KeyboardEvent('keydown', { key:'2' }));
+  window.dispatchEvent(new KeyboardEvent('keydown', { key:'Home' }));
+  const homeBack = presentIndex === 0;
+  window.dispatchEvent(new KeyboardEvent('keydown', { key:'2' }));
+  presentBadge.click();
+  const badgeBack = presentIndex === 0 &&
+    presentBadge.textContent.startsWith('overview');
+  setPresent(false);
+  ok('Home and the step badge return to the overview', homeBack && badgeBack);
+
   window.dispatchEvent(new KeyboardEvent('keydown', { key:'P', shiftKey:true }));
   const keyOn = document.body.classList.contains('present');
   window.dispatchEvent(new KeyboardEvent('keydown', { key:'P', shiftKey:true }));
@@ -1391,7 +1457,40 @@ if (/[?&]test/.test(location.search)){
   document.body.classList.add('present');
   ok('present mode hides the step numbers',
      getComputedStyle(stepBadge).display === 'none');
+  stepNums.present = true; applyStepNums();
+  const numsInPresent = getComputedStyle(stepBadge).display !== 'none';
   document.body.classList.remove('present');
+  stepNums.present = false; stepNums.edit = false; applyStepNums();
+  const numsOffInEdit = getComputedStyle(stepBadge).display === 'none';
+  stepNums.edit = true; applyStepNums();
+  ok('step numbers can be shown in present mode or hidden while editing',
+     numsInPresent && numsOffInEdit);
+  document.body.classList.add('present');
+  stepNums.present = false; applyStepNums();
+  window.dispatchEvent(new KeyboardEvent('keydown', { key:'n' }));
+  const nShows = stepNums.present &&
+    getComputedStyle(stepBadge).display !== 'none';
+  window.dispatchEvent(new KeyboardEvent('keydown', { key:'n' }));
+  const nHides = !stepNums.present &&
+    getComputedStyle(stepBadge).display === 'none';
+  document.body.classList.remove('present');
+  ok('N toggles the numbers while presenting', nShows && nHides);
+  document.body.classList.add('present');
+  stepNums.present = false; applyStepNums();
+  numsBtn.click();
+  const btnOn = stepNums.present && numsBtn.classList.contains('on') &&
+    getComputedStyle(stepBadge).display !== 'none';
+  numsBtn.click();
+  document.body.classList.remove('present');
+  ok('the zoombar button toggles the numbers too', btnOn && !stepNums.present);
+  stepNums.edit = true; applyStepNums();
+  numsBtn.click();
+  const editHides = !stepNums.edit &&
+    getComputedStyle(stepBadge).display === 'none';
+  numsBtn.click();
+  const editShows = stepNums.edit &&
+    getComputedStyle(stepBadge).display !== 'none';
+  ok('the zoombar button toggles the numbers while editing', editHides && editShows);
   removeStep(fr.id);
   S.selNodes = [box.id];
   const stepsBeforeShift = presentFrames().length;
@@ -1787,6 +1886,8 @@ if (/[?&]test/.test(location.search)){
          !!wb && wb.blob.type === 'image/webp' && got.toasts.includes('webp downloaded') &&
          !!cp && [...cp.types].includes('image/png') &&
          got.toasts.includes('image copied to clipboard'));
+      ok('draw.io export is offered in the FILE menu',
+         !!btn('drawio') && !!btn('drawio-image'));
 
       const selKeepN = nodes, selKeepL = links;
       const selKeepSel = { nodes:S.selNodes.slice(), links:S.selLinks.slice() };
@@ -1807,6 +1908,13 @@ if (/[?&]test/.test(location.search)){
          /data-id="sa"/.test(selSvg) && /data-id="sb"/.test(selSvg) &&
          !/data-id="sc"/.test(selSvg) && /data-link="sk"/.test(selSvg) &&
          /data-id="sc"/.test(allSvg) && selSvg.length < allSvg.length);
+      const dx = drawioXML();
+      const dxImg = await drawioImageXML();
+      ok('draw.io export maps the diagram and offers a picture',
+         dx.includes('<mxGraphModel') && dx.includes('id="sa"') &&
+         dx.includes('id="sk"') && dx.includes('edge="1"') &&
+         dxImg.includes('shape=image') &&
+         dxImg.includes('data:image/svg+xml;base64'));
       S.selNodes = selKeepSel.nodes; S.selLinks = selKeepSel.links;
       nodes = selKeepN; links = selKeepL; render();
 

@@ -20,6 +20,10 @@ document.addEventListener('click', () => helpEl.classList.remove('on'));
 
 const presentBtn = document.getElementById('btn-present');
 const presentBadge = document.getElementById('present-badge');
+presentBadge.title = 'Back to the overview (0 or Home)';
+presentBadge.addEventListener('click', () => {
+  if (document.body.classList.contains('present')) showStep(0);
+});
 let presentSteps = [], presentIndex = 0, presentZoneId = null, presentAnim = null;
 function presentZones(){
   const rank = n => {
@@ -161,6 +165,64 @@ function renameStep(f, name){
   });
   input.addEventListener('blur', () => commit(true));
 }
+const STEPNUMS_KEY = 'yoruma.stepnums.v1';
+const stepNums = { edit:true, present:false };
+try {
+  const saved = JSON.parse(localStorage.getItem(STEPNUMS_KEY) || 'null');
+  if (saved && typeof saved === 'object'){
+    if (typeof saved.edit === 'boolean') stepNums.edit = saved.edit;
+    if (typeof saved.present === 'boolean') stepNums.present = saved.present;
+  }
+} catch (e){}
+const numsBtn = document.getElementById('z-nums');
+function numsActive(){
+  return document.body.classList.contains('present')
+    ? !!stepNums.present : !!stepNums.edit;
+}
+function applyStepNums(){
+  document.body.classList.toggle('step-nums-off', !stepNums.edit);
+  document.body.classList.toggle('show-step-nums', !!stepNums.present);
+  if (numsBtn){
+    const on = numsActive();
+    numsBtn.classList.toggle('on', on);
+    numsBtn.setAttribute('aria-pressed', on ? 'true' : 'false');
+  }
+  try { localStorage.setItem(STEPNUMS_KEY, JSON.stringify(stepNums)); } catch (e){}
+}
+function toggleStepNumsPresent(){
+  stepNums.present = !stepNums.present;
+  applyStepNums();
+  toast('step numbers ' + (stepNums.present ? 'on' : 'off') + ' in present mode');
+}
+function toggleStepNumsHere(){
+  if (document.body.classList.contains('present')){
+    toggleStepNumsPresent();
+    return;
+  }
+  stepNums.edit = !stepNums.edit;
+  applyStepNums();
+  toast('step numbers ' + (stepNums.edit ? 'on' : 'off') + ' while editing');
+}
+applyStepNums();
+if (numsBtn) numsBtn.addEventListener('click', toggleStepNumsHere);
+function stepNumsRow(){
+  const box = document.createElement('div');
+  box.className = 'step-prefs';
+  [['edit', 'while editing'], ['present', 'in present mode']].forEach(([key, label]) => {
+    const l = document.createElement('label');
+    const input = document.createElement('input');
+    input.type = 'checkbox';
+    input.checked = !!stepNums[key];
+    input.addEventListener('change', () => {
+      stepNums[key] = input.checked;
+      applyStepNums();
+    });
+    l.appendChild(input);
+    l.appendChild(document.createTextNode(label));
+    box.appendChild(l);
+  });
+  return box;
+}
 function renderStepsMenu(){
   const el = document.getElementById('steps-menu');
   if (!el) return;
@@ -170,6 +232,11 @@ function renderStepsMenu(){
   add.disabled = !S.selNodes.length;
   add.addEventListener('click', () => { addStep(); renderStepsMenu(); });
   el.appendChild(add);
+  const numsLabel = document.createElement('div');
+  numsLabel.className = 'menu-label';
+  numsLabel.textContent = 'Show step numbers';
+  el.appendChild(numsLabel);
+  el.appendChild(stepNumsRow());
   const list = presentFrames();
   if (!list.length){
     const d = document.createElement('div');
@@ -274,7 +341,10 @@ function showStep(i){
   glideTo(viewFor(presentBox()));
   const label = z ? (z.kind === 'frame'
     ? stepName(z, presentIndex - 1) : (z.title || 'zone')) : 'overview';
-  presentBadge.textContent = (presentIndex + 1) + ' / ' + presentSteps.length + ' · ' + label;
+  const total = presentSteps.length - 1;
+  presentBadge.textContent = presentIndex === 0
+    ? (total ? 'overview · 0 / ' + total : 'overview')
+    : presentIndex + ' / ' + total + ' · ' + label;
 }
 function stepPresent(dir){
   if (!document.body.classList.contains('present')) return;
@@ -283,6 +353,7 @@ function stepPresent(dir){
 function setPresent(on){
   document.body.classList.toggle('present', on);
   presentBtn.textContent = on ? 'EXIT' : 'PRESENT';
+  applyStepNums();
   if (presentAnim){ cancelAnimationFrame(presentAnim); presentAnim = null; }
   if (on){
     clearSel();
@@ -336,14 +407,35 @@ function loadExample(id){
 function renderDemoMenu(){
   const el = document.getElementById('demo-menu');
   el.innerHTML = '';
-  const add = (label, fn) => {
+  const add = (label, fn, note) => {
     const b = document.createElement('button');
     b.textContent = label;
+    if (note) b.title = note;
     b.addEventListener('click', () => { el.classList.remove('on'); fn(); });
     el.appendChild(b);
   };
   add('Blank canvas', clearDoc);
-  EXAMPLES.forEach(ex => add(ex.name, () => loadExample(ex.id)));
+  EXAMPLES.forEach(ex => add(ex.name, () => loadExample(ex.id),
+    ex.sourceName ? 'Based on ' + ex.sourceName : ''));
+  const src = document.createElement('div');
+  src.className = 'menu-source';
+  src.appendChild(document.createTextNode('Sources: '));
+  [
+    ['a16z data architectures',
+      'https://a16z.com/emerging-architectures-for-modern-data-infrastructure/'],
+    ['AWS', 'https://aws.amazon.com/architecture/'],
+    ['Google Cloud', 'https://docs.cloud.google.com/architecture'],
+    ['Azure', 'https://learn.microsoft.com/en-us/azure/architecture/']
+  ].forEach(([label, href], i) => {
+    if (i) src.appendChild(document.createTextNode(' · '));
+    const a = document.createElement('a');
+    a.href = href;
+    a.target = '_blank';
+    a.rel = 'noopener';
+    a.textContent = label;
+    src.appendChild(a);
+  });
+  el.appendChild(src);
 }
 const demoMenu = document.getElementById('demo-menu');
 document.getElementById('btn-demo').addEventListener('click', ev => {
@@ -430,6 +522,8 @@ function syncHud(){
   const mode = S.selLinks.length
     ? ((links.find(l => l.id === S.selLinks[0]) || {}).motion || S.motion)
     : S.motion;
-  motionBtn.textContent = 'FLOW · ' + MLABEL[mode];
+  const motionLabel = motionBtn.querySelector('.hlabel');
+  if (motionLabel) motionLabel.textContent = 'FLOW · ' + MLABEL[mode];
+  else motionBtn.textContent = 'FLOW · ' + MLABEL[mode];
 }
 

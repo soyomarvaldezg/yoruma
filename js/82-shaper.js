@@ -192,6 +192,44 @@ ZONE_STYLE.forEach(opt => {
   shaper.appendChild(b);
 });
 
+/* A zone wears its vendor mark in the band, like the AWS/Azure frame style.
+   Click the button to pick an image; click it again to remove the logo. */
+const zoneLogoInput = document.createElement('input');
+zoneLogoInput.type = 'file';
+zoneLogoInput.accept = 'image/*';
+zoneLogoInput.style.display = 'none';
+document.body.appendChild(zoneLogoInput);
+zoneLogoInput.addEventListener('change', () => {
+  const n = byId(S.selNodes[0]);
+  if (n && n.kind === 'zone' && zoneLogoInput.files[0])
+    attachLogo(zoneLogoInput.files[0], n);
+  zoneLogoInput.value = '';
+});
+const zoneLogoBtn = document.createElement('button');
+zoneLogoBtn.innerHTML = '<svg viewBox="0 0 24 24">' +
+  '<rect x="3.5" y="5" width="17" height="14" rx="1.8"/>' +
+  '<circle cx="8.6" cy="10" r="1.6"/>' +
+  '<path d="M4.2 17.2l4.8-4.8 4.2 4.2 2.4-2.4 4.2 4.2"/></svg>';
+zoneLogoBtn.dataset.zone = 'logo';
+zoneLogoBtn.title = 'Zone logo — choose an image, or drop one on the band';
+zoneLogoBtn.setAttribute('aria-label', 'Attach or remove the zone logo');
+zoneLogoBtn.setAttribute('aria-pressed', 'false');
+zoneLogoBtn.addEventListener('mousedown', ev => ev.preventDefault());
+zoneLogoBtn.addEventListener('click', () => {
+  const n = byId(S.selNodes[0]);
+  if (!n || n.kind !== 'zone') return;
+  if (n.logo){
+    snapshot();
+    delete n.logo;
+    delete n.mono;
+    render();
+    toast('zone logo removed');
+    return;
+  }
+  zoneLogoInput.click();
+});
+shaper.appendChild(zoneLogoBtn);
+
 const linkbar = document.getElementById('linkbar');
 const LINK_STYLE = [
   { lw:1.2, title:'Thin', svg:'<path d="M3 12h18" stroke-width="1.2"/>' },
@@ -295,7 +333,12 @@ function placeShaper(){
     }
     else if (b.dataset.zone){
       b.style.display = n.kind === 'zone' ? '' : 'none';
-      on = n.kind === 'zone' && n[b.dataset.zone] === true;
+      on = n.kind === 'zone' && (b.dataset.zone === 'logo'
+        ? !!n.logo : n[b.dataset.zone] === true);
+      if (b.dataset.zone === 'logo')
+        b.title = n.logo
+          ? 'Remove the zone logo'
+          : 'Zone logo — choose an image, or drop one on the band';
     } else if (b.dataset.align){
       b.style.display = n.kind === 'tile' ? 'none' : '';
       on = (n.align || 'center') === b.dataset.align;

@@ -338,9 +338,9 @@ stage.addEventListener('drop', ev => {
   }
   const p = toWorld(ev);
   const hit = nodeAt(p, 0);
-  if (hit && LOGO_KINDS.has(hit.kind) && f.type && f.type.startsWith('image/')){
-    attachLogo(f, hit);
-    return;
+  if (hit && f.type && f.type.startsWith('image/')){
+    if (hit.kind === 'zone' && p.y <= hit.y + 34){ attachLogo(f, hit); return; }
+    if (LOGO_KINDS.has(hit.kind)){ attachLogo(f, hit); return; }
   }
   insertFile(f, p);
 });
@@ -371,13 +371,14 @@ function buildGrid(el, list, group){
     el.appendChild(b);
   });
 }
-buildGrid(document.getElementById('tools'), DRAW.concat(DATA), 'all');
+buildGrid(document.getElementById('tools'), DRAW, 'draw');
+buildGrid(document.getElementById('shape-tools'), DATA, 'data');
 
 function setTool(id, group){
   S.tool = id;
   S.armed = null;
   remarkChips(null);
-  document.querySelectorAll('#tools button').forEach(b => {
+  document.querySelectorAll('#tools button, #shape-tools button').forEach(b => {
     const on = b.dataset.tool === id;
     b.classList.toggle('on', on);
     b.setAttribute('aria-pressed', on ? 'true' : 'false');
@@ -400,7 +401,7 @@ function catalogChip(label, box){
     remarkChips(c);
     S.tool = 'place';
     document.body.dataset.tool = 'place';
-    document.querySelectorAll('#tools button').forEach(b => b.classList.remove('on'));
+    document.querySelectorAll('#tools button, #shape-tools button').forEach(b => b.classList.remove('on'));
   });
   box.appendChild(c);
 }
@@ -468,4 +469,22 @@ catalogFilter.addEventListener('keydown', e => {
 function remarkChips(active){
   catalogEl.querySelectorAll('.chip').forEach(c => c.classList.toggle('on', c === active));
 }
+
+const SECT_KEY = 'yoruma.sidebar.v1';
+const SECTS = ['sect-draw', 'sect-icons', 'sect-blocks']
+  .map(id => document.getElementById(id)).filter(Boolean);
+function loadSections(){
+  let saved = null;
+  try { saved = JSON.parse(localStorage.getItem(SECT_KEY) || 'null'); } catch (e){}
+  SECTS.forEach(d => {
+    if (saved && typeof saved[d.id] === 'boolean') d.open = saved[d.id];
+  });
+}
+function saveSections(){
+  const state = {};
+  SECTS.forEach(d => { state[d.id] = d.open; });
+  try { localStorage.setItem(SECT_KEY, JSON.stringify(state)); } catch (e){}
+}
+loadSections();
+SECTS.forEach(d => d.addEventListener('toggle', saveSections));
 

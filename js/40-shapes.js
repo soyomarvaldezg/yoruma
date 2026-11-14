@@ -56,16 +56,25 @@ function shape(n){
         ...(n.solid ? {} : { 'stroke-dasharray':'7 6' }),
         'pointer-events':'none'
       }));
-      if (n.band && n.title){
+      if (n.band && (n.title || n.logo)){
         const accent = accentOf(n) || LINE;
         g.appendChild(mk('path', {
           d:`M${x} ${y+34} V${y+8} a8 8 0 0 1 8 -8 H${x+w-8} a8 8 0 0 1 8 8 V${y+34} Z`,
           fill: hexA(accent, .16), stroke:'none', 'pointer-events':'none',
           'data-role':'zone-band'
         }));
-        addLines(g, x + 12, y + 24, 'start', accent, "'VD Code',monospace",
-          15*fscale(n), 600, '.08em', [String(n.title).toUpperCase()], 0, '',
-          'zone-band-label');
+      }
+      if (n.logo){
+        const ls = 18;
+        g.appendChild(mk('image', { x:x+10, y:y+8, width:ls, height:ls,
+          href:n.logo, preserveAspectRatio:'xMidYMid meet',
+          'pointer-events':'none', 'data-role':'zone-logo' }));
+      }
+      if (n.band && n.title){
+        const accent = accentOf(n) || LINE;
+        addLines(g, x + 12 + (n.logo ? 24 : 0), y + 24, 'start', accent,
+          "'VD Code',monospace", 15*fscale(n), 600, '.08em',
+          [String(n.title).toUpperCase()], 0, '', 'zone-band-label');
       }
       break;
     }
@@ -405,8 +414,8 @@ function drawText(g, n){
   }
   if (n.kind === 'zone'){
     if (n.band) return;
-    addLines(g, n.x + 12, n.y + 26, 'start', ink, CODE, 17*fscale(n), W1, '.12em',
-      [title.toUpperCase()], 0, ST, 'title');
+    addLines(g, n.x + 12 + (n.logo ? 24 : 0), n.y + 26, 'start', ink, CODE,
+      17*fscale(n), W1, '.12em', [title.toUpperCase()], 0, ST, 'title');
     return;
   }
   if (n.kind === 'text'){
