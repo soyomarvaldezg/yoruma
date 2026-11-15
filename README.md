@@ -10,10 +10,10 @@ Nothing to install. There is no build step.
 **Use it:** <https://soyomarvaldezg.github.io/yoruma/> — or open `index.html` from a clone.
 
 The page starts on a blank canvas. Press **EXAMPLES ▾** to load a sample:
-a BI stack, a streaming pipeline, an ML platform, AWS / GCP / Azure reference
-topologies with regions, zones, VPCs and subnets, a hybrid landing zone, a
-multi-region DR layout, and a migration factory. The menu footer links the
-sources. See `docs/examples-sources.md` for the full list.
+a BI stack, a streaming pipeline, an ML platform, a medallion lakehouse,
+AWS / GCP / Azure reference topologies with regions, zones, VPCs and subnets,
+a hybrid landing zone, a multi-region DR layout, and a migration factory.
+The menu footer links the sources. See `docs/examples-sources.md` for the full list.
 
 ![The editor with the modern BI example open](docs/editor.png)
 

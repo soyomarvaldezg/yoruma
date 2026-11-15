@@ -26,7 +26,7 @@ without renaming its neighbours.
 | File | Owns |
 |---|---|
 | `js/00-core.js` | constants, palette tables (`ICON`, `DRAW`, `DATA`, `MORPHS`, `SIZE`, `ANIMS`, `LOOP_D`), the `S` state object, colour helpers, `byId`, `zoneMembers` |
-| `js/05-examples.js` | the three worked example documents, as plain data |
+| `js/05-examples.js` | the worked example documents, as plain data |
 | `js/10-doc.js` | demo seed, pages (state, switching, add/remove, duplicate, compare), `snapshot`/`undo`/`redo`, autosave and restore |
 | `js/20-view.js` | pan, zoom, fit (including compare ghosts), `applyView` |
 | `js/30-routing.js` | anchors, the 26px stubs, multi-bend routing, `midPoint` |
@@ -87,6 +87,9 @@ A document holds one or more **pages** (`{ id, name, nodes, links, view }`); the
 and `links` always mirror the active page, so every feature (render, lint, present, exports,
 autosave) works page by page without knowing pages exist. Version-1 files without `pages` load as
 a single page, which keeps old documents and the JSON export backwards compatible.
+
+Compare and trace are transient view state. They never enter the document and never change the
+saved file.
 
 Steps are nodes of `kind: "frame"` with a `members` array and a `step` order. They are never
 drawn unless selected, so steps can overlap spatially. A frame's `title` is its custom name;
