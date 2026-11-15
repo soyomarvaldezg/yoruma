@@ -356,6 +356,7 @@ function setPresent(on){
   applyStepNums();
   if (presentAnim){ cancelAnimationFrame(presentAnim); presentAnim = null; }
   if (on){
+    trace = null; spotId = null;
     clearSel();
     const frames = presentFrames();
     presentSteps = [null].concat(frames.length ? frames : presentZones());
@@ -391,7 +392,8 @@ function clearDoc(){
   const where = pages.length > 1 ? 'this page' : 'the whole document';
   if ((nodes.length || links.length) &&
       !confirm('Clear ' + where + '? Undo restores it until reload.')) return;
-  snapshot(); nodes = []; links = []; clearSel(); render(); fit(); save();
+  snapshot(); nodes = []; links = []; clearSel(); trace = null; spotId = null;
+  render(); fit(); save();
 }
 function loadExample(id){
   const ex = EXAMPLES.find(e => e.id === id);
@@ -402,6 +404,7 @@ function loadExample(id){
   nodes = JSON.parse(JSON.stringify(ex.nodes));
   links = JSON.parse(JSON.stringify(ex.links));
   S.selNodes = []; S.selLinks = [];
+  trace = null; spotId = null;
   render(); fit();
 }
 function renderDemoMenu(){

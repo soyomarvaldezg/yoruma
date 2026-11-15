@@ -595,6 +595,46 @@ if (/[?&]test/.test(location.search)){
   ok('the dim eases in once and does not re-flash on redraw', dimFirst && !dimAgain);
   spotId = null; render();
 
+  const traceN = nodes, traceL = links;
+  const tNode = (id, x) => ({ id, kind:'box', title:id, sub:'', color:null,
+    tcolor:null, scolor:null, fill:null, fs:1, x, y:700, w:120, h:80 });
+  nodes = [tNode('A', 60), tNode('B', 240), tNode('C', 420),
+    tNode('D', 600), tNode('E', 60 + 0)];
+  nodes[4].y = 860;
+  links = [
+    { id:'t1', from:'A', to:'B', label:'', color:null, motion:null, bends:[] },
+    { id:'t2', from:'B', to:'C', label:'', color:null, motion:null, bends:[] },
+    { id:'t3', from:'A', to:'D', label:'', color:null, motion:null, bends:[] },
+    { id:'t4', from:'E', to:'B', label:'', color:null, motion:null, bends:[] },
+    { id:'t5', from:'C', to:'A', label:'', color:null, motion:null, bends:[] }
+  ];
+  const upAll = traceWalk('C', 'up', 0);
+  ok('upstream trace follows the chain and skips siblings',
+     upAll.nodes.has('C') && upAll.nodes.has('B') && upAll.nodes.has('A') &&
+     upAll.nodes.has('E') && !upAll.nodes.has('D'));
+  const downAll = traceWalk('A', 'down', 0);
+  ok('downstream trace reverses the path',
+     downAll.nodes.has('A') && downAll.nodes.has('B') && downAll.nodes.has('C') &&
+     downAll.nodes.has('D') && !downAll.nodes.has('E'));
+  const upOne = traceWalk('C', 'up', 1);
+  ok('trace depth stops at one hop',
+     upOne.nodes.has('C') && upOne.nodes.has('B') && !upOne.nodes.has('A'));
+
+  trace = { id:'C', dir:'up', depth:0 };
+  render();
+  ok('trace dims shapes outside the result',
+     !stage.querySelector('g.node[data-id="B"]').classList.contains('dimmed') &&
+     stage.querySelector('g.node[data-id="D"]').classList.contains('dimmed'));
+  S.selNodes = ['A']; S.selLinks = []; render();
+  ok('trace bar appears for one selected shape',
+     document.getElementById('tracebar').classList.contains('on'));
+  window.dispatchEvent(new KeyboardEvent('keydown', { key:'Escape' }));
+  ok('escape clears the trace', trace === null &&
+     !stage.querySelector('g.node[data-id="D"]').classList.contains('dimmed'));
+  nodes = traceN; links = traceL;
+  S.selNodes = []; S.selLinks = [];
+  render();
+
   sendAlt('pointerdown', { x:300, y:900 });
   for (let i = 1; i <= 6; i++) sendAlt('pointermove', { x:300 + i*24, y:900 + (i%2 ? 10 : -6) });
   const laserPath = stage.querySelector('path.laser');
@@ -875,6 +915,20 @@ if (/[?&]test/.test(location.search)){
   ok('a new page starts empty and takes over',
      nodes.length === 0 && pages.length === 2 && pageId !== keepPageId &&
      document.querySelectorAll('#pages .page-tab').length === 2);
+  const pageOrder = pages.map(p => p.id).join();
+  const openPage = pageId;
+  movePageBy(pageId, -1);
+  ok('page reorder moves the tab and keeps the open page',
+     pageId === openPage && pages.map(p => p.id).join() !== pageOrder);
+  movePageBy(pageId, 1);
+  const thirdPage = { id:'tmpPage', name:'Third', nodes:[], links:[], view:null };
+  pages.push(thirdPage);
+  const order3 = pages.map(p => p.id);
+  movePage(order3[1], order3[2]);
+  ok('dropping a page on a later tab moves it forward',
+     pages.map(p => p.id).join() === [order3[0], order3[2], order3[1]].join());
+  movePage(order3[1], order3[2]);
+  pages = pages.filter(p => p.id !== 'tmpPage');
   nodes.push({ id:'ip1', kind:'box', title:'Invoice', sub:'', color:null, tcolor:null,
     scolor:null, fs:1, x:100, y:100, w:180, h:100 });
   render(); saveNow(true);
@@ -895,12 +949,96 @@ if (/[?&]test/.test(location.search)){
   const scratchId = pageId;
   deletePage(scratchId);
   ok('an empty page can be deleted again', !pages.some(p => p.id === scratchId));
+
+  const cmpPage = addPage('Compare test');
+  nodes.push(
+    { id:'cmpA', kind:'box', title:'A', sub:'', color:null, tcolor:null,
+      scolor:null, fs:1, x:100, y:100, w:180, h:100 },
+    { id:'cmpB', kind:'box', title:'B', sub:'', color:null, tcolor:null,
+      scolor:null, fs:1, x:400, y:100, w:180, h:100 },
+    { id:'cmpZ', kind:'zone', title:'Zone', sub:'', color:null, tcolor:null,
+      scolor:null, fs:1, x:20, y:20, w:620, h:300 },
+    { id:'cmpC', kind:'box', title:'C', sub:'', color:null, tcolor:null,
+      scolor:null, fs:1, x:100, y:560, w:180, h:100 });
+  links = [
+    { id:'cl1', from:'cmpA', to:'cmpB', label:'reads', color:null, motion:null, bends:[] },
+    { id:'cl2', from:'cmpB', to:'cmpA', label:'acks', color:null, motion:null, bends:[] }
+  ];
+  const cmpIds = nodes.map(n => n.id).join();
+  const dup = duplicatePage(pageId);
+  ok('duplicate page keeps ids for compare',
+     dup.id !== cmpPage.id && dup.nodes.map(n => n.id).join() === cmpIds);
+  ok('duplicate page starts comparing with its source',
+     !!compare && compare.from === cmpPage.id);
+  nodes[0].x += 40;
+  nodes[1].title = 'B edited';
+  nodes.push({ id:'cmpNew', kind:'box', title:'New', sub:'', color:null,
+    tcolor:null, scolor:null, fs:1, x:100, y:400, w:180, h:100 });
+  nodes = nodes.filter(n => n.id !== 'cmpZ');
+  links[0].to = 'cmpNew';
+  links = links.filter(l => l.id !== 'cl2');
+  links.push({ id:'cl3', from:'cmpB', to:'cmpA', label:'new', color:null,
+    motion:null, bends:[] });
+  compare = { from: cmpPage.id };
+  renderPages(); render();
+  ok('compare marks moved, edited and added shapes',
+     deltaView.byId.get('cmpA') === 'moved' &&
+     deltaView.byId.get('cmpB') === 'edited' &&
+     deltaView.byId.get('cmpNew') === 'added' &&
+     deltaView.byId.get('cmpC') === 'unchanged' &&
+     deltaView.removed.some(n => n.id === 'cmpZ') &&
+     !!stage.querySelector('[data-role="delta-halo"]') &&
+     !!stage.querySelector('[data-role="delta-ghosts"]') &&
+     !!stage.querySelector('[data-role="delta-badge"]') &&
+     !!stage.querySelector('g.node[data-id="cmpC"][data-delta="unchanged"]'));
+  ok('compare marks added, rewired and removed arrows',
+     deltaView.linkById.get('cl1') === 'rewired' &&
+     deltaView.linkById.get('cl3') === 'added' &&
+     deltaView.linksRemoved.some(l => l.id === 'cl2') &&
+     !!stage.querySelector('[data-role="delta-link-halo"]') &&
+     !!stage.querySelector('[data-role="delta-link-ghost"]'));
+  ok('compare keeps its counts on the compare button',
+     document.querySelector('.page-cmp').getAttribute('aria-pressed') === 'true' &&
+     /Exit compare/.test(document.querySelector('.page-cmp').title) &&
+     /edited/.test(document.querySelector('.page-cmp').title) &&
+     /arrows/.test(document.querySelector('.page-cmp').title));
+  exitCompare();
+  ok('compare exits cleanly',
+     compare === null && deltaView === null &&
+     document.querySelector('.page-cmp').getAttribute('aria-pressed') === 'false');
   switchPage(keepPageId);
+  pages = pages.filter(p => p.id !== dup.id && p.id !== cmpPage.id);
+
   pages = [keepPageObj];
   pageId = keepPageId;
   document.body.dataset.sticky = '0';
   renderPages(); render();
   ok('one page is left after cleanup', pages.length === 1);
+
+  const findN = nodes, findL = links;
+  nodes = [
+    { id:'f1', kind:'box', title:'Find me', sub:'needle', color:null, tcolor:null,
+      scolor:null, fs:1, x:100, y:100, w:180, h:100 },
+    { id:'f2', kind:'store', title:'Other', sub:'', color:null, tcolor:null,
+      scolor:null, fs:1, x:400, y:100, w:180, h:100 }
+  ];
+  links = [];
+  renderPages(); render();
+  openFind();
+  const findInput = document.getElementById('find-input');
+  findInput.value = 'needle';
+  findInput.dispatchEvent(new Event('input', { bubbles:true }));
+  ok('find filters shapes by title or subtitle',
+     document.querySelectorAll('#find-list .find-hit').length === 1 &&
+     /Find me/.test(document.querySelector('#find-list .find-hit').textContent));
+  window.dispatchEvent(new KeyboardEvent('keydown', { key:'Enter' }));
+  ok('find selects the match and closes',
+     S.selNodes[0] === 'f1' && document.getElementById('finder').hidden);
+  openFind();
+  window.dispatchEvent(new KeyboardEvent('keydown', { key:'Escape' }));
+  ok('find closes on escape', document.getElementById('finder').hidden);
+  nodes = findN; links = findL;
+  renderPages(); render();
 
   const stepRow = document.querySelector('.step-row');
   const stepDel = stepRow && stepRow.querySelector('button.del');
@@ -1669,6 +1807,39 @@ if (/[?&]test/.test(location.search)){
   render();
   ok('lint stays quiet without the crossing',
     !lintIssues().some(i => i.type === 'cross'));
+
+  nodes.push(
+    { id:'LO1', kind:'box', title:'left block', sub:'', color:null, tcolor:null,
+      scolor:null, fill:null, fs:1, x:100, y:700, w:180, h:110 },
+    { id:'LO2', kind:'box', title:'right block', sub:'', color:null, tcolor:null,
+      scolor:null, fill:null, fs:1, x:200, y:740, w:180, h:110 });
+  render();
+  ok('lint flags overlapping shapes',
+    lintIssues().some(i => i.type === 'overlap' &&
+      (i.id === 'LO1' || i.id === 'LO2')));
+  nodes.pop(); nodes.pop();
+
+  nodes.push({ id:'LL', kind:'box', title:'label wall', sub:'', color:null,
+    tcolor:null, scolor:null, fill:null, fs:1, x:450, y:120, w:80, h:60 });
+  links[0].label = 'reads';
+  render();
+  ok('lint flags a label sitting on a shape',
+    lintIssues().some(i => i.id === 'lk1' && i.type === 'label'));
+  links[0].label = '';
+  nodes.pop();
+
+  const denseN = nodes, denseL = links;
+  nodes = Array.from({ length:25 }, (_, i) => ({
+    id:'LD' + i, kind:'box', title:'n' + i, sub:'', color:null, tcolor:null,
+    scolor:null, fill:null, fs:1,
+    x:(i % 5)*260, y:Math.floor(i / 5)*160, w:200, h:100 }));
+  links = [];
+  render();
+  ok('lint flags an overfull page',
+    lintIssues().some(i => i.type === 'dense'));
+  nodes = denseN; links = denseL;
+  render();
+
   syncLint();
   const chip = document.getElementById('lint-chip');
   ok('lint chip lists the issues', !!chip && !chip.hidden && /LINT/.test(chip.textContent));
@@ -1908,6 +2079,12 @@ if (/[?&]test/.test(location.search)){
          /data-id="sa"/.test(selSvg) && /data-id="sb"/.test(selSvg) &&
          !/data-id="sc"/.test(selSvg) && /data-link="sk"/.test(selSvg) &&
          /data-id="sc"/.test(allSvg) && selSvg.length < allSvg.length);
+      spotId = 'sa'; trace = { id:'sa', dir:'down', depth:0 };
+      render();
+      const dimSvg = await buildSVG();
+      ok('focus and trace dimming stay out of the export',
+         !/<g[^>]*opacity="\.(16|22)"/.test(dimSvg));
+      spotId = null; trace = null; render();
       const dx = drawioXML();
       const dxImg = await drawioImageXML();
       ok('draw.io export maps the diagram and offers a picture',

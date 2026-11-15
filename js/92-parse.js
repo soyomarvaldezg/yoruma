@@ -292,6 +292,12 @@ async function buildSVG(opts){
   const css = (await fontFace('VD Code','fonts/SourceCodePro.ttf'))
             + (await fontFace('VD Sans','fonts/DMSans.ttf'));
   const clone = viewport.cloneNode(true);
+  /* Focus, trace and present dim groups at render time. The picture is always
+     the full diagram, so strip that state before serialising. */
+  clone.querySelectorAll('g[opacity]').forEach(el => {
+    el.removeAttribute('opacity');
+    el.classList.remove('dimmed');
+  });
   clone.querySelectorAll('.ui').forEach(el => {
     if (el.classList.contains('march')) el.classList.remove('ui');
     else if (el.classList.contains('comet') || el.classList.contains('comet-halo')){

@@ -109,6 +109,11 @@
   </aside>
   <main>
     <div class="pagebar" id="pages"></div>
+    <div id="compare-menu"></div>
+    <div class="finder" id="finder" hidden>
+      <input id="find-input" type="search" placeholder="Find a shape" autocomplete="off" spellcheck="false">
+      <div id="find-list"></div>
+    </div>
     <svg id="stage" xmlns="http://www.w3.org/2000/svg"><g id="viewport"></g></svg>
     <div class="zoombar">
       <button id="z-out">−</button>
@@ -120,6 +125,16 @@
     </div>
     <div id="minimap" class="off" aria-hidden="true"><canvas id="minimap-canvas"></canvas></div>
     <div id="present-badge"></div>
+    <div id="tracebar" role="toolbar" aria-label="Trace path">
+      <button data-trace="up" title="Upstream: what feeds this" aria-label="Trace upstream">↑</button>
+      <button data-trace="down" title="Downstream: what this feeds" aria-label="Trace downstream">↓</button>
+      <button data-trace="both" title="Both directions" aria-label="Trace both directions">↔</button>
+      <button data-depth="1" title="One hop">1</button>
+      <button data-depth="3" title="Three hops">3</button>
+      <button data-depth="0" title="All hops">∞</button>
+      <span id="trace-info"></span>
+      <button data-trace="off" title="Clear trace" aria-label="Clear trace">×</button>
+    </div>
     <div class="status" id="status">nothing selected</div>
     <button id="lint-chip" title="Problems in this diagram: text that overflows or arrows crossing shapes. Click to step through them" hidden></button>
   </main>
@@ -198,11 +213,12 @@
   <div><span><kbd>Enter</kbd></span><span>rename a shape, or note an arrow</span></div>
 
   <h3>View</h3>
-  <div><span><kbd>F</kbd><kbd>W</kbd><kbd>Esc</kbd></span><span>fit · focus one shape · deselect</span></div>
+  <div><span><kbd>F</kbd><kbd>⌘F</kbd><kbd>W</kbd><kbd>Esc</kbd></span><span>fit · find · focus one shape · deselect</span></div>
   <div><span><kbd>[</kbd><kbd>]</kbd><kbd>,</kbd><kbd>.</kbd></span><span>text size · motion dot size</span></div>
   <div><span><kbd>M</kbd><kbd>⇧M</kbd></span><span>motion mode · minimap</span></div>
   <div><span><kbd>&lt;</kbd><kbd>&gt;</kbd></span><span>loop tempo on a selected tile</span></div>
   <div><span><kbd>⌘.</kbd><kbd>⌥←</kbd><kbd>⌥→</kbd></span><span>left panel · previous page · next page</span></div>
+  <div><span><kbd>⌥⇧←</kbd><kbd>⌥⇧→</kbd></span><span>move the current page</span></div>
 
   <h3>Steps &amp; present</h3>
   <div><span><kbd>S</kbd><kbd>⇧S</kbd></span><span>open the steps panel · add a step from the selection</span></div>
@@ -262,9 +278,11 @@ function tick(now){
 <script src="js/88-colour-motion.js"></script>
 <script src="js/89-lint.js"></script>
 <script src="js/90-export.js"></script>
+<script src="js/91-trace.js"></script>
 <script src="js/92-parse.js"></script>
 <script src="js/93-text.js"></script>
 <script src="js/94-hud.js"></script>
+<script src="js/95-find.js"></script>
 <script src="js/96-keys.js"></script>
 <script src="js/98-boot.js"></script>
 <script src="js/99-tests.js"></script>

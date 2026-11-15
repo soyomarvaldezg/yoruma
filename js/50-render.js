@@ -2,6 +2,22 @@
 let motionEls = [], handles = [];
 let dimPrev = new Set(), dimNow = new Set();
 const lenCache = new Map();
+const DELTA_ADD = '#2F9E44', DELTA_MOVE = '#F08C00';
+
+/* Compare state is a halo plus a badge, so a shape that is already green or
+   amber keeps its own colour and the diff stays readable. */
+function deltaBadge(g, n, st){
+  const col = st === 'added' ? DELTA_ADD : st === 'removed' ? LINE : DELTA_MOVE;
+  const cx = n.x + n.w - 4, cy = n.y - 4;
+  const badge = mk('g', { 'data-role':'delta-badge', 'pointer-events':'none' });
+  badge.appendChild(mk('circle', { cx, cy, r:7, fill:col, stroke:'#fff', 'stroke-width':1.5 }));
+  const t = mk('text', { x:cx, y:cy + 4.5, 'text-anchor':'middle', fill:'#fff',
+    'font-family':"'VD Sans',sans-serif", 'font-size':'11', 'font-weight':'700' });
+  t.textContent = st === 'added' ? '+' : st === 'removed' ? '−'
+    : st === 'edited' ? '~' : '→';
+  badge.appendChild(t);
+  g.appendChild(badge);
+}
 
 function tick(now){
   requestAnimationFrame(tick);
@@ -27,6 +43,8 @@ function renderSoon(){
 }
 function render(){
   const lite = !!(drag || resize);
+  deltaView = compareData();
+  traceSet = traceData();
   viewport.innerHTML = '';
   const defs = mk('defs');
   const mkArrow = (id, fill) => {
@@ -60,7 +78,16 @@ function render(){
   const spot = !focusZone && spotId ? byId(spotId) : null;
   const focusMembers = focusZone && focusZone.kind === 'frame'
     ? stepMembers(focusZone) : null;
+  const traceOn = !focusZone && !!traceSet;
+  const tracedZone = n => traceOn && n.kind === 'zone' &&
+    nodes.some(m => m.kind !== 'zone' && traceSet.nodes.has(m.id) &&
+      m.x >= n.x && m.y >= n.y && m.x + m.w <= n.x + n.w &&
+      m.y + m.h <= n.y + n.h);
   const dimmed = n => {
+    if (traceOn){
+      if (n.kind === 'frame' || traceSet.nodes.has(n.id) || tracedZone(n)) return false;
+      return true;
+    }
     if (spot) return n !== spot && n.kind !== 'frame';
     if (!focusZone || n === focusZone || n.kind === 'frame') return false;
     if (focusMembers) return !focusMembers.has(n.id);
@@ -76,7 +103,8 @@ function render(){
         fill:'none', stroke:FIBER, 'stroke-width':1.4, 'stroke-dasharray':'3 3',
         'pointer-events':'none', class:'ui' }));
     g.appendChild(shape(n));
-    if (dimmed(n)){
+    if (tracedZone(n) && !traceSet.nodes.has(n.id)) g.setAttribute('opacity', '.45');
+    else if (dimmed(n)){
       g.setAttribute('opacity', '.16');
       if (!dimPrev.has(n.id)) g.classList.add('dimmed');
       dimNow.add(n.id);
@@ -100,9 +128,19 @@ function render(){
     const dir = l.head === false && l.headStart === true ? -1 : 1;
     const lw = l.lw || 1.5;
     const g = mk('g', { 'data-link':l.id });
+    const ls = deltaView && deltaView.linkById.get(l.id);
+    if (ls && (deltaView.hasChanges || ls !== 'unchanged'))
+      g.setAttribute('data-delta', ls);
 
     g.appendChild(mk('path', { d, fill:'none', stroke:'transparent', 'stroke-width':16,
       'pointer-events':'stroke', class:'linkhit', 'data-link':l.id }));
+    if (ls === 'added' || ls === 'rewired' || ls === 'edited')
+      g.appendChild(mk('path', { d, fill:'none',
+        stroke: ls === 'added' ? DELTA_ADD : DELTA_MOVE,
+        'stroke-width': lw + 7, 'stroke-linecap':'round', opacity:'.22',
+        'pointer-events':'none',
+        ...(ls === 'rewired' ? { 'stroke-dasharray':'3 5' } : {}),
+        'data-role':'delta-link-halo' }));
     g.appendChild(mk('path', { d, fill:'none', stroke: col || LINE,
       'stroke-width': selected ? Math.max(2.6, lw + 1.1) : lw, 'stroke-linecap':'round',
       'marker-end': l.head === false ? 'none' : `url(#${markerId(col || LINE)})`,
@@ -133,7 +171,8 @@ function render(){
     if (selected)
       g.appendChild(mk('path', { d, fill:'none', stroke:FIBER, 'stroke-width':1,
         'stroke-dasharray':'2 4', opacity:'.9', 'pointer-events':'none', class:'ui' }));
-    if ((spot && a !== spot && b !== spot) ||
+    if ((traceOn && !traceSet.links.has(l.id)) ||
+        (spot && a !== spot && b !== spot) ||
         (focusZone && (focusMembers ? (dimmed(a) || dimmed(b)) : (dimmed(a) && dimmed(b))))){
       g.setAttribute('opacity', '.16');
       if (!dimPrev.has(l.id)) g.classList.add('dimmed');
@@ -164,9 +203,57 @@ function render(){
     drawn.push({ link:l, d, mode, col });
   });
 
+  if (deltaView && deltaView.linksRemoved.length){
+    const lg = mk('g', { 'data-role':'delta-link-ghosts' });
+    deltaView.linksRemoved.forEach(l => {
+      const a = deltaView.old.get(l.from), b = deltaView.old.get(l.to);
+      if (!a || !b) return;
+      const pts = route(a, b, bendsOf(l), l);
+      lg.appendChild(mk('path', { d:rounded(pts, 7), fill:'none', stroke:LINE,
+        'stroke-width':1.4, 'stroke-dasharray':'5 5', opacity:'.45',
+        'pointer-events':'none', 'data-role':'delta-link-ghost' }));
+    });
+    world.appendChild(lg);
+  }
+
+  if (deltaView && deltaView.removed.length){
+    const ghosts = mk('g', { 'data-role':'delta-ghosts' });
+    deltaView.removed.forEach(n => {
+      if (n.kind === 'frame') return;
+      const zone = n.kind === 'zone';
+      const g = mk('g', { class:'delta-ghost', 'data-id':n.id });
+      g.appendChild(mk('rect', { x:n.x, y:n.y, width:n.w, height:n.h, rx:zone ? 10 : 6,
+        fill:'none', stroke:LINE, 'stroke-width':1.4,
+        'stroke-dasharray':zone ? '8 6' : '5 5',
+        opacity:'.55', 'pointer-events':'none' }));
+      if (n.title){
+        const t = mk('text', { x:n.x+10, y:n.y+22, fill:MUTED,
+          'font-family':"'VD Sans',sans-serif", 'font-size':'13',
+          'font-weight':'600', opacity:'.75', 'pointer-events':'none',
+          'data-role':'delta-ghost-label' });
+        t.textContent = n.title.slice(0, 32);
+        g.appendChild(t);
+      }
+      deltaBadge(g, n, 'removed');
+      ghosts.appendChild(g);
+    });
+    world.appendChild(ghosts);
+  }
+
   const nodesG = mk('g');
   nodes.filter(n => n.kind !== 'zone').forEach(n => {
     const g = mk('g', { class:'node', 'data-id':n.id });
+    const st = deltaView && deltaView.byId.get(n.id);
+    if (st && (deltaView.hasChanges || st !== 'unchanged'))
+      g.setAttribute('data-delta', st);
+    if (st === 'added' || st === 'moved' || st === 'edited'){
+      g.appendChild(mk('rect', { x:n.x-3, y:n.y-3, width:n.w+6, height:n.h+6, rx:8,
+        fill:'none', stroke: st === 'added' ? DELTA_ADD : DELTA_MOVE,
+        'stroke-width':2, 'pointer-events':'none',
+        ...(st === 'moved' ? { 'stroke-dasharray':'5 4' } : {}),
+        'data-role':'delta-halo' }));
+      deltaBadge(g, n, st);
+    }
     if (isSelNode(n.id))
       g.appendChild(mk('rect', { x:n.x-2, y:n.y-2, width:n.w+4, height:n.h+4, rx:4,
         fill:'none', stroke:FIBER, 'stroke-width':1.4, 'stroke-dasharray':'3 3',
@@ -185,8 +272,20 @@ function render(){
   const zoneLabels = mk('g');
   nodes.filter(n => n.kind === 'zone').forEach(n => {
     const g = mk('g', { 'data-id':n.id });
+    const st = deltaView && deltaView.byId.get(n.id);
+    if (st && (deltaView.hasChanges || st !== 'unchanged'))
+      g.setAttribute('data-delta', st);
+    if (st === 'added' || st === 'moved' || st === 'edited'){
+      g.appendChild(mk('rect', { x:n.x-4, y:n.y-4, width:n.w+8, height:n.h+8, rx:10,
+        fill:'none', stroke: st === 'added' ? DELTA_ADD : DELTA_MOVE,
+        'stroke-width':2, 'pointer-events':'none',
+        ...(st === 'moved' ? { 'stroke-dasharray':'6 4' } : {}),
+        'data-role':'delta-halo' }));
+      deltaBadge(g, n, st);
+    }
     drawText(g, n);
-    if (dimmed(n)) g.setAttribute('opacity', '.22');
+    if (tracedZone(n) && !traceSet.nodes.has(n.id)) g.setAttribute('opacity', '.45');
+    else if (dimmed(n)) g.setAttribute('opacity', '.16');
     zoneLabels.appendChild(g);
   });
   world.appendChild(zoneLabels);
@@ -341,6 +440,7 @@ function render(){
 
   document.body.dataset.tool = S.tool;
   syncHud();
+  syncTracebar();
   /* The style bar is docked first: the loop strip has to see it to stay clear. */
   placeStylebar();
   placeShaper();

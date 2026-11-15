@@ -15,6 +15,7 @@ reference architectures. Each one names the source it follows in the
 | Hybrid · on-prem to multi-cloud | [AWS Hybrid Cloud](https://aws.amazon.com/hybrid/) · [AWS Direct Connect](https://docs.aws.amazon.com/directconnect/latest/UserGuide/Welcome.html) · [Azure ExpressRoute](https://learn.microsoft.com/en-us/azure/expressroute/expressroute-introduction) · [Cloud Interconnect](https://docs.cloud.google.com/network-connectivity/docs/interconnect/concepts/overview) · [Azure Arc](https://learn.microsoft.com/en-us/azure/azure-arc/overview) |
 | Multi-region · active-passive DR | [AWS Architecture Center](https://aws.amazon.com/architecture/) |
 | On-prem to cloud migration | [Azure Cloud Adoption Framework · plan your migration](https://learn.microsoft.com/en-us/azure/cloud-adoption-framework/migrate/plan-migration) |
+| Medallion lakehouse | [Databricks · Medallion architecture](https://www.databricks.com/glossary/medallion-architecture) |
 
 ## Icon sets
 

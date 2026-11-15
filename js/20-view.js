@@ -57,12 +57,15 @@ function toScreen(w){
   return { x: w.x*view.k + view.x + r.left, y: w.y*view.k + view.y + r.top };
 }
 function contentBBox(){
-  if (!nodes.length) return { x:0, y:0, w:400, h:300 };
+  const ghosts = (typeof deltaView !== 'undefined' && deltaView && deltaView.removed)
+    ? deltaView.removed.filter(n => n.kind !== 'frame') : [];
+  const all = nodes.concat(ghosts);
+  if (!all.length) return { x:0, y:0, w:400, h:300 };
   return {
-    x: Math.min(...nodes.map(n => n.x)),
-    y: Math.min(...nodes.map(n => n.y)),
-    w: Math.max(...nodes.map(n => n.x+n.w)) - Math.min(...nodes.map(n => n.x)),
-    h: Math.max(...nodes.map(n => n.y+n.h)) - Math.min(...nodes.map(n => n.y))
+    x: Math.min(...all.map(n => n.x)),
+    y: Math.min(...all.map(n => n.y)),
+    w: Math.max(...all.map(n => n.x+n.w)) - Math.min(...all.map(n => n.x)),
+    h: Math.max(...all.map(n => n.y+n.h)) - Math.min(...all.map(n => n.y))
   };
 }
 function fit(){

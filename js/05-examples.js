@@ -414,5 +414,44 @@ const EXAMPLES = [
     {"id":"m_l13","from":"m_lake","to":"m_lh","label":"curate","color":"#F76707","motion":null,"way":null},
     {"id":"m_l14","from":"m_wh","to":"m_gov","label":"lineage","color":"#657486","motion":null,"way":null}
     ]
+  },
+  {
+    id: "medallion",
+    name: "Medallion lakehouse",
+    source: "https://www.databricks.com/glossary/medallion-architecture",
+    sourceName: "Databricks · Medallion architecture",
+    nodes: [
+    {"id":"mz_src","kind":"zone","title":"Sources","sub":"","color":"#657486","tcolor":null,"scolor":null,"fs":1,"x":0,"y":0,"w":360,"h":560,"band":true},
+    {"id":"mz_ops","kind":"store","title":"Operational systems","sub":"ERP · CRM","color":"#657486","tcolor":null,"scolor":null,"fs":1,"x":40,"y":110,"w":280,"h":110},
+    {"id":"mz_events","kind":"queue","title":"Event stream","sub":"Kafka · CDC","color":"#F76707","tcolor":null,"scolor":null,"fs":1,"x":40,"y":270,"w":280,"h":90},
+    {"id":"mz_files","kind":"file","title":"Partner files","sub":"SFTP · object storage","color":"#4DABF7","tcolor":null,"scolor":null,"fs":1,"x":40,"y":410,"w":280,"h":100},
+    {"id":"mz_raw","kind":"zone","title":"Raw","sub":"bronze","color":"#B36B00","tcolor":null,"scolor":null,"fs":1,"x":400,"y":0,"w":340,"h":560,"band":true,"fill":"#FFE0B2"},
+    {"id":"mz_land","kind":"file","title":"Landing files","sub":"verbatim, immutable","color":"#B36B00","tcolor":null,"scolor":null,"fs":1,"x":440,"y":120,"w":260,"h":100},
+    {"id":"mz_ice","kind":"store","title":"Raw Iceberg","sub":"append-only · partitioned","color":"#B36B00","tcolor":null,"scolor":null,"fs":1,"x":440,"y":290,"w":260,"h":110},
+    {"id":"mz_std","kind":"zone","title":"Standardized","sub":"silver","color":"#1864AB","tcolor":null,"scolor":null,"fs":1,"x":780,"y":0,"w":340,"h":560,"band":true,"fill":"#BBDEFB"},
+    {"id":"mz_clean","kind":"box","title":"Dedupe & cast","sub":"null rules · types","color":"#1864AB","tcolor":null,"scolor":null,"fs":1,"x":820,"y":120,"w":260,"h":100},
+    {"id":"mz_tables","kind":"table","title":"Standard tables","sub":"one grain per table","color":"#1864AB","tcolor":null,"scolor":null,"fs":1,"x":820,"y":290,"w":260,"h":120},
+    {"id":"mz_cur","kind":"zone","title":"Curated","sub":"gold","color":"#2B8A3E","tcolor":null,"scolor":null,"fs":1,"x":1160,"y":0,"w":340,"h":560,"band":true,"fill":"#C8E6C9"},
+    {"id":"mz_vault","kind":"table","title":"Business vault","sub":"conformed marts","color":"#2B8A3E","tcolor":null,"scolor":null,"fs":1,"x":1200,"y":120,"w":260,"h":120},
+    {"id":"mz_dims","kind":"table","title":"Dimensions","sub":"customer · product","color":"#2B8A3E","tcolor":null,"scolor":null,"fs":1,"x":1200,"y":300,"w":260,"h":120},
+    {"id":"mz_srv","kind":"zone","title":"Serving","sub":"","color":"#B7791F","tcolor":null,"scolor":null,"fs":1,"x":1540,"y":0,"w":360,"h":560,"band":true,"fill":"#FFE082"},
+    {"id":"mz_sem","kind":"cube","title":"Semantic model","sub":"metrics · entities","color":"#B7791F","tcolor":null,"scolor":null,"fs":1,"x":1580,"y":110,"w":280,"h":100},
+    {"id":"mz_board","kind":"dashboard","title":"Executive board","sub":"one screen","color":"#E8590C","tcolor":null,"scolor":null,"fs":1,"x":1580,"y":260,"w":280,"h":110},
+    {"id":"mz_api","kind":"api","title":"Metrics API","sub":"read-only · governed","color":"#B7791F","tcolor":null,"scolor":null,"fs":1,"x":1580,"y":420,"w":280,"h":90}
+    ],
+    links: [
+    {"id":"mz_l1","from":"mz_ops","to":"mz_land","label":"extract","color":"#657486","motion":null,"way":null},
+    {"id":"mz_l2","from":"mz_events","to":"mz_land","label":"stream","color":"#657486","motion":null,"way":null},
+    {"id":"mz_l3","from":"mz_files","to":"mz_land","label":"upload","color":"#657486","motion":null,"way":null},
+    {"id":"mz_l4","from":"mz_land","to":"mz_ice","label":"land","color":"#B36B00","motion":null,"way":null},
+    {"id":"mz_l5","from":"mz_ice","to":"mz_clean","label":"clean","color":"#1864AB","motion":null,"way":null},
+    {"id":"mz_l6","from":"mz_clean","to":"mz_tables","label":"publish","color":"#1864AB","motion":null,"way":null},
+    {"id":"mz_l7","from":"mz_tables","to":"mz_vault","label":"model","color":"#2B8A3E","motion":null,"way":null},
+    {"id":"mz_l8","from":"mz_tables","to":"mz_dims","label":"conform","color":"#2B8A3E","motion":null,"way":null},
+    {"id":"mz_l9","from":"mz_vault","to":"mz_sem","label":"govern","color":"#B7791F","motion":null,"way":null},
+    {"id":"mz_l10","from":"mz_dims","to":"mz_sem","label":"join","color":"#B7791F","motion":null,"way":null},
+    {"id":"mz_l11","from":"mz_sem","to":"mz_board","label":"query","color":"#E8590C","motion":null,"way":null},
+    {"id":"mz_l12","from":"mz_sem","to":"mz_api","label":"serve","color":"#B7791F","motion":null,"way":null}
+    ]
   }
 ];

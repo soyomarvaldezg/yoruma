@@ -41,6 +41,7 @@ window.addEventListener('keydown', e => {
       return;
     }
     if (spotId){ spotId = null; render(); return; }
+    if (trace){ trace = null; render(); return; }
     if (document.body.classList.contains('present')){ setPresent(false); return; }
     clearSel(); setTool('select', 'draw'); render();
     return;
@@ -49,7 +50,7 @@ window.addEventListener('keydown', e => {
     if (S.sticky){ S.sticky = false; document.body.dataset.sticky = '0'; }
     const only = S.selNodes.length === 1 ? byId(S.selNodes[0]) : null;
     if (spotId){ spotId = null; toast('focus off'); }
-    else if (only){ spotId = only.id; toast('focus on ' + (only.title || only.kind)); }
+    else if (only){ trace = null; spotId = only.id; toast('focus on ' + (only.title || only.kind)); }
     else { toast('select one shape to focus on it'); return; }
     render();
     return;
@@ -88,6 +89,11 @@ window.addEventListener('keydown', e => {
   if (meta && e.shiftKey && e.key.toLowerCase() === 'z'){ e.preventDefault(); redo(); return; }
   if (meta && e.key.toLowerCase() === 'y'){ e.preventDefault(); redo(); return; }
   if (meta && e.key.toLowerCase() === 'z'){ e.preventDefault(); undo(); return; }
+  if (e.altKey && e.shiftKey && (e.key === 'ArrowRight' || e.key === 'ArrowLeft')){
+    e.preventDefault();
+    movePageBy(pageId, e.key === 'ArrowRight' ? 1 : -1);
+    return;
+  }
   if (e.altKey && (e.key === 'ArrowRight' || e.key === 'ArrowLeft')){
     e.preventDefault();
     const i = pages.findIndex(p => p.id === pageId);

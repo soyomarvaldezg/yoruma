@@ -86,10 +86,26 @@ decision back to auto.
 - **Pages** hold separate diagrams in one document.
   The page strip sits at the top-left of the canvas.
   Click a page to open it. Double-click to rename it. Click `×` to delete it.
+  Drag a tab to reorder the pages; `⌥⇧←` and `⌥⇧→` move the open page.
   Each page keeps its own shapes, arrows and zoom.
+  `⧉` duplicates the current page, keeps its shape ids, and starts comparing the
+  copy against the page it came from. `⇄` switches the baseline or exits. Unchanged shapes
+  recede to grey; the rest keep their own colours under an amber or green halo
+  and a badge: `+` new, `~` edited, `→` moved, `−` gone.
+  The `⇄` button stays pressed while comparing and its tooltip carries the
+  counts; press it again to exit.
 - **Steps** are invisible frames. Select shapes and add a step.
   Then **PRESENT** walks from the overview through each step.
   Everything outside the current step dims.
+- **LINT** counts the problems the page can see: text cut or outside its shape,
+  arrows crossing a shape, a label landing on another shape, shapes that
+  overlap, and a page carrying more than 24 shapes. Click it to jump to the
+  next problem. It stays hidden when the page is clean.
+- **Find** with `⌘F` searches every shape's title and subtitle. Arrow keys move
+  through the matches; Enter selects one and centers it. Esc closes.
+- **Trace** with one shape selected: the bottom bar offers `↑` upstream, `↓`
+  downstream and `↔` both, with `1`, `3` or `∞` hops. It dims everything outside
+  the path and reports the shape and hop count. `Esc` or `×` clears it.
 
 ![Nested zones: VPC, region and subnet, with header bands](docs/zones.png)
 

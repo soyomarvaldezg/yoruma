@@ -196,6 +196,7 @@ const CUSTOM = { hex:null };
 
 let drag = null, resize = null, lend = null, marquee = null, pen = null, pan = null, bend = null;
 let spotId = null, laser = null, erase = null;
+let trace = null, traceSet = null;
 let inked = [];
 const INK_KEY = 'yoruma.ink.v1';
 const INK_MAX = 3e5;

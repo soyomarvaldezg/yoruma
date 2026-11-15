@@ -1,4 +1,4 @@
-/* ---------- lint: text overflow and arrow crossings ---------- */
+/* ---------- lint: overflow, crossings, labels, overlaps, density ---------- */
 const LINT_SKIP = new Set(['zone', 'frame', 'line', 'arrow']);
 let lintList = [], lintTimer = null, lintPick = 0;
 
@@ -72,8 +72,64 @@ function crossIssues(){
   return out;
 }
 
+function overlapIssues(){
+  const out = [];
+  const drawn = nodes.filter(n => !LINT_SKIP.has(n.kind) &&
+    n.kind !== 'heading' && n.kind !== 'text');
+  if (drawn.length > 600) return out;
+  for (let i = 0; i < drawn.length; i++){
+    for (let j = i + 1; j < drawn.length; j++){
+      const a = drawn[i], b = drawn[j];
+      const ox = Math.min(a.x + a.w, b.x + b.w) - Math.max(a.x, b.x);
+      const oy = Math.min(a.y + a.h, b.y + b.h) - Math.max(a.y, b.y);
+      if (ox <= 4 || oy <= 4) continue;
+      out.push({ id:a.id, type:'overlap', link:false,
+        msg: (a.title || a.kind) + ' overlaps ' + (b.title || b.kind) });
+    }
+  }
+  return out;
+}
+
+function labelIssues(){
+  const out = [];
+  links.forEach(l => {
+    if (!l.label) return;
+    const a = byId(l.from), b = byId(l.to);
+    if (!a || !b) return;
+    const pts = route(a, b, bendsOf(l), l);
+    const m = midPoint(pts);
+    const vertical = Math.abs(pts[pts.length-1][0] - pts[0][0]) <
+                     Math.abs(pts[pts.length-1][1] - pts[0][1]);
+    const k = l.fs || 1;
+    const lines = wrapLines(l.label, (vertical ? 130 : 210)*k, 14*k, false, 4);
+    const h = lines.length * 17*k;
+    const x = vertical ? m.x + 12*k : m.x;
+    const y = vertical ? m.y + 4*k - (lines.length - 1)*17*k/2
+                       : m.y - 6*k - (lines.length - 1)*17*k;
+    const cx = x, cy = y - h/2;
+    for (const n of nodes){
+      if (n === a || n === b || LINT_SKIP.has(n.kind)) continue;
+      if (cx > n.x && cx < n.x + n.w && cy > n.y && cy < n.y + n.h){
+        out.push({ id:l.id, type:'label', link:true,
+          msg: 'label “' + l.label + '” sits on ' + (n.title || n.kind) });
+        break;
+      }
+    }
+  });
+  return out;
+}
+
+const LINT_DENSE = 24;
+function densityIssues(){
+  const count = nodes.filter(n => !LINT_SKIP.has(n.kind) &&
+    n.kind !== 'heading' && n.kind !== 'text').length;
+  if (count <= LINT_DENSE) return [];
+  return [{ id:null, type:'dense', link:false,
+    msg: count + ' shapes in one diagram; split it into pages' }];
+}
+
 function lintIssues(){
-  return textIssues().concat(crossIssues());
+  return textIssues().concat(crossIssues(), labelIssues(), overlapIssues(), densityIssues());
 }
 
 function syncLint(){
@@ -101,7 +157,7 @@ document.getElementById('lint-chip').addEventListener('click', () => {
   const it = lintList[lintPick % lintList.length];
   lintPick++;
   if (it.link) selectLink(it.id);
-  else selectNodes([it.id], false);
+  else if (it.id) selectNodes([it.id], false);
   render();
   toast(it.msg, 2600);
 });

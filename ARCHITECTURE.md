@@ -27,11 +27,11 @@ without renaming its neighbours.
 |---|---|
 | `js/00-core.js` | constants, palette tables (`ICON`, `DRAW`, `DATA`, `MORPHS`, `SIZE`, `ANIMS`, `LOOP_D`), the `S` state object, colour helpers, `byId`, `zoneMembers` |
 | `js/05-examples.js` | the three worked example documents, as plain data |
-| `js/10-doc.js` | demo seed, pages (state, switching, add/remove), `snapshot`/`undo`/`redo`, autosave and restore |
-| `js/20-view.js` | pan, zoom, fit, `applyView` |
+| `js/10-doc.js` | demo seed, pages (state, switching, add/remove, duplicate, compare), `snapshot`/`undo`/`redo`, autosave and restore |
+| `js/20-view.js` | pan, zoom, fit (including compare ghosts), `applyView` |
 | `js/30-routing.js` | anchors, the 26px stubs, multi-bend routing, `midPoint` |
 | `js/40-shapes.js` | every shape kind, glyph icons, zone bands, tile squares and their loops, `drawText` |
-| `js/50-render.js` | `render()`, present dimming, step number badges, handles, motion dots, live comets, the tick that moves them, the lite drag path |
+| `js/50-render.js` | `render()`, focus and trace dimming, compare halos, badges and ghosts for shapes and arrows, present dimming, step number badges, handles, motion dots, live comets, the tick that moves them, the lite drag path |
 | `js/60-hit.js` | `nodeAt`, `handleAt`, `zoneHit`, the paint-target picker |
 | `js/70-pointer.js` | pointer listeners: drag, resize, bend, marquee, pan, arrow pen |
 | `js/80-editor.js` | the inline title, subtitle and note editor |
@@ -41,11 +41,13 @@ without renaming its neighbours.
 | `js/86-sidebar.js` | Draw palette, Blocks catalog and filter, clipboard paste |
 | `js/87-minimap.js` | the minimap: auto visibility, the silhouette scene, click-to-jump and the show/hide toggle (Shift+M, Alt-click for auto) |
 | `js/88-colour-motion.js` | paint targets, swatches, the floating style bar, `applyColor`, motion, dot and font size |
-| `js/89-lint.js` | text overflow and arrow-crossing lint, the LINT pill and its click cycle |
+| `js/89-lint.js` | text overflow, arrow crossings, labels on shapes, overlapping shapes and page density; the LINT pill and its click cycle |
 | `js/90-export.js` | `diagramId`, `diagramSkip`, Mermaid and D2 builders |
+| `js/91-trace.js` | inbound/outbound indexes, the trace walk, the trace bar and its state |
 | `js/92-parse.js` | schema validation (nodes, links, pages), `buildSVG` including the selection-only export, import flow, downloads and Kroki links |
 | `js/93-text.js` | the text format: YAML-subset parser, deterministic packer, text import |
 | `js/94-hud.js` | zoom bar, status line, toasts, the steps model, present walkthrough, menus |
+| `js/95-find.js` | the find overlay: match titles and subtitles, keyboard navigation, center on the chosen shape |
 | `js/96-keys.js` | the global key handler and present navigation |
 | `js/98-boot.js` | restore-or-blank, initial fit, animation tick |
 | `js/99-tests.js` | the `?test` suite |
