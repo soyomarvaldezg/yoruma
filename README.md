@@ -502,10 +502,16 @@ Download a JSON copy of anything you cannot afford to lose.
 
 ## Credits
 
-The interaction and motion ideas owe a debt to
+yoruma's interaction and motion patterns were inspired by tools we admire:
+[draw.io](https://github.com/jgraph/drawio),
+[Excalidraw](https://github.com/excalidraw/excalidraw),
+[tldraw](https://github.com/tldraw/tldraw),
+[Whimsical](https://whimsical.com) and
 [Fluyo](https://github.com/itsnect/fluyo) (MIT), an animated diagram editor by
-Claudio Jiménez Flores. No Fluyo source is copied here; where the two projects
-overlap, the code is independent.
+Claudio Jiménez Flores. No source code from those projects is included or
+adapted; where behavior overlaps, the implementation here is independent.
+Product names are trademarks of their respective owners and are used only to
+describe that inspiration; no affiliation or endorsement is implied.
 
 ## Licence
 
