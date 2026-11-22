@@ -2243,6 +2243,45 @@ if (/[?&]test/.test(location.search)){
       view.x = keepView.x; view.y = keepView.y; view.k = keepView.k;
       applyView(); render();
 
+      /* A note types like a text box: Enter starts a line, the box follows. */
+      const keepTextN = nodes, keepTextL = links;
+      const keepTextSel = S.selNodes.slice(), keepTextSelL = S.selLinks.slice();
+      nodes = []; links = []; S.selNodes = []; S.selLinks = [];
+      const note = { id:'nt1', kind:'text', title:'', sub:'', color:null,
+        tcolor:null, scolor:null, fs:1, x:80, y:80, w:200, h:28 };
+      nodes.push(note); render();
+      editNode(note);
+      edTitle.value = 'first\nsecond\nthird';
+      commitEdit();
+      const noteEl = stage.querySelector('g.node[data-id="nt1"] [data-role="title"]');
+      ok('a note keeps its line breaks', !!noteEl &&
+         noteEl.querySelectorAll('tspan').length === 3 &&
+         noteEl.textContent === 'firstsecondthird');
+      ok('a note grows to hold every line', note.h >= 80);
+      ok('a long note is not linted as overflow',
+         !lintIssues().some(x => x.id === 'nt1'));
+
+      editNode(note);
+      edTitle.value = 'edited';
+      edTitle.dispatchEvent(new KeyboardEvent('keydown', { key:'Escape', bubbles:true }));
+      ok('Escape keeps what was typed in a note',
+         note.title === 'edited' && editing === null);
+
+      S.selNodes = ['nt1']; S.selLinks = []; render();
+      const noteHandle = handles.find(x => x.kind === 'resize' && x.corner === 'se');
+      const noteFs = note.fs, noteW = note.w, noteH = note.h;
+      if (!noteHandle) ok('a note has corner handles', false);
+      else {
+        drag({ x:noteHandle.x, y:noteHandle.y },
+             { x:note.x + (noteHandle.x - note.x)*1.6,
+               y:note.y + (noteHandle.y - note.y)*1.6 });
+        ok('dragging a note corner scales its text',
+           note.fs > noteFs && note.w > noteW && note.h > noteH);
+      }
+      nodes = keepTextN; links = keepTextL;
+      S.selNodes = keepTextSel; S.selLinks = keepTextSelL;
+      render();
+
       const fails = R.filter(r => r.startsWith('FAIL')).length;
       const el2 = document.getElementById('help');
       el2.innerHTML = '<h3>Self test</h3>' + R.map(r =>

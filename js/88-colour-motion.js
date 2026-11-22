@@ -235,7 +235,15 @@ function bumpFont(delta){
   if (!S.selNodes.length && !S.selLinks.length) return;
   snapshot();
   nodes.filter(n => S.selNodes.includes(n.id)).forEach(n => {
-    n.fs = Math.min(4, Math.max(0.4, Math.round(((n.fs || 1) + delta) * 10) / 10));
+    const before = n.fs || 1;
+    n.fs = Math.min(4, Math.max(0.4, Math.round((before + delta) * 10) / 10));
+    if (n.kind === 'text' || n.kind === 'heading'){
+      /* A note keeps one scale: the box grows with the words, as it does
+         when a corner is dragged. */
+      const k = n.fs / before;
+      n.w = Math.max(24, Math.round(n.w * k));
+      n.h = Math.max(10, Math.round(n.h * k));
+    }
   });
   links.filter(l => S.selLinks.includes(l.id)).forEach(l => {
     l.fs = Math.min(4, Math.max(0.4, Math.round(((l.fs || 1) + delta) * 10) / 10));

@@ -240,7 +240,8 @@ Press a tool key twice to draw shape after shape. Press it again to draw one sha
 | Mouse | Action |
 |---|---|
 | Drag | Draw a shape, or move one |
-| Double-click | Name a shape, or add a note to an arrow |
+| Drag a corner | Resize a shape. On text and headings it scales the text |
+| Double-click | Name a shape, or add a note to an arrow. `Enter` starts a new line in text |
 | `Enter` | Name the selected shape |
 | Right-drag | Pan |
 | `⌘` + wheel | Zoom |

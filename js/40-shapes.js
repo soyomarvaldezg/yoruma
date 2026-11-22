@@ -408,8 +408,10 @@ function drawText(g, n){
   if (n.kind === 'heading'){
     const al = n.align || 'left';
     const hx = al === 'right' ? n.x + n.w - 6 : al === 'center' ? n.x + n.w/2 : n.x + 6;
+    const lines = title.split('\n').map(s => s.toUpperCase());
+    const lh = 26*k;
     addLines(g, hx, n.y + 21*k, al === 'right' ? 'end' : al === 'center' ? 'middle' : 'start',
-      ink, CODE, 20*k, W1, '.14em', [title.toUpperCase()], 0, ST, 'title');
+      ink, CODE, 20*k, W1, '.14em', lines, lh, ST, 'title');
     return;
   }
   if (n.kind === 'zone'){
@@ -419,8 +421,13 @@ function drawText(g, n){
     return;
   }
   if (n.kind === 'text'){
-    addLines(g, cx, cy + 7, 'middle', ink, SANS, 21*k, 500, '0',
-      wrapLines(title, n.w - 12, 21*k, false, 1), 0, ST, 'title');
+    const al = n.align || 'center';
+    const tx = al === 'left' ? n.x + 6 : al === 'right' ? n.x + n.w - 6 : cx;
+    const lh = 26*k;
+    const lines = title.split('\n').map(line =>
+      wrapLines(line, n.w - 12, 21*k, false, 1)[0]);
+    addLines(g, tx, n.y + 21*k, al === 'right' ? 'end' : al === 'left' ? 'start' : 'middle',
+      ink, SANS, 21*k, 500, '0', lines, lh, ST, 'title');
     return;
   }
   if (n.kind === 'table'){

@@ -133,7 +133,8 @@ stage.addEventListener('pointerdown', ev => {
       bend = { l: links.find(x => x.id === h.id), insertAt:h.seg, moved:false };
     } else if (h.kind === 'resize'){
       const n = byId(h.id);
-      resize = { n, corner:h.corner, ox:n.x, oy:n.y, ow:n.w, oh:n.h, moved:false };
+      resize = { n, corner:h.corner, ox:n.x, oy:n.y, ow:n.w, oh:n.h,
+                 fs0: n.fs || 1, moved:false };
     } else {
       const l = links.find(x => x.id === h.id);
       lend = { l, end:h.end, other: h.end === 'from' ? byId(l.to) : byId(l.from) };
@@ -279,6 +280,26 @@ stage.addEventListener('pointermove', ev => {
   if (resize){
     if (!resize.moved){ snapshot(); resize.moved = true; }
     const n = resize.n, c = resize.corner;
+    if (n.kind === 'text' || n.kind === 'heading'){
+      /* A note scales rather than stretches: the dragged corner moves away
+         from the opposite one, and the text grows with the box. */
+      const west = c === 'nw' || c === 'sw', north = c === 'nw' || c === 'ne';
+      const fx = west ? resize.ox + resize.ow : resize.ox;
+      const fy = north ? resize.oy + resize.oh : resize.oy;
+      const sx = west ? resize.ox : resize.ox + resize.ow;
+      const sy = north ? resize.oy : resize.oy + resize.oh;
+      const d0 = Math.hypot(sx - fx, sy - fy) || 1;
+      const d1 = Math.hypot(p.x - fx, p.y - fy);
+      const fs = Math.min(4, Math.max(0.4, resize.fs0 * d1/d0));
+      const k = fs / resize.fs0;
+      n.fs = Math.round(fs*100)/100;
+      n.w = Math.max(24, Math.round(resize.ow*k));
+      n.h = Math.max(10, Math.round(resize.oh*k));
+      n.x = Math.round(west ? fx - n.w : fx);
+      n.y = Math.round(north ? fy - n.h : fy);
+      renderSoon();
+      return;
+    }
     let x1 = resize.ox, y1 = resize.oy, x2 = resize.ox + resize.ow, y2 = resize.oy + resize.oh;
     if (c === 'nw' || c === 'sw') x1 = p.x;
     if (c === 'ne' || c === 'se') x2 = p.x;
