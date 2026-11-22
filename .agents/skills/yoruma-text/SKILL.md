@@ -1,4 +1,6 @@
 ---
+user-invocable: true
+disable-model-invocation: true
 name: yoruma-text
 description: >
   Write or edit yoruma diagrams in its plain-text format (YAML-shaped,
@@ -6,7 +8,6 @@ description: >
   text for yoruma, when asked for a ".yaml diagram", a "yoruma diagram",
   or when converting an architecture description into shapes, zones and
   arrows that yoruma can lay out. Aimed at ~400 tokens per diagram.
-user-invocable: true
 ---
 
 # yoruma text format
