@@ -420,6 +420,14 @@ menu.querySelectorAll('button').forEach(b => {
       if (x === 'icons-clear'){ clearImportedIcons(); return; }
       if (x === 'clear'){ clearDoc(); return; }
       if (x === 'mermaid') return copy(mermaid(), 'mermaid source copied');
+      if (x === 'yaml'){
+        const made = docToText();
+        if (!made.text){ toast('nothing to write as text'); return; }
+        await copy(made.text, 'yaml copied' +
+          (made.dropped ? ' — ' + made.dropped + ' shape' +
+            (made.dropped === 1 ? '' : 's') + ' left out' : ''));
+        return;
+      }
       if (x === 'd2') return copy(d2(), 'd2 source copied');
       if (x === 'kroki-mermaid') return copy(await krokiPath('mermaid', mermaid()), 'kroki mermaid url copied');
       if (x === 'kroki-d2') return copy(await krokiPath('d2', d2()), 'kroki d2 url copied');

@@ -480,6 +480,156 @@ function buildTextDoc(model){
 
 function textDoc(text){ return buildTextDoc(parseText(text)); }
 
+/* Would this text open as a document? A paste asks before it takes over the
+   canvas, so the answer has to be cheap and honest: the parser is the judge. */
+function isTextDoc(text){
+  try { return parseText(text).shapes.length > 0; }
+  catch (e){ return false; }
+}
+
+/* ---------- document to text ---------- */
+/* The way back: a document becomes the file it came from, so a diagram edited
+   on the canvas can leave as text again. Three things have no spelling in the
+   format — pin positions, a zone's `dir`, and per-shape text and stroke
+   colours — and the packer lays the file out again, so the picture comes back
+   re-packed rather than pixel-frozen. Kinds the format cannot name (a loose
+   logo, an image, a frame, a bare line) are left out and counted. */
+const TEXT_WORDS = {
+  box:'card', store:'db', ellipse:'ellipse', zone:'zone', file:'file', queue:'queue',
+  cloud:'cloud', api:'api', shield:'shield', people:'people', agent:'agent',
+  contract:'contract', dashboard:'dashboard', cube:'cube', table:'table', tile:'tile',
+  text:'text', heading:'heading'
+};
+const TEXT_SW_SIZE = { 0.6:'s', 1.2:'m', 2.2:'l', 3.4:'xl' };
+const TEXT_URI_NAMES = new Map();
+
+/* An icon drawn on the canvas is an image, not a name. The bundled pack still
+   knows which name produced it, so the uri is the way back to `icon:`. */
+function textIconName(uri){
+  if (!uri) return null;
+  if (!TEXT_URI_NAMES.size && typeof LOCAL_ICONS !== 'undefined')
+    LOCAL_ICONS.forEach(e => {
+      const u = iconDataUri(e);
+      if (u && !TEXT_URI_NAMES.has(u)) TEXT_URI_NAMES.set(u, e.n);
+    });
+  return TEXT_URI_NAMES.get(uri) || null;
+}
+const textValue = v => String(v == null ? '' : v).replace(/[\r\n]+/g, ' ').trim();
+function textLabel(raw, used){
+  const base = textValue(raw).replace(/<->|->|--/g, '→').replace(/:/g, '·')
+    .slice(0, 80) || 'shape';
+  let name = base, i = 2;
+  while (used.has(textSlug(name) || base)) name = base + ' ' + i++;
+  used.add(textSlug(name) || base);
+  return name;
+}
+function textZoneOf(n, zones){
+  let best = null;
+  zones.forEach(z => {
+    if (z === n) return;
+    if (n.x < z.x || n.y < z.y || n.x + n.w > z.x + z.w || n.y + n.h > z.y + z.h) return;
+    /* Two zones of the same box would each hold the other; only a strictly
+       larger zone is a parent. */
+    if (n.kind === 'zone' && z.w * z.h <= n.w * n.h) return;
+    if (!best || z.w * z.h < best.w * best.h) best = z;
+  });
+  return best;
+}
+function docToText(doc){
+  const src = doc || { nodes, links };
+  const all = src.nodes || [];
+  const zones = all.filter(n => n.kind === 'zone');
+  const out = [];
+  const used = new Set();
+  const nameOf = new Map();
+
+  const title = all.find(n => n.kind === 'heading' && /^doc-title(-\d+)?$/.test(n.id));
+  const subtitle = all.find(n => n.kind === 'text' && /^doc-subtitle(-\d+)?$/.test(n.id));
+  if (title && textValue(title.title)) out.push('title: ' + textValue(title.title));
+  if (subtitle && textValue(subtitle.title)) out.push('subtitle: ' + textValue(subtitle.title));
+
+  const shapes = all.filter(n => TEXT_WORDS[n.kind] && n !== title && n !== subtitle);
+  const dropped = all.length - shapes.length - (title ? 1 : 0) - (subtitle ? 1 : 0);
+
+  /* `theme: data` is worth keeping only when the canvas is exactly what the
+     theme paints: every role tone in place, and no colour on the kinds the
+     theme leaves alone. One hand-picked colour means the colours are the news. */
+  const themed = shapes.length > 0 &&
+    shapes.every(n => TEXT_TONES[n.kind] ? n.color === TEXT_TONES[n.kind] : !n.color);
+  if (themed) out.push('theme: data');
+
+  shapes.forEach(n => {
+    nameOf.set(n.id, textLabel(n.title || n.id, used));
+  });
+  const children = new Map();
+  shapes.forEach(n => {
+    const z = textZoneOf(n, zones);
+    if (!children.has(z)) children.set(z, []);
+    children.get(z).push(n);
+  });
+
+  const prop = (depth, key, value) =>
+    out.push('  '.repeat(depth + 1) + key + ': ' + value);
+  const emitShape = (n, depth) => {
+    out.push('  '.repeat(depth) + TEXT_WORDS[n.kind] + ' ' + nameOf.get(n.id) + ':');
+    const zone = n.kind === 'zone';
+    if (n.color && !(themed && TEXT_TONES[n.kind] === n.color))
+      prop(depth, 'color', n.color);
+    if (n.fill) prop(depth, 'fill', n.fill);
+    if (n.dash) prop(depth, 'dash', 'true');
+    /* A zone takes its own short list of props; anything else it carries would
+       come back as an unknown property on the next open. */
+    if (zone){
+      if (n.solid) prop(depth, 'solid', 'true');
+      if (n.band) prop(depth, 'band', 'true');
+    } else {
+      if (textValue(n.sub)) prop(depth, 'sub', textValue(n.sub));
+      const icon = textIconName(n.logo);
+      if (icon) prop(depth, 'icon', icon);
+      if (n.tint) prop(depth, 'tint', 'true');
+      if (n.stroke && n.stroke !== 'solid') prop(depth, 'stroke', n.stroke);
+      if (n.sharp) prop(depth, 'sharp', 'true');
+      if (n.solid) prop(depth, 'solid', 'true');
+      if (n.band) prop(depth, 'band', 'true');
+      if (n.fillmode === 'solid') prop(depth, 'fillmode', 'solid');
+      if (TEXT_SW_SIZE[n.sw]) prop(depth, 'size', TEXT_SW_SIZE[n.sw]);
+      if (n.align) prop(depth, 'align', n.align);
+      /* Loops belong to tiles; the parser says so, so nothing else may carry one. */
+      if (n.kind === 'tile' && n.anim) prop(depth, 'anim', n.anim);
+      if (n.kind === 'tile' && n.speed && n.speed !== 1)
+        prop(depth, 'speed', String(n.speed));
+      const [dw, dh] = SIZE[n.kind] || [0, 0];
+      if (Math.abs(n.w - dw) > 1 || Math.abs(n.h - dh) > 1){
+        prop(depth, 'w', String(Math.round(n.w)));
+        prop(depth, 'h', String(Math.round(n.h)));
+      }
+    }
+    (children.get(n) || []).forEach(c => emitShape(c, depth + 1));
+  };
+  (children.get(null) || []).forEach(n => emitShape(n, 0));
+
+  const twoWay = new Set();
+  (src.links || []).forEach(l => {
+    const a = nameOf.get(l.from), b = nameOf.get(l.to);
+    if (!a || !b) return;
+    const back = l.to + '>' + l.from;
+    const plain = !l.label && !l.color && !l.dash && !l.motion &&
+      !(l.bends && l.bends.length);
+    if (plain && twoWay.has(back)) return;
+    const arrow = l.head === false ? '--' : (l.headStart ? '<->' : '->');
+    if (l.headStart) twoWay.add(l.from + '>' + l.to);
+    const label = textValue(l.label).replace(/<->|->|--/g, '→');
+    out.push(a + ' ' + arrow + ' ' + b + ':' + (label ? ' ' + label : ''));
+    if (l.color) out.push('  color: ' + l.color);
+    if (l.dash) out.push('  dash: true');
+    if (l.motion && l.motion !== 'off') out.push('  motion: ' + l.motion);
+    (l.bends || []).forEach(b =>
+      out.push('  bend: ' + Math.round(b.x) + ' ' + Math.round(b.y)));
+  });
+
+  return { text: out.length ? out.join('\n') + '\n' : '', dropped };
+}
+
 const textInput = document.createElement('input');
 textInput.type = 'file';
 textInput.accept = '.yoruma,.yaml,.yml,.txt,.text,text/plain';

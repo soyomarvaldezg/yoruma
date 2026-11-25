@@ -3,6 +3,7 @@ const CLOUD_D = 'M20 45 C7 45 0 37 0 27 C0 18 7 10 16 9 C20 2 28 -2 36 -2 '
               + 'C46 -2 54 5 56 14 C64 15 70 21 70 29 C70 38 63 45 54 45 Z';
 const GLYPHS = ['people','api','dashboard','cube','shield','agent','contract','video','media'];
 const LOGO_KINDS = new Set(['box','ellipse','tile']);
+const ICON_BOXES = new Map();
 
 
 function shape(n){
@@ -459,6 +460,8 @@ function drawText(g, n){
   const y = cy - total/2 + 9;
   if (logo){
     const box = 40*k;
+    /* Where the glyph landed, so a press on it can peel it off the card. */
+    ICON_BOXES.set(n.id, { x: n.x + 12, y: y - 28*k, w: box, h: box });
     const inner = n.mono ? monoInner(logo, accentOf(n) || LINE) : null;
     if (inner){
       const g2 = mk('g', {

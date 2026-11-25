@@ -184,6 +184,18 @@ stage.addEventListener('pointerdown', ev => {
       selectLink(lid); render(); return;
     }
     if (hit){
+      /* Pressing the glyph peels it off and keeps dragging it, so an icon is
+         grabbed in one gesture instead of a toolbar trip. The detach already
+         took the undo snapshot, which is why this drag starts out moved. */
+      if ((hit.kind === 'box' || hit.kind === 'ellipse') && iconBoxAt(hit, p, 4)){
+        const loose = detachIcon(hit, p);
+        if (loose){
+          drag = { items:[{ n:loose, x:loose.x, y:loose.y }], start:p, moved:true };
+          cap(ev);
+          render();
+          return;
+        }
+      }
       const now = Date.now();
       if (lastHit.id === hit.id && now - lastHit.t < 340){
         lastHit = { id:null, t:0 };

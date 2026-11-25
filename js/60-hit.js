@@ -31,6 +31,16 @@ function nodeAt(p, pad){
   }
   return null;
 }
+/* A card paints its icon inside its own box, so the glyph is the one part of
+   a shape that is a picture rather than the shape. This is the box it landed
+   in on the last render (40-shapes.js records it while drawing). */
+function iconBoxAt(n, p, pad){
+  const b = n && n.logo && ICON_BOXES.get(n.id);
+  if (!b) return null;
+  const g = pad || 0;
+  return p.x >= b.x - g && p.x <= b.x + b.w + g &&
+         p.y >= b.y - g && p.y <= b.y + b.h + g;
+}
 function nearest(p, max){
   let best = null, bd = max || 70;
   nodes.forEach(n => {

@@ -230,6 +230,45 @@ zoneLogoBtn.addEventListener('click', () => {
 });
 shaper.appendChild(zoneLogoBtn);
 
+/* A card paints its icon inside itself, so the pointer selects the card and
+   never the glyph. Detaching hands the icon to the canvas as a logo node,
+   which drags like any other shape. `at` is where the grab happened: the glyph
+   comes loose under the pointer. */
+function detachIcon(n, at){
+  if (!n || !n.logo || !['box','ellipse'].includes(n.kind)) return null;
+  snapshot();
+  /* The loose glyph keeps the size it wore inside the card. A logo node paints
+     a monochrome glyph at 86% of its box, so that box is that much larger to
+     make the icon look unchanged. */
+  const box = ICON_BOXES.get(n.id);
+  const glyph = box ? box.w : 40;
+  const w = Math.round(glyph * (n.mono ? 1 / 0.86 : 1));
+  const h = n.mono ? w : Math.round(glyph);
+  const cx = at ? at.x : n.x + n.w + 12 + w/2;
+  const cy = at ? at.y : n.y + 6 + h/2;
+  const logo = { id:'n'+(uid++), kind:'logo', title:'', sub:'', color:null,
+    tcolor:null, scolor:null, fs:1,
+    x: Math.round(cx - w/2), y: Math.round(cy - h/2), w, h, logo:n.logo };
+  if (n.mono) logo.mono = true;
+  delete n.logo;
+  delete n.mono;
+  nodes.push(logo);
+  selectNodes([logo.id], false);
+  render();
+  toast('icon detached — drag it where it belongs');
+  return logo;
+}
+const detachBtn = document.createElement('button');
+detachBtn.innerHTML = '<svg viewBox="0 0 24 24">' +
+  '<rect x="3" y="9" width="9" height="9" rx="1.6"/>' +
+  '<path d="M13.5 6.5H21M21 6.5V13M21 6.5l-7 7"/></svg>';
+detachBtn.dataset.detach = 'icon';
+detachBtn.title = 'Detach the icon — it becomes a logo you can drag';
+detachBtn.setAttribute('aria-label', 'Detach the icon onto the canvas');
+detachBtn.addEventListener('mousedown', ev => ev.preventDefault());
+detachBtn.addEventListener('click', () => detachIcon(byId(S.selNodes[0])));
+shaper.appendChild(detachBtn);
+
 const linkbar = document.getElementById('linkbar');
 const LINK_STYLE = [
   { lw:1.2, title:'Thin', svg:'<path d="M3 12h18" stroke-width="1.2"/>' },
@@ -339,6 +378,8 @@ function placeShaper(){
         b.title = n.logo
           ? 'Remove the zone logo'
           : 'Zone logo — choose an image, or drop one on the band';
+    } else if (b.dataset.detach){
+      b.style.display = n.logo && ['box','ellipse'].includes(n.kind) ? '' : 'none';
     } else if (b.dataset.align){
       b.style.display = n.kind === 'tile' ? 'none' : '';
       on = (n.align || 'center') === b.dataset.align;

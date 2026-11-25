@@ -2053,12 +2053,114 @@ if (/[?&]test/.test(location.search)){
       ok('dropping a text file opens it', droppedOk);
       nodes = dropKeepN; links = dropKeepL; render();
 
+      const pasteKeepN = nodes, pasteKeepL = links;
+      const pasteUndo = undoStack.length, pasteRedo = redoStack.length;
+      nodes = []; links = []; render();
+      const pdt = new DataTransfer();
+      pdt.setData('text/plain', 'card Pasted\ncard Second\nPasted -> Second: goes');
+      window.dispatchEvent(new ClipboardEvent('paste',
+        { bubbles:true, cancelable:true, clipboardData:pdt }));
+      await new Promise(r => setTimeout(r, 200));
+      /* A yaml file is a document; anything else stays the shape clipboard. */
+      const clippedBefore = clipboard;
+      const pdt2 = new DataTransfer();
+      pdt2.setData('text/plain', 'just a sentence');
+      window.dispatchEvent(new ClipboardEvent('paste',
+        { bubbles:true, cancelable:true, clipboardData:pdt2 }));
+      await new Promise(r => setTimeout(r, 60));
+      ok('pasting text opens it as a document',
+         nodes.some(n => n.title === 'Pasted') && nodes.some(n => n.title === 'Second') &&
+         links.some(l => l.label === 'goes'));
+      ok('pasting prose leaves the canvas alone',
+         nodes.length === 2 && clipboard === clippedBefore);
+      nodes = pasteKeepN; links = pasteKeepL;
+      undoStack.length = pasteUndo; redoStack.length = pasteRedo;
+      render();
+
+      const RT_SRC = 'title: Round trip\nsubtitle: small\n' +
+        'zone Zone A:\n  card First:\n    sub: one\n  file Second:\n' +
+        'tile Run:\n  anim: poll\n  tint: true\n' +
+        'First -> Second: reads\n  color: "#E03131"\n  dash: true\n';
+      const rtMade = docToText(buildTextDoc(parseText(RT_SRC)));
+      let rtBack = null;
+      try { rtBack = parseText(rtMade.text); }
+      catch (e){ rtBack = 'threw: ' + e.message; }
+      ok('the document writes back as text',
+         rtBack && rtBack.shapes && rtBack.shapes.length === 4 &&
+         rtBack.byId.get('first').parent.name === 'Zone A' &&
+         rtBack.shapes.find(s => s.id === 'first').props.sub === 'one' &&
+         rtBack.links.length === 1 && rtBack.links[0].label === 'reads' &&
+         rtBack.links[0].color === '#E03131' && rtBack.links[0].dash === true &&
+         rtBack.root.props.title === 'Round trip' &&
+         rtBack.root.props.subtitle === 'small' && rtMade.dropped === 0);
+
+      const detachKeepN = nodes.slice(), detachKeepL = links.slice();
+      const detachUndo = undoStack.length, detachRedo = redoStack.length;
+      const detachCard = { id:'det1', kind:'box', title:'Iconed', sub:'', color:null,
+        tcolor:null, scolor:null, fs:1, x:200, y:2300, w:180, h:90, mono:true,
+        logo:'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7' };
+      nodes.push(detachCard); render();
+      const wasLogo = detachCard.logo;
+      detachIcon(detachCard);
+      const loose = nodes[nodes.length - 1];
+      ok('a detached icon becomes a logo the pointer can grab',
+         nodes.length === detachKeepN.length + 2 && loose.kind === 'logo' &&
+         loose.logo === wasLogo && loose.mono === true &&
+         !detachCard.logo && !detachCard.mono && S.selNodes[0] === loose.id);
+      nodes = detachKeepN; links = detachKeepL;
+      undoStack.length = detachUndo; redoStack.length = detachRedo;
+      render();
+
+      const barCard = (id, logo) => ({ id, kind:'box', title:'I', sub:'', color:null,
+        tcolor:null, scolor:null, fs:1, x:100, y:100, w:180, h:90,
+        ...(logo ? { logo, mono:true } : {}) });
+      const barKeepN = nodes, barKeepL = links;
+      nodes = [barCard('db1', wasLogo)]; links = []; S.selNodes = ['db1']; render();
+      const detachShown = document.querySelector('#shaper [data-detach]').style.display !== 'none';
+      nodes = [barCard('db2')]; links = []; S.selNodes = ['db2']; render();
+      const detachHidden = document.querySelector('#shaper [data-detach]').style.display === 'none';
+      ok('the shape bar only offers detach when there is an icon', detachShown && detachHidden);
+      nodes = barKeepN; links = barKeepL; S.selNodes = []; render();
+
+      const grabKeepN = nodes, grabKeepL = links;
+      const grabUndo = undoStack.length, grabRedo = redoStack.length;
+      const grabCard = { id:'gr1', kind:'box', title:'Grab me', sub:'', color:null,
+        tcolor:null, scolor:null, fs:1, x:300, y:2500, w:208, h:100,
+        logo: wasLogo, mono:true };
+      nodes = [grabCard]; links = []; S.selNodes = []; render();
+      const ibox = ICON_BOXES.get('gr1');
+      const onIcon = ibox ? { x: ibox.x + ibox.w/2, y: ibox.y + ibox.h/2 } : { x:0, y:0 };
+      const grabTo = { x: onIcon.x + 140, y: onIcon.y + 60 };
+      drag(onIcon, grabTo);
+      const peeled = nodes.filter(n => n.kind === 'logo');
+      /* The loose glyph must look like the one that was in the card: same
+         apparent size, landing under the pointer that grabbed it. */
+      ok('pressing the icon grabs it off the card in one gesture',
+         !!ibox && peeled.length === 1 && !nodes.find(n => n.id === 'gr1').logo &&
+         Math.abs(peeled[0].x + peeled[0].w/2 - grabTo.x) <= 2 &&
+         Math.abs(peeled[0].y + peeled[0].h/2 - grabTo.y) <= 2 &&
+         Math.abs(peeled[0].w * 0.86 - ibox.w) <= 2 &&
+         S.selNodes[0] === peeled[0].id);
+      S.selNodes = []; render();
+      const bodyCard = { id:'gr2', kind:'box', title:'Body', sub:'', color:null,
+        tcolor:null, scolor:null, fs:1, x:300, y:2800, w:208, h:100,
+        logo: wasLogo, mono:true };
+      nodes = [bodyCard]; links = []; render();
+      const bodyAt = { x: bodyCard.x + 150, y: bodyCard.y + 70 };
+      drag(bodyAt, { x: bodyAt.x + 100, y: bodyAt.y });
+      ok('a press away from the icon still moves the card whole',
+         nodes.length === 1 && !!bodyCard.logo && bodyCard.x === 400);
+      nodes = grabKeepN; links = grabKeepL;
+      undoStack.length = grabUndo; redoStack.length = grabRedo;
+      S.selNodes = []; render();
+
       ok('webp export and png clipboard copy',
          !!wb && wb.blob.type === 'image/webp' && got.toasts.includes('webp downloaded') &&
          !!cp && [...cp.types].includes('image/png') &&
          got.toasts.includes('image copied to clipboard'));
       ok('draw.io export is offered in the FILE menu',
          !!btn('drawio') && !!btn('drawio-image'));
+      ok('the FILE menu offers the text back as yaml', !!btn('yaml'));
 
       const selKeepN = nodes, selKeepL = links;
       const selKeepSel = { nodes:S.selNodes.slice(), links:S.selLinks.slice() };

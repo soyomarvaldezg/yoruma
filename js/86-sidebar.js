@@ -311,6 +311,14 @@ window.addEventListener('paste', ev => {
     pasteClipboard(data);
     return;
   }
+  /* Text pasted straight from a chat or an editor opens as a document, the
+     same path FILE ▾ → Open text takes. Names and arrows are the tell: any
+     other prose falls through to the shape clipboard. */
+  if (text && text.length <= DOC_MAX_CHARS && isTextDoc(text)){
+    ev.preventDefault();
+    openTextDoc(text, 'the pasted text');
+    return;
+  }
   const f = ev.clipboardData && ev.clipboardData.files && ev.clipboardData.files[0];
   if (f){ ev.preventDefault(); insertFile(f, centrePoint()); return; }
   if (!text && clipboard){

@@ -69,7 +69,9 @@ decision back to auto.
   button again to remove it. This matches the AWS/Azure frame style.
 - **Cards** are boxes with a title and an optional subtitle.
   A card takes its own stroke colour and its own fill.
-  It can carry an icon or a brand logo.
+  It can carry an icon or a brand logo. The icon is painted inside the card, so drag
+  the glyph itself to peel it off as a logo you can drop anywhere; the shape bar's
+  detach button does the same from the card's side.
 - **Icon tiles** are filled squares in one hue with a white glyph and no outline.
   The hue is the explicit colour, or a stable colour the icon hashes to.
   `tint: true` washes the tile pale and paints the glyph in the outline colour.
@@ -285,7 +287,7 @@ The document saves to `localStorage` on every change. A reload restores it, zoom
 - **Open**: JSON… and text…
 - **Export**: SVG, PNG, WebP, PNG to the clipboard, the JSON document, and draw.io.
 - **Selection**: SVG and PNG of just the selected shapes.
-- **Text source**: Mermaid, D2 and their Kroki links.
+- **Text source**: YAML, Mermaid, D2 and their Kroki links. Each copies its source.
 - **Icons**: import a pack, or remove the imported ones.
 - **Clear the document…** empties the current page. Undo restores it.
 
@@ -302,7 +304,8 @@ Loading is strict:
 
 ## Text format
 
-**Open text…** loads a small declarative format. The format is YAML-shaped.
+**Open text…** loads a small declarative format, and so does a paste: copy the text and
+press `⌘V` over the canvas, or drop the saved file on it. The format is YAML-shaped.
 It needs no positions. Files are in `docs/`:
 
 - `example-text.yaml` — a small pipeline.
