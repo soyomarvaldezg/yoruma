@@ -196,11 +196,10 @@ the same file always lays out the same way, and `x:`/`y:` pins survive.
 ## Handing the diagram over
 
 Yoruma is a static page: whoever wants the picture opens `index.html` from a clone of the repo
-(or the published site) and loads the file there. Nothing is uploaded and a yaml file is the
-deliverable. The repo also ships `tools/yoruma.mjs`, which renders that file to PNG or SVG
-headlessly (`render`, `check`, `icons`; it needs `task deps` once). Use it when Node and the
-tools are installed, since then you can look at the result before handing it over; otherwise
-hand over the file.
+(or the published site) and loads the file there. Nothing is uploaded, and the yaml file is the
+only deliverable: never hand over a picture, a screenshot or an exported PNG/SVG.
+The repo also ships `tools/yoruma.mjs`, which runs a file through the same parser and packer
+the page uses (`check`, `icons`; it needs `task deps` once).
 
 - Write the yaml to a file yourself; never hand back a block and wait for the user to save it.
   Pick a name that says what the diagram is (`arquitectura-recomendada.yaml`, or the next
@@ -209,7 +208,8 @@ hand over the file.
 - A fenced block is a preview of what you wrote, never the only copy.
 - On an edit, rewrite that same file rather than printing a new one, so the path they already
   have open stays valid.
-- Tell them: **FILE ▾ → Open text…**, or drop the saved file on the canvas.
+- Tell them: paste the text straight into the page, **FILE ▾ → Open text…**, or drop the
+  saved file on the canvas.
 - Close the loop in plain language: they say what should change, you answer with the updated
   file. Say what to look at ("the queue should now be orange, between Capture and Processing")
   so a mistake is visible at a glance.
@@ -217,18 +217,16 @@ hand over the file.
 Stay near the 400-token target: the file is meant to be read and edited by a human in a text
 editor as much as by a model.
 
-Load it once before saying it works. In this repo the shortest route is
-`node tools/yoruma.mjs check FILE` (prints `line N: ...`) and
-`node tools/yoruma.mjs render FILE -o /tmp/x.png`, then look at the image. Without the
+Load it once before saying it works: `node tools/yoruma.mjs check FILE` prints `line N: ...`
+for the first thing the page cannot read, and `0 failed` when every file opens. Without the
 tools, open `index.html` and call `openTextDoc(src, 'name.yaml', true)`, the same path
-FILE ▾ → Open text takes. Do not stop at `buildTextDoc(parseText(src))`: that lays out the
-file but skips the step that resolves `icon:` and `brand:`. A truncated `sub:` line or a
-label sitting on an arrowhead only shows up in the picture.
-`docs/example-loops.yaml` is the reference for icon cards, loops and `speed:`.
+FILE ▾ → Open text takes; that step also resolves `icon:` and `brand:`, which
+`buildTextDoc(parseText(src))` alone does not. `check` is the last step — no picture is part of
+the handoff. `docs/example-loops.yaml` is the reference for icon cards, loops and `speed:`.
 
 ## Keep it small
 
 Target roughly 400 tokens per diagram. Do not add a schema, a parser wrapper or a templating
-layer; the repo's own renderer is `tools/yoruma.mjs` when it is installed.
+layer; the repo's own validator is `tools/yoruma.mjs` when it is installed.
 Notes on arrows (`A -> B: read`) and short `sub:` lines carry most of the
 meaning; avoid prose inside shapes.
